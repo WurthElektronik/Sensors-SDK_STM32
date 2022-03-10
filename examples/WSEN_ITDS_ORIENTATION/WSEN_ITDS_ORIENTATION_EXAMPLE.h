@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,18 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief Header file for WSEN_ITDS orientation example.
+ *
+ * Example for the ITDS accelerometer demonstrating the sensor's 6D and 4D (e.g. portrait/landscape)
+ * orientation detection functionality.
+ */
 
 #ifndef WSEN_ITDS_ORIENTATION_EXAMPLE_H_INCLUDED
 #define WSEN_ITDS_ORIENTATION_EXAMPLE_H_INCLUDED

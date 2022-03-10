@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,135 +18,145 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief Header file for the WSEN-PADS sensor driver.
+ */
 
 #ifndef _WSEN_PADS_H
 #define _WSEN_PADS_H
 
-/**         Includes         */
+/*         Includes         */
 
 #include <stdint.h>
 
 #include "../WeSensorsSDK.h"
 
 
-/**         PADS 2511020213301 DEVICE_ID         */
+/*         PADS 2511020213301 DEVICE_ID         */
 
-#define PADS_DEVICE_ID_VALUE        0xB3     /* Device ID of PADS 2511020213301 Sensor */
-
-
-/**         Available PADS 2511020213301 I2C slave addresses         */
-
-#define PADS_ADDRESS_I2C_0          0x5C     /* when SAO of PADS is connected to ground */
-#define PADS_ADDRESS_I2C_1          0x5D     /* when SAO of PADS is connected to positive supply voltage */
+#define PADS_DEVICE_ID_VALUE        0xB3     /**< Device ID of PADS 2511020213301 Sensor */
 
 
-/**         Register address definitions         */
+/*         Available PADS 2511020213301 I2C slave addresses         */
 
-#define PADS_INT_CFG_REG            0x0B     /* Interrupt configuration register */
-#define PADS_THR_P_L_REG            0x0C     /* Pressure threshold LSB register */
-#define PADS_THR_P_H_REG            0x0D     /* Pressure threshold MSB register */
-#define PADS_INTERFACE_CTRL_REG     0x0E     /* Interface control register */
-#define PADS_DEVICE_ID_REG          0x0F     /* Device ID register */
-#define PADS_CTRL_1_REG             0x10     /* Control register 1 */
-#define PADS_CTRL_2_REG             0x11     /* Control register 2 */
-#define PADS_CTRL_3_REG             0x12     /* Control register 3 */
-#define PADS_FIFO_CTRL_REG          0x13     /* FIFO control register */
-#define PADS_FIFO_WTM_REG           0x14     /* FIFO threshold register */
-#define PADS_REF_P_L_REG            0x15     /* Reference pressure LSB value register */
-#define PADS_REF_P_H_REG            0x16     /* Reference pressure MSB value register */
-#define PADS_OPC_P_L_REG            0x18     /* Pressure offset LSB value register */
-#define PADS_OPC_P_H_REG            0x19     /* Pressure offset MSB value register */
-#define PADS_INT_SOURCE_REG         0x24     /* Interrupt source register */
-#define PADS_FIFO_STATUS1_REG       0x25     /* FIFO status register 1 */
-#define PADS_FIFO_STATUS2_REG       0x26     /* FIFO status register 2 */
-#define PADS_STATUS_REG             0x27     /* Status register */
-#define PADS_DATA_P_XL_REG          0x28     /* Pressure output LSB value register */
-#define PADS_DATA_P_L_REG           0x29     /* Pressure output MID value register */
-#define PADS_DATA_P_H_REG           0x2A     /* Pressure output MSB value register */
-#define PADS_DATA_T_L_REG           0x2B     /* Temperature output LSB value register */
-#define PADS_DATA_T_H_REG           0x2C     /* Temperature output MSB value register */
-#define PADS_FIFO_DATA_P_XL_REG     0x78     /* Pressure LSB data in FIFO buffer */
-#define PADS_FIFO_DATA_P_L_REG      0x79     /* Pressure MID data in FIFO buffer */
-#define PADS_FIFO_DATA_P_H_REG      0x7A     /* Pressure MSB data in FIFO buffer */
-#define PADS_FIFO_DATA_T_L_REG      0x7B     /* Temperature LSB data in FIFO buffer */
-#define PADS_FIFO_DATA_T_H_REG      0x7C     /* Temperature MSB data in FIFO buffer */
+#define PADS_ADDRESS_I2C_0          0x5C     /**< when SAO of PADS is connected to ground */
+#define PADS_ADDRESS_I2C_1          0x5D     /**< when SAO of PADS is connected to positive supply voltage */
 
 
-/**         Misc. defines         */
+/*         Register address definitions         */
+
+#define PADS_INT_CFG_REG            0x0B     /**< Interrupt configuration register */
+#define PADS_THR_P_L_REG            0x0C     /**< Pressure threshold LSB register */
+#define PADS_THR_P_H_REG            0x0D     /**< Pressure threshold MSB register */
+#define PADS_INTERFACE_CTRL_REG     0x0E     /**< Interface control register */
+#define PADS_DEVICE_ID_REG          0x0F     /**< Device ID register */
+#define PADS_CTRL_1_REG             0x10     /**< Control register 1 */
+#define PADS_CTRL_2_REG             0x11     /**< Control register 2 */
+#define PADS_CTRL_3_REG             0x12     /**< Control register 3 */
+#define PADS_FIFO_CTRL_REG          0x13     /**< FIFO control register */
+#define PADS_FIFO_WTM_REG           0x14     /**< FIFO threshold register */
+#define PADS_REF_P_L_REG            0x15     /**< Reference pressure LSB value register */
+#define PADS_REF_P_H_REG            0x16     /**< Reference pressure MSB value register */
+#define PADS_OPC_P_L_REG            0x18     /**< Pressure offset LSB value register */
+#define PADS_OPC_P_H_REG            0x19     /**< Pressure offset MSB value register */
+#define PADS_INT_SOURCE_REG         0x24     /**< Interrupt source register */
+#define PADS_FIFO_STATUS1_REG       0x25     /**< FIFO status register 1 */
+#define PADS_FIFO_STATUS2_REG       0x26     /**< FIFO status register 2 */
+#define PADS_STATUS_REG             0x27     /**< Status register */
+#define PADS_DATA_P_XL_REG          0x28     /**< Pressure output LSB value register */
+#define PADS_DATA_P_L_REG           0x29     /**< Pressure output MID value register */
+#define PADS_DATA_P_H_REG           0x2A     /**< Pressure output MSB value register */
+#define PADS_DATA_T_L_REG           0x2B     /**< Temperature output LSB value register */
+#define PADS_DATA_T_H_REG           0x2C     /**< Temperature output MSB value register */
+#define PADS_FIFO_DATA_P_XL_REG     0x78     /**< Pressure LSB data in FIFO buffer */
+#define PADS_FIFO_DATA_P_L_REG      0x79     /**< Pressure MID data in FIFO buffer */
+#define PADS_FIFO_DATA_P_H_REG      0x7A     /**< Pressure MSB data in FIFO buffer */
+#define PADS_FIFO_DATA_T_L_REG      0x7B     /**< Temperature LSB data in FIFO buffer */
+#define PADS_FIFO_DATA_T_H_REG      0x7C     /**< Temperature MSB data in FIFO buffer */
+
+
+/*         Misc. defines         */
 
 #define PADS_FIFO_BUFFER_SIZE     128
 
 
-/**         Register type definitions         */
+/*         Register type definitions         */
 
 /**
-* Interrupt_CFG
+* @brief Interrupt_CFG
+*
 * Address 0x0B
 * Type  R/W
 * Default value: 0x00
 */
 typedef struct
 {
-  uint8_t highPresInt : 1;          /* PHE: Enable/disable interrupt on pressure high event (0: disabled; 1: enabled) */
-  uint8_t lowPresInt : 1;           /* PLE: Enable/disable interrupt on pressure low event (0: disabled; 1: enabled) */
-  uint8_t latchedInt : 1;           /* LIR: Enable/disable latched interrupt (0: normal; 1: enabled) */
-  uint8_t diffInt : 1;              /* DIFF_EN: Enable/disable differential interrupt generation (0: disabled; 1: enabled) */
-  uint8_t resetAutoZero : 1;    /* RESET_AZ: Reset AUTOZERO function; also resets reference pressure register (0: normal mode; 1: reset AUTOZERO) */
-  uint8_t autoZero : 1;         /* AUTOZERO: Turn on AUTOZERO mode; stores reference pressure in REF_P; enables differential output pressure (0: normal mode; 1: turn on) */
-  uint8_t resetAutoRefp : 1;        /* RESET_ARP: Reset AUTOREFP mode; also resets reference pressure register (0: normal mode; 1: enabled) */
-  uint8_t autoRefp : 1;             /* AUTOREFP: Turn on AUTOREFP function; stores reference pressure in REF_P; enables differential output pressure (0: normal mode; 1: turn on) */
+  uint8_t highPresInt : 1;          /**< PHE: Enable/disable interrupt on pressure high event (0: disabled; 1: enabled) */
+  uint8_t lowPresInt : 1;           /**< PLE: Enable/disable interrupt on pressure low event (0: disabled; 1: enabled) */
+  uint8_t latchedInt : 1;           /**< LIR: Enable/disable latched interrupt (0: normal; 1: enabled) */
+  uint8_t diffInt : 1;              /**< DIFF_EN: Enable/disable differential interrupt generation (0: disabled; 1: enabled) */
+  uint8_t resetAutoZero : 1;        /**< RESET_AZ: Reset AUTOZERO function; also resets reference pressure register (0: normal mode; 1: reset AUTOZERO) */
+  uint8_t autoZero : 1;             /**< AUTOZERO: Turn on AUTOZERO mode; stores reference pressure in REF_P; enables differential output pressure (0: normal mode; 1: turn on) */
+  uint8_t resetAutoRefp : 1;        /**< RESET_ARP: Reset AUTOREFP mode; also resets reference pressure register (0: normal mode; 1: enabled) */
+  uint8_t autoRefp : 1;             /**< AUTOREFP: Turn on AUTOREFP function; stores reference pressure in REF_P; enables differential output pressure (0: normal mode; 1: turn on) */
 } PADS_interruptConfiguration_t;
 
 
 /**
-* Pressure threshold LSB register
+* @brief Pressure threshold LSB register
+*
 * Address 0x0C
 * Type  R/W
 * Default value: 0x00
 */
 typedef struct
 {
-  uint8_t presThresholdLsb : 8;   /* THR[7:0] This register contains the low part of threshold value for pressure interrupt */
+  uint8_t presThresholdLsb : 8;   /**< THR[7:0] This register contains the low part of threshold value for pressure interrupt */
 } PADS_thresholdLSB_t;
 
 
 /**
-* Pressure threshold MSB register
+* @brief Pressure threshold MSB register
+*
 * Address 0x0D
 * Type  R/W
 * Default value: 0x00
 */
 typedef struct
 {
-  uint8_t presThresholdMsb : 7;   /* THR[14:8] This register contains the high part of threshold value for pressure interrupt */
-  uint8_t notUsed01 : 1;          /* This bit must be set to 0 for proper operation of the device */
+  uint8_t presThresholdMsb : 7;   /**< THR[14:8] This register contains the high part of threshold value for pressure interrupt */
+  uint8_t notUsed01 : 1;          /**< This bit must be set to 0 for proper operation of the device */
 } PADS_thresholdMSB_t;
 
 
 /**
-* Interface control register
+* @brief Interface control register
+*
 * Address 0x0B
 * Type  R/W
 * Default value: 0x00
 */
 typedef struct
 {
-  uint8_t disableI2C : 1;             /* I2C_DISABLE: Enable/disable I2C digital Interface (0: I2C enabled; 1: I2C disabled) */
-  uint8_t notUsed01 : 1;              /* This bit must be set to 0 for proper operation of the device */
-  uint8_t disPullDownOnIntPin : 1;    /* PD_DIS_INT: Enable/disable pull down on the INT pin (0: PD connected; 1: PD disconnected) */
-  uint8_t pullUpOnSAOPin : 1;         /* SAO_PU_EN: Enable/disable pull-up on the SAO pin (0: disabled; 1: enabled) */
-  uint8_t pullUpOnSDAPin : 1;         /* SDA_PU_EN: Enable/disable pull-up on the SDA pin (0: disabled; 1: enabled) */
-  uint8_t notUsed02 : 2;              /* This bit must be set to 0 for proper operation of the device */
-  uint8_t notUsed03 : 1;              /* This bit must be set to 0 for proper operation of the device */
+  uint8_t disableI2C : 1;             /**< I2C_DISABLE: Enable/disable I2C digital Interface (0: I2C enabled; 1: I2C disabled) */
+  uint8_t notUsed01 : 1;              /**< This bit must be set to 0 for proper operation of the device */
+  uint8_t disPullDownOnIntPin : 1;    /**< PD_DIS_INT: Enable/disable pull down on the INT pin (0: PD connected; 1: PD disconnected) */
+  uint8_t pullUpOnSAOPin : 1;         /**< SAO_PU_EN: Enable/disable pull-up on the SAO pin (0: disabled; 1: enabled) */
+  uint8_t pullUpOnSDAPin : 1;         /**< SDA_PU_EN: Enable/disable pull-up on the SDA pin (0: disabled; 1: enabled) */
+  uint8_t notUsed02 : 2;              /**< This bit must be set to 0 for proper operation of the device */
+  uint8_t notUsed03 : 1;              /**< This bit must be set to 0 for proper operation of the device */
 } PADS_interfaceCtrl_t;
 
 
 /**
-* Control register 1
+* @brief Control register 1
+*
 * Address 0x0F
 * Type  R/W
 * Default value: 0x00
@@ -173,36 +183,38 @@ typedef struct
 */
 typedef struct
 {
-  uint8_t notUsed01 : 1;            /* This bit must be set to 0 for proper operation of the device */
-  uint8_t blockDataUpdate : 1;      /* BDU: Block data update. 0 - continuous update; 1 - output registers are not updated until both MSB and LSB have been read */
-  uint8_t lowPassFilterConfig : 1;  /* LPFP_CFG: Configure low pass filter for pressure data */
-  uint8_t enLowPassFilter : 1;      /* EN_LPFP: Enable low pass filter for pressure data */
-  uint8_t outputDataRate : 3;       /* ODR[2:0]: Output data rate. Default '000' */
-  uint8_t notUsed02 : 1;            /* This bit must be set to 0 for proper operation of the device */
+  uint8_t notUsed01 : 1;            /**< This bit must be set to 0 for proper operation of the device */
+  uint8_t blockDataUpdate : 1;      /**< BDU: Block data update. 0 - continuous update; 1 - output registers are not updated until both MSB and LSB have been read */
+  uint8_t lowPassFilterConfig : 1;  /**< LPFP_CFG: Configure low pass filter for pressure data */
+  uint8_t enLowPassFilter : 1;      /**< EN_LPFP: Enable low pass filter for pressure data */
+  uint8_t outputDataRate : 3;       /**< ODR[2:0]: Output data rate. Default '000' */
+  uint8_t notUsed02 : 1;            /**< This bit must be set to 0 for proper operation of the device */
 } PADS_ctrl1_t;
 
 
 /**
-* Control register 2
+* @brief Control register 2
+*
 * Address 0x11
 * Type  R/W
 * Default value: 0x10
 */
 typedef struct
 {
-  uint8_t oneShotBit : 1;         /* ONE_SHOT: 0: Normal operation; 1: Start single conversion measurement */
-  uint8_t lowNoiseMode : 1;       /* LOW_NOISE_EN: Enables low noise mode (used only if ODR is lower than 100 Hz). Default value: 0 (0: low-power mode; 1: low-noise mode) */
-  uint8_t softwareReset : 1;      /* SWRESET: Software reset. 0: normal mode; 1: SW reset;  Self-clearing upon completion */
-  uint8_t notUsed01 : 1;          /* This bit must be set to 0 for proper operation of the device */
-  uint8_t autoAddIncr : 1;        /* IF_ADD_INC: Register address automatically incremented during a multiple byte access with I2C interface. Default value 1 (0: disable; 1: enable) */
-  uint8_t openDrainOnINTPin : 1;  /* PP_OD: Push-pull/open-drain selection on interrupt pad. Default value: 0 (0: push-pull; 1: open-drain) */
-  uint8_t intActiveLevel : 1;     /* INT_H_L: Interrupt active high, active low. Default value: 0 (0: active high; 1: active low) */
-  uint8_t boot : 1;               /* BOOT: Reboot memory content. 0: normal mode; 1: reboot memory content. Self-clearing upon completion */
+  uint8_t oneShotBit : 1;         /**< ONE_SHOT: 0: Normal operation; 1: Start single conversion measurement */
+  uint8_t lowNoiseMode : 1;       /**< LOW_NOISE_EN: Enables low noise mode (used only if ODR is lower than 100 Hz). Default value: 0 (0: low-power mode; 1: low-noise mode) */
+  uint8_t softwareReset : 1;      /**< SWRESET: Software reset. 0: normal mode; 1: SW reset;  Self-clearing upon completion */
+  uint8_t notUsed01 : 1;          /**< This bit must be set to 0 for proper operation of the device */
+  uint8_t autoAddIncr : 1;        /**< IF_ADD_INC: Register address automatically incremented during a multiple byte access with I2C interface. Default value 1 (0: disable; 1: enable) */
+  uint8_t openDrainOnINTPin : 1;  /**< PP_OD: Push-pull/open-drain selection on interrupt pad. Default value: 0 (0: push-pull; 1: open-drain) */
+  uint8_t intActiveLevel : 1;     /**< INT_H_L: Interrupt active high, active low. Default value: 0 (0: active high; 1: active low) */
+  uint8_t boot : 1;               /**< BOOT: Reboot memory content. 0: normal mode; 1: reboot memory content. Self-clearing upon completion */
 } PADS_ctrl2_t;
 
 
 /**
-* Control register 3
+* @brief Control register 3
+*
 * Address 0x12
 * Type  R/W
 * Default value: 0x00
@@ -218,17 +230,18 @@ typedef struct
 */
 typedef struct
 {
-  uint8_t intEventCtrl : 2;       /* INT_S: Data signal on INT pad control bits: Default value: 00 */
-  uint8_t dataReadyInt : 1;       /* DRDY: Data-ready signal on INT pin. Default value: 0 (0: disable; 1: enable) */
-  uint8_t fifoOverrunInt : 1;     /* INT_F_OVR: Enable FIFO overrun interrupt. Default value: 0 (0: disable; 1: enable) */
-  uint8_t fifoThresholdInt : 1;   /* INT_F_WTM: Enable FIFO threshold (watermark) interrupt. Default value: 0 (0: disable; 1: enable) */
-  uint8_t fifoFullInt : 1;        /* INT_F_FULL: Enable FIFO full interrupt. Default value: 0 (0: disable; 1: enable) */
-  uint8_t notUsed01 : 2;          /* These 2 bits must be set to 0 for proper operation of the device */
+  uint8_t intEventCtrl : 2;       /**< INT_S: Data signal on INT pad control bits: Default value: 00 */
+  uint8_t dataReadyInt : 1;       /**< DRDY: Data-ready signal on INT pin. Default value: 0 (0: disable; 1: enable) */
+  uint8_t fifoOverrunInt : 1;     /**< INT_F_OVR: Enable FIFO overrun interrupt. Default value: 0 (0: disable; 1: enable) */
+  uint8_t fifoThresholdInt : 1;   /**< INT_F_WTM: Enable FIFO threshold (watermark) interrupt. Default value: 0 (0: disable; 1: enable) */
+  uint8_t fifoFullInt : 1;        /**< INT_F_FULL: Enable FIFO full interrupt. Default value: 0 (0: disable; 1: enable) */
+  uint8_t notUsed01 : 2;          /**< These 2 bits must be set to 0 for proper operation of the device */
 } PADS_ctrl3_t;
 
 
 /**
-* Control FIFO control register
+* @brief Control FIFO control register
+*
 * Address 0x13
 * Type  R/W
 * Default value: 0x00
@@ -245,74 +258,78 @@ typedef struct
 */
 typedef struct
 {
-  uint8_t fifoMode : 3;           /* [TRIG_MODES; FMODE[1:0]]: select FIFO mode */
-  uint8_t stopOnThreshold : 1;    /* STOP_ON_WTM: When set to true, the FIFO is considered to be full when the user-defined threshold is reached. Default value: 0 (0: disabled; 1: enabled) */
-  uint8_t notUsed01 : 4;          /* These 4 bits must be set to 0 for proper operation of the device */
+  uint8_t fifoMode : 3;           /**< [TRIG_MODES; FMODE[1:0]]: select FIFO mode */
+  uint8_t stopOnThreshold : 1;    /**< STOP_ON_WTM: When set to true, the FIFO is considered to be full when the user-defined threshold is reached. Default value: 0 (0: disabled; 1: enabled) */
+  uint8_t notUsed01 : 4;          /**< These 4 bits must be set to 0 for proper operation of the device */
 } PADS_fifoCtrl_t;
 
 
 /**
-* FIFO threshold setting register
+* @brief FIFO threshold setting register
+*
 * Address 0x14
 * Type  R/W
 * Default value: 0x00
 */
 typedef struct
 {
-  uint8_t fifoThreshold : 7;  /* WTM[6:0]: FIFO threshold level setting (value between 0 and 127). Default value: 0x00 */
-  uint8_t notUsed01 : 1;      /* This bit must be set to 0 for proper operation of the device */
+  uint8_t fifoThreshold : 7;    /**< WTM[6:0]: FIFO threshold level setting (value between 0 and 127). Default value: 0x00 */
+  uint8_t notUsed01 : 1;        /**< This bit must be set to 0 for proper operation of the device */
 } PADS_fifoThreshold_t;
 
 
 /**
-* Interrupt source register
+* @brief Interrupt source register
+*
 * Address 0x24
-* read only
+* Type  R
 * Default value: Output; 0x00
 */
 typedef struct
 {
-  uint8_t diffPresHighEvent : 1;  /* PH: Differential pressure high (0: no interrupt; 1: high differential pressure event has occurred) */
-  uint8_t diffPresLowEvent : 1;   /* PL: Differential pressure low (0: no interrupt; 1: low differential pressure event has occurred) */
-  uint8_t intStatus : 1;          /* IA: Interrupt active (0: no interrupt; 1: one or more interrupt events have been generated) */
-  uint8_t notUsed01 : 4;          /* These 4 bits must be set to 0 for proper operation of the device */
-  uint8_t bootOn : 1;             /* BOOT_ON: Indication of boot phase (0: Boot phase has ended; 1: Boot phase is running) */
+  uint8_t diffPresHighEvent : 1;  /**< PH: Differential pressure high (0: no interrupt; 1: high differential pressure event has occurred) */
+  uint8_t diffPresLowEvent : 1;   /**< PL: Differential pressure low (0: no interrupt; 1: low differential pressure event has occurred) */
+  uint8_t intStatus : 1;          /**< IA: Interrupt active (0: no interrupt; 1: one or more interrupt events have been generated) */
+  uint8_t notUsed01 : 4;          /**< These 4 bits must be set to 0 for proper operation of the device */
+  uint8_t bootOn : 1;             /**< BOOT_ON: Indication of boot phase (0: Boot phase has ended; 1: Boot phase is running) */
 } PADS_intSource_t;
 
 
 /**
-* FIFO Status register 2
+* @brief FIFO Status register 2
+*
 * Address 0x26
-* read only
+* Type  R
 * Default value: Output; 0x00
 */
 typedef struct
 {
-  uint8_t notUsed01 : 5;    /* These 5 bits must be set to 0 for proper operation of the device */
-  uint8_t fifoFull : 1;     /* FIFO_FULL_IA: FIFO full status (0: FIFO not full; 1: FIFO is full, no samples overwritten) */
-  uint8_t fifoOverrun : 1;  /* FIFO_OVR_IA: FIFO overrun status (0: FIFO is not overrun; 1: FIFO is full and at least one sample has been overwritten) */
-  uint8_t fifoWtm : 1;      /* FIFO_WTM_IA: Threshold (watermark) status (0: FIFO level below threshold; 1: FIFO  level equal or higher than threshold) */
+  uint8_t notUsed01 : 5;    /**< These 5 bits must be set to 0 for proper operation of the device */
+  uint8_t fifoFull : 1;     /**< FIFO_FULL_IA: FIFO full status (0: FIFO not full; 1: FIFO is full, no samples overwritten) */
+  uint8_t fifoOverrun : 1;  /**< FIFO_OVR_IA: FIFO overrun status (0: FIFO is not overrun; 1: FIFO is full and at least one sample has been overwritten) */
+  uint8_t fifoWtm : 1;      /**< FIFO_WTM_IA: Threshold (watermark) status (0: FIFO level below threshold; 1: FIFO  level equal or higher than threshold) */
 } PADS_fifoStatus2_t;
 
 
 /**
-* Status register
+* @brief Status register
+*
 * Address 0x27
-* read only
+* Type  R
 * Default value: Output; 0x00
 */
 typedef struct
 {
-  uint8_t presDataAvailable : 1;  /* P_DA: Pressure data available. (0: Pressure sample not yet available; 1: A new pressure sample is available) */
-  uint8_t tempDataAvailable : 1;  /* T_DA: Temperature data available. (0: Temperature sample not yet available; 1: A new temperature sample is available) */
-  uint8_t notUsed01 : 2;          /* These 2 bits must be set to 0 for proper operation of the device */
-  uint8_t presDataOverrun : 1;    /* P_OR: Pressure data overrun. (0: No overrun; 1: Pressure data overwritten) */
-  uint8_t tempDataOverrun : 1;    /* T_OR: Temperature data overrun. (0: No overrun; 1: Temperature data overwritten) */
-  uint8_t notUsed02 : 2;          /* These 2 bits must be set to 0 for proper operation of the device */
+  uint8_t presDataAvailable : 1;  /**< P_DA: Pressure data available. (0: Pressure sample not yet available; 1: A new pressure sample is available) */
+  uint8_t tempDataAvailable : 1;  /**< T_DA: Temperature data available. (0: Temperature sample not yet available; 1: A new temperature sample is available) */
+  uint8_t notUsed01 : 2;          /**< These 2 bits must be set to 0 for proper operation of the device */
+  uint8_t presDataOverrun : 1;    /**< P_OR: Pressure data overrun. (0: No overrun; 1: Pressure data overwritten) */
+  uint8_t tempDataOverrun : 1;    /**< T_OR: Temperature data overrun. (0: No overrun; 1: Temperature data overwritten) */
+  uint8_t notUsed02 : 2;          /**< These 2 bits must be set to 0 for proper operation of the device */
 } PADS_status_t;
 
 
-/**         Functional type definitions         */
+/*         Functional type definitions         */
 
 typedef enum
 {
@@ -323,21 +340,21 @@ typedef enum
 
 typedef enum
 {
-  PADS_outputDataRatePowerDown = 0,     /* single conversion / power down */
-  PADS_outputDataRate1Hz = 1,           /* 1Hz */
-  PADS_outputDataRate10Hz = 2,          /* 10Hz */
-  PADS_outputDataRate25Hz = 3,          /* 25Hz */
-  PADS_outputDataRate50Hz = 4,          /* 50Hz */
-  PADS_outputDataRate75Hz = 5,          /* 75Hz */
-  PADS_outputDataRate100Hz = 6,         /* 100Hz */
-  PADS_outputDataRate200Hz = 7          /* 200Hz */
+  PADS_outputDataRatePowerDown = 0,     /**< single conversion / power down */
+  PADS_outputDataRate1Hz = 1,           /**< 1Hz */
+  PADS_outputDataRate10Hz = 2,          /**< 10Hz */
+  PADS_outputDataRate25Hz = 3,          /**< 25Hz */
+  PADS_outputDataRate50Hz = 4,          /**< 50Hz */
+  PADS_outputDataRate75Hz = 5,          /**< 75Hz */
+  PADS_outputDataRate100Hz = 6,         /**< 100Hz */
+  PADS_outputDataRate200Hz = 7          /**< 200Hz */
 } PADS_outputDataRate_t;
 
 
 typedef enum
 {
-  PADS_lpFilterBW1 = 0,                 /* Bandwidth = outputDataRate / 9 */
-  PADS_lpFilterBW2 = 1                  /* Bandwidth = outputDataRate / 20 */
+  PADS_lpFilterBW1 = 0,                 /**< Bandwidth = outputDataRate / 9 */
+  PADS_lpFilterBW2 = 1                  /**< Bandwidth = outputDataRate / 20 */
 } PADS_filterConf_t;
 
 
@@ -357,14 +374,14 @@ typedef enum
 
 typedef enum
 {
-  PADS_lowPower = 0,      /* Low power mode */
-  PADS_lowNoise = 1,      /* Low noise mode */
+  PADS_lowPower = 0,      /**< Low power mode */
+  PADS_lowNoise = 1,      /**< Low noise mode */
 } PADS_powerMode_t;
 
 
 typedef enum
 {
-  PADS_dataReady = 0,        /* Data signal (in order of priority: DRDY or INT_F_WTM or INT_F_OVR or INT_F_FULL) */
+  PADS_dataReady = 0,        /**< Data signal (in order of priority: DRDY or INT_F_WTM or INT_F_OVR or INT_F_FULL) */
   PADS_pressureHigh = 1,
   PADS_pressureLow = 2,
   PADS_pressureHighOrLow = 3
@@ -387,7 +404,7 @@ extern "C"
 {
 #endif
 
-  /**         Function definitions         */
+  /*         Function definitions         */
 
   /* Sensor/interface initialization */
   int8_t PADS_initInterface(WE_sensorInterface_t* sensorInterface);
@@ -536,12 +553,19 @@ extern "C"
   int8_t PADS_getFifoTemperature_int(uint8_t numSamples, int16_t *temperature);   // Temperature values in °C/100
   int8_t PADS_getFifoValues_int(uint8_t numSamples, int32_t *pressPa, int16_t *temperature);
 
-#ifdef WE_USE_FLOAT
-  int8_t PADS_getPressure_float(float *presskPa);           // Pressure value in kPa
-  int8_t PADS_getTemperature_float(float *tempDegC);        // Temperature value in °C
+  int32_t PADS_convertPressure_int(int32_t rawPres);             // Pressure value in Pa
+  int32_t PADS_convertDifferentialPressure_int(int32_t rawPres); // Pressure value in Pa
 
-  int8_t PADS_getFifoPressure_float(float *presskPa);       // Pressure value in kPa
-  int8_t PADS_getFifoTemperature_float(float *tempDegC);    // Temperature value in °C
+#ifdef WE_USE_FLOAT
+  int8_t PADS_getPressure_float(float *presskPa);                 // Pressure value in kPa
+  int8_t PADS_getDifferentialPressure_float(float *presskPa);     // Pressure value in kPa
+  int8_t PADS_getTemperature_float(float *tempDegC);              // Temperature value in °C
+
+  int8_t PADS_getFifoPressure_float(float *presskPa);             // Pressure value in kPa
+  int8_t PADS_getFifoTemperature_float(float *tempDegC);          // Temperature value in °C
+
+  float PADS_convertPressure_float(int32_t rawPres);             // Pressure value in kPa
+  float PADS_convertDifferentialPressure_float(int32_t rawPres); // Pressure value in kPa
 #else
   #warning "WSEN_PADS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
 #endif /* WE_USE_FLOAT */
@@ -552,4 +576,4 @@ extern "C"
 
 #endif /* _WSEN_PADS_H */
 
-/**         EOF         */
+/*         EOF         */

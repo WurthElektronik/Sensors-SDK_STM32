@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,18 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS single data conversion example.
+ *
+ * Example for the ITDS accelerometer showing how to trigger single measurements using digital IOs
+ * or by writing to a register.
+ */
 
 #include "WSEN_ITDS_SINGLE_DATA_CONVERSION_EXAMPLE.h"
 
@@ -110,48 +118,22 @@ void WE_itdsSingleDataConversionExampleLoop()
     /* Revoke single data conversion trigger signal */
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
 
-    /* Retrieve and print acceleration data */
-    int16_t xRawAcc = 0;
-    int16_t yRawAcc = 0;
-    int16_t zRawAcc = 0;
+    /* Retrieve and print acceleration data.
+     * Here, the acceleration values of all axes in [mg] are read in one go.
+     * Note that as an alternative, there are also functions to get the values for single
+     * axes or to get the raw, unconverted values. */
 
-    /* Read raw acceleration values */
-    if (ITDS_getRawAccelerationX(&xRawAcc) != WE_SUCCESS)
+    int16_t xAcc, yAcc, zAcc;
+    if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
     {
-      debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-      xRawAcc = 0;
+      debugPrintAcceleration_int("X", xAcc);
+      debugPrintAcceleration_int("Y", yAcc);
+      debugPrintAcceleration_int("Z", zAcc);
     }
-    if (ITDS_getRawAccelerationY(&yRawAcc) != WE_SUCCESS)
+    else
     {
-      debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-      yRawAcc = 0;
+      debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
     }
-    if (ITDS_getRawAccelerationZ(&zRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-      zRawAcc = 0;
-    }
-
-    /* Shift by 4 as 12bit resolution is used in low power mode */
-    xRawAcc = xRawAcc >> 4;
-    yRawAcc = yRawAcc >> 4;
-    zRawAcc = zRawAcc >> 4;
-
-    int32_t xAcceleration = 0;
-    int32_t yAcceleration = 0;
-    int32_t zAcceleration = 0;
-
-    xAcceleration = (int32_t) xRawAcc;
-    xAcceleration = (xAcceleration * 7808) / 1000; /* Multiply with sensitivity 7.808 in low power mode, 12 bit, and full scale +-16g */
-    debugPrintAcceleration_int("X", xAcceleration);
-
-    yAcceleration = (int32_t) yRawAcc;
-    yAcceleration = (yAcceleration * 7808) / 1000;
-    debugPrintAcceleration_int("Y", yAcceleration);
-
-    zAcceleration = (int32_t) zRawAcc;
-    zAcceleration = (zAcceleration * 7808) / 1000;
-    debugPrintAcceleration_int("Z", zAcceleration);
   }
 
   HAL_Delay(1);

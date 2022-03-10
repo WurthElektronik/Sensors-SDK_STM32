@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,18 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS FIFO example.
+ *
+ * Example for the ITDS accelerometer demonstrating usage of the FIFO buffer (FIFO mode,
+ * continuous-to-FIFO mode, bypass-to-continuous mode and continuous mode)
+ */
 
 #include "WSEN_ITDS_FIFO_EXAMPLE.h"
 
@@ -267,18 +275,13 @@ void ITDS_startFifoMode()
           zAccAvg += (int32_t) zRawAcc[i];
         }
 
-        /* Shift by 2 as 14bit resolution is used in high performance mode */
-        xAccAvg = xAccAvg >> 2;
-        yAccAvg = yAccAvg >> 2;
-        zAccAvg = zAccAvg >> 2;
-
         xAccAvg /= 32;
         yAccAvg /= 32;
         zAccAvg /= 32;
 
-        xAccAvg = (xAccAvg * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-        yAccAvg = (yAccAvg * 1952) / 1000;
-        zAccAvg = (zAccAvg * 1952) / 1000;
+        xAccAvg = ITDS_convertAccelerationFs16g_int(xAccAvg);
+        yAccAvg = ITDS_convertAccelerationFs16g_int(yAccAvg);
+        zAccAvg = ITDS_convertAccelerationFs16g_int(zAccAvg);
 
         /* Restart data collection by first setting bypass mode and then re-enabling FIFO mode */
         ITDS_setFifoMode(ITDS_bypassMode);
@@ -351,18 +354,13 @@ void ITDS_startContinuousMode()
           zAccAvg += (int32_t) zRawAcc[i];
         }
 
-        /* Shift by 2 as 14bit resolution is used in high performance mode */
-        xAccAvg = xAccAvg >> 2;
-        yAccAvg = yAccAvg >> 2;
-        zAccAvg = zAccAvg >> 2;
-
         xAccAvg /= FIFO_THRESH;
         yAccAvg /= FIFO_THRESH;
         zAccAvg /= FIFO_THRESH;
 
-        xAccAvg = (xAccAvg * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-        yAccAvg = (yAccAvg * 1952) / 1000;
-        zAccAvg = (zAccAvg * 1952) / 1000;
+        xAccAvg = ITDS_convertAccelerationFs16g_int(xAccAvg);
+        yAccAvg = ITDS_convertAccelerationFs16g_int(yAccAvg);
+        zAccAvg = ITDS_convertAccelerationFs16g_int(zAccAvg);
       }
       else
       {
@@ -397,9 +395,9 @@ void ITDS_startContinuousMode()
       debugPrint(buffer);
       debugPrintln(" samples)");
 
-      /* Restart data collection by first setting bypass mode and then re-enabling FIFO mode */
+      /* Restart data collection by first setting bypass mode and then re-enabling continuous FIFO mode */
       ITDS_setFifoMode(ITDS_bypassMode);
-      ITDS_setFifoMode(ITDS_fifoEnabled);
+      ITDS_setFifoMode(ITDS_continuousMode);
     }
 
     /* Print last acceleration values (averaged) every second. */
@@ -504,18 +502,13 @@ void ITDS_startContinuousToFifoMode()
               zAccAvg += (int32_t) zRawAcc[i];
             }
 
-            /* Shift by 2 as 14bit resolution is used in high performance mode */
-            xAccAvg = xAccAvg >> 2;
-            yAccAvg = yAccAvg >> 2;
-            zAccAvg = zAccAvg >> 2;
-
             xAccAvg /= 32;
             yAccAvg /= 32;
             zAccAvg /= 32;
 
-            xAccAvg = (xAccAvg * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-            yAccAvg = (yAccAvg * 1952) / 1000;
-            zAccAvg = (zAccAvg * 1952) / 1000;
+            xAccAvg = ITDS_convertAccelerationFs16g_int(xAccAvg);
+            yAccAvg = ITDS_convertAccelerationFs16g_int(yAccAvg);
+            zAccAvg = ITDS_convertAccelerationFs16g_int(zAccAvg);
 
             debugPrintAcceleration_int("X", xAccAvg);
             debugPrintAcceleration_int("Y", yAccAvg);
@@ -556,7 +549,7 @@ void ITDS_startBypassToContinuousMode()
 {
   debugPrintln("Starting bypass-to-continuous mode...");
 
-  /* Interrupt when FIFO buffer is filled up to threshold on INT0 */
+  /* Interrupt when FIFO buffer is filled up to threshold on INT1 */
   ITDS_enableFifoThresholdINT1(ITDS_enable);
 
   /* Set wake-up interrupt parameters - see example
@@ -610,18 +603,13 @@ void ITDS_startBypassToContinuousMode()
           zAccAvg += (int32_t) zRawAcc[i];
         }
 
-        /* Shift by 2 as 14bit resolution is used in high performance mode */
-        xAccAvg = xAccAvg >> 2;
-        yAccAvg = yAccAvg >> 2;
-        zAccAvg = zAccAvg >> 2;
-
         xAccAvg /= FIFO_THRESH;
         yAccAvg /= FIFO_THRESH;
         zAccAvg /= FIFO_THRESH;
 
-        xAccAvg = (xAccAvg * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-        yAccAvg = (yAccAvg * 1952) / 1000;
-        zAccAvg = (zAccAvg * 1952) / 1000;
+        xAccAvg = ITDS_convertAccelerationFs16g_int(xAccAvg);
+        yAccAvg = ITDS_convertAccelerationFs16g_int(yAccAvg);
+        zAccAvg = ITDS_convertAccelerationFs16g_int(zAccAvg);
 
         debugPrintAcceleration_int("X", xAccAvg);
         debugPrintAcceleration_int("Y", yAccAvg);

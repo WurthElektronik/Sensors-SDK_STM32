@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,18 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS activity/inactivity example.
+ *
+ * Activity/inactivity detection example for the ITDS accelerometer demonstrating usage of the sleep
+ * change and sleep status interrupt as well as stationary (motion) detection.
+ */
 
 #include "WSEN_ITDS_ACTIVITY_INACTIVITY_EXAMPLE.h"
 
@@ -252,12 +260,12 @@ bool ITDS_init(void)
   /* Set weight of 15.6 mg per LSB */
 //  ITDS_setOffsetWeight(ITDS_enable);
   /* No offset for X and Y, Z offset of 1g (64 * 15.6 mg) */
-//  ITDS_setOffsetValueOnXAxis(0);
-//  ITDS_setOffsetValueOnYAxis(0);
-//  ITDS_setOffsetValueOnZAxis(64);
+//  ITDS_setOffsetValueX(0);
+//  ITDS_setOffsetValueY(0);
+//  ITDS_setOffsetValueZ(64);
   /* Apply user offset to all data or to data used for wake-up only */
-//  ITDS_enApplyOffset(ITDS_enable);
-//  ITDS_enApplyWakeUpOffset(ITDS_enable);
+//  ITDS_enableApplyOffset(ITDS_enable);
+//  ITDS_enableApplyWakeUpOffset(ITDS_enable);
 
   /* Interrupts are active high */
   ITDS_setInterruptActiveLevel(ITDS_activeHigh);

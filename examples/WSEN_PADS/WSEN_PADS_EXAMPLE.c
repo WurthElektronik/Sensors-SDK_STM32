@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN-PADS example.
+ *
+ * Demonstrates basic usage of the PADS absolute pressure sensor connected via I2C.
+ */
 
 #include "WSEN_PADS_EXAMPLE.h"
 
@@ -362,7 +369,7 @@ static void debugPrintPressure_float(float pressureKPa)
 {
   float pressureAbs = fabs(pressureKPa);
   uint16_t full = (uint16_t) pressureAbs;
-  uint16_t decimals = (uint16_t) (((uint32_t) (pressureKPa * 10000)) % 10000); /* 4 decimal places */
+  uint16_t decimals = (uint16_t) (((uint32_t) (pressureAbs * 10000)) % 10000); /* 4 decimal places */
 
   char bufferFull[4]; /* max 3 pre-decimal point positions (26 to 126 kPa) */
   char bufferDecimals[5]; /* 4 decimal places */
@@ -370,6 +377,10 @@ static void debugPrintPressure_float(float pressureKPa)
   sprintf(bufferDecimals, "%04u", decimals);
 
   debugPrint("PADS pressure (float) = ");
+  if (pressureKPa < 0)
+  {
+    debugPrint("-");
+  }
   debugPrint(bufferFull);
   debugPrint(".");
   debugPrint(bufferDecimals);

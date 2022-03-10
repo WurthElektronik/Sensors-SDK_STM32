@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS self test example.
+ *
+ * Example for the ITDS accelerometer showing how to execute the sensor's self test procedure.
+ */
 
 #include "WSEN_ITDS_SELF_TEST_EXAMPLE.h"
 
@@ -210,9 +217,9 @@ bool ITDS_selfTest(void)
       }
 
       /* Convert to mg and add to sum */
-      avgX += rawAccX * 0.122f;
-      avgY += rawAccY * 0.122f;
-      avgZ += rawAccZ * 0.122f;
+      avgX += ITDS_convertAccelerationFs4g_float(rawAccX);
+      avgY += ITDS_convertAccelerationFs4g_float(rawAccY);
+      avgZ += ITDS_convertAccelerationFs4g_float(rawAccZ);
 
       i++;
     }
@@ -248,9 +255,9 @@ bool ITDS_selfTest(void)
       }
 
       /* Convert to mg and add to sum */
-      avgXSelfTest += rawAccX * 0.122f;
-      avgYSelfTest += rawAccY * 0.122f;
-      avgZSelfTest += rawAccZ * 0.122f;
+      avgXSelfTest += ITDS_convertAccelerationFs4g_float(rawAccX);
+      avgYSelfTest += ITDS_convertAccelerationFs4g_float(rawAccY);
+      avgZSelfTest += ITDS_convertAccelerationFs4g_float(rawAccZ);
 
       i++;
     }
@@ -309,7 +316,7 @@ bool ITDS_discardOldData(void)
 }
 
 /**
- * @brief Checks if the validity of the supplied acceleration values.
+ * @brief Checks the validity of the supplied acceleration values.
  * @param value Acceleration value captured with self-test mode disabled.
  * @param valueSelfTest Acceleration value captured with self-test mode enabled.
  * @retval True if the difference of the supplied values is in the valid range.

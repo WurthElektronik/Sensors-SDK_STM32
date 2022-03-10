@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,18 +18,38 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief This is the main header file of the WE Sensors SDK.
+ */
 
 #ifndef WE_SENSORS_SDK_H_INCLUDED
 #define WE_SENSORS_SDK_H_INCLUDED
 
-#define WE_SENSOR_SDK_MAJOR_VERSION  2
-#define WE_SENSOR_SDK_MINOR_VERSION  0
 
+/**
+ * @brief SDK major version number.
+ */
+#define WE_SENSOR_SDK_MAJOR_VERSION  2
+
+/**
+ * @brief SDK minor version number.
+ */
+#define WE_SENSOR_SDK_MINOR_VERSION  1
+
+/**
+ * @brief Return code for successful operations.
+ */
 #define WE_SUCCESS   0
+
+/**
+ * @brief Return code for failed operations.
+ */
 #define WE_FAIL     -1
 
 /**
@@ -37,11 +57,12 @@
  */
 typedef enum
 {
-	WE_HIDS,  /* Humidity sensor */
-	WE_ITDS,  /* Acceleration sensor */
-	WE_TIDS,  /* Temperature sensor */
-	WE_PADS,  /* Absolute pressure sensor */
-	WE_PDUS   /* Differential pressure sensor */
+  WE_HIDS,  /* Humidity sensor */
+  WE_ITDS,  /* Acceleration sensor */
+  WE_TIDS,  /* Temperature sensor */
+  WE_PADS,  /* Absolute pressure sensor */
+  WE_PDUS,  /* Differential pressure sensor */
+  WE_SENSOR_TYPE_MAX
 } WE_sensorType_t;
 
 
@@ -50,8 +71,8 @@ typedef enum
  */
 typedef enum
 {
-	WE_i2c,
-	WE_spi
+  WE_i2c,
+  WE_spi
 } WE_sensorInterfaceType_t;
 
 
@@ -78,9 +99,15 @@ typedef struct
   uint8_t slaveTransmitterMode : 1;
 
   /**
+   * @brief Enables usage of most significant bit of I2C register address to enable 
+   * multi byte read (required e.g. by HIDS humidity sensor).
+   */
+  uint8_t useRegAddrMsbForMultiBytesRead : 1;
+
+  /**
    * @brief Currently unused.
    */
-  uint8_t reserved : 6;
+  uint8_t reserved : 5;
 } WE_i2cOptions_t;
 
 
@@ -148,22 +175,22 @@ typedef struct
   /**
    * @brief Sensor type specifier.
    */
-	WE_sensorType_t sensorType;
+  WE_sensorType_t sensorType;
 
-	/**
-	 * @brief Specifies the interface to be used to communicate with the sensor.
-	 */
-	WE_sensorInterfaceType_t interfaceType;
+  /**
+   * @brief Specifies the interface to be used to communicate with the sensor.
+   */
+  WE_sensorInterfaceType_t interfaceType;
 
-	/**
-	 * @brief Options of sensor interface.
-	 */
-	WE_sensorInterfaceOptions_t options;
+  /**
+   * @brief Options of sensor interface.
+   */
+  WE_sensorInterfaceOptions_t options;
 
-	/**
-	 * @brief HAL interface handle. The type of the handle depends on the interface used.
-	 */
-	void *handle;
+  /**
+   * @brief HAL interface handle. The type of the handle depends on the interface used.
+   */
+  void *handle;
 } WE_sensorInterface_t;
 
 #endif // WE_SENSORS_SDK_H_INCLUDED

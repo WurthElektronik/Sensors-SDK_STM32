@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN multi sensor example.
+ *
+ * Example for using multiple sensors connected via I2C simultaneously (HIDS, ITDS and TIDS)
+ */
 
 #include "WSEN_MULTI_SENSOR_EXAMPLE.h"
 
@@ -149,9 +156,6 @@ void WE_multiSensorExampleLoop()
 
 #ifdef MULTI_SENSOR_EXAMPLE_ITDS
   ITDS_state_t dataReady = ITDS_disable;
-  int16_t xRawAcc = 0;
-  int16_t yRawAcc = 0;
-  int16_t zRawAcc = 0;
   float xAcceleration = 0.0f;
   float yAcceleration = 0.0f;
   float zAcceleration = 0.0f;
@@ -162,46 +166,15 @@ void WE_multiSensorExampleLoop()
     ITDS_isAccelerationDataReady(&dataReady);
   } while (dataReady == ITDS_disable);
 
-  if (ITDS_getRawAccelerationX(&xRawAcc) == WE_SUCCESS)
+  if (ITDS_getAccelerations_float(1, &xAcceleration, &yAcceleration, &zAcceleration) == WE_SUCCESS)
   {
-    xRawAcc = xRawAcc >> 2; /* shifted by 2 as 14bit resolution is used in high performance mode */
-    xAcceleration = (float) xRawAcc;
-    xAcceleration = xAcceleration / 1000; /* mg to g */
-    xAcceleration = xAcceleration * 1.952; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
     debugPrintAcceleration("X", xAcceleration);
-  }
-  else
-  {
-    debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-    xAcceleration = 0.0f;
-  }
-
-  if (ITDS_getRawAccelerationY(&yRawAcc) == WE_SUCCESS)
-  {
-    yRawAcc = yRawAcc >> 2;
-    yAcceleration = (float) yRawAcc;
-    yAcceleration = yAcceleration / 1000;
-    yAcceleration = yAcceleration * 1.952;
     debugPrintAcceleration("Y", yAcceleration);
-  }
-  else
-  {
-    debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-    yAcceleration = 0.0f;
-  }
-
-  if (ITDS_getRawAccelerationZ(&zRawAcc) == WE_SUCCESS)
-  {
-    zRawAcc = zRawAcc >> 2;
-    zAcceleration = (float) zRawAcc;
-    zAcceleration = zAcceleration / 1000;
-    zAcceleration = zAcceleration * 1.952;
     debugPrintAcceleration("Z", zAcceleration);
   }
   else
   {
-    debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-    zAcceleration = 0.0f;
+    debugPrintln("**** ITDS_getAccelerations_float(): NOT OK ****");
   }
 #endif // MULTI_SENSOR_EXAMPLE_ITDS
 
@@ -217,7 +190,7 @@ void WE_multiSensorExampleLoop()
   {
     TIDS_isBusy(&tidsBusy);
   }
-  while (tidsBusy != TIDS_enable);
+  while (tidsBusy == TIDS_enable);
 
   int16_t temperatureInt;
   if (TIDS_getRawTemperature(&temperatureInt) == WE_SUCCESS)
@@ -284,7 +257,7 @@ bool initSensors(void)
  */
 bool HIDS_init(void)
 {
-  /* Initialize sensor interface (use i2c with HIDS address, burst mode deactivated) */
+  /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
   WE_sensorInterface_t interface;
   HIDS_getInterface(&interface);
   interface.interfaceType = WE_i2c;
@@ -486,6 +459,7 @@ static void debugPrintln(char _out[])
 #ifdef MULTI_SENSOR_EXAMPLE_ITDS
 static void debugPrintAcceleration(char axis[], float acc)
 {
+  acc /= 1000.0f;
   float accAbs = fabs(acc);
   uint16_t full = (uint16_t) accAbs;
   uint16_t decimals = (uint16_t) (((uint32_t) (accAbs * 10000)) % 10000); /* 4 decimal places */

@@ -18,10 +18,15 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
  **/
+
+/**
+ * @file
+ * @brief Driver file for the WSEN-PDUS sensor.
+ */
 
 #include "WSEN_PDUS_25131308XXX01.h"
 
@@ -36,7 +41,7 @@
 static WE_sensorInterface_t pdusSensorInterface = {
     .sensorType = WE_PDUS,
     .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = PDUS_ADDRESS_I2C, .burstMode = 0, .slaveTransmitterMode = 1, .reserved = 0},
+    .options = {.i2c = {.address = PDUS_ADDRESS_I2C, .burstMode = 0, .slaveTransmitterMode = 1, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
                 .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
                 .readTimeout = 1000,
                 .writeTimeout = 1000},
@@ -49,8 +54,8 @@ static WE_sensorInterface_t pdusSensorInterface = {
  * will simply send up to 4 bytes of data in response to any read
  * request.
  *
- * @param numBytesToRead Number of bytes to be read
- * @param data Target buffer
+ * @param[in] numBytesToRead Number of bytes to be read
+ * @param[out] data Target buffer
  * @return Error Code
  */
 static inline int8_t PDUS_ReadReg(uint16_t numBytesToRead,
@@ -84,7 +89,7 @@ static inline int8_t PDUS_ReadReg(uint16_t numBytesToRead,
  *
  * Note that the sensor type can't be changed.
  *
- * @param sensorInterface Sensor interface configuration
+ * @param[in] sensorInterface Sensor interface configuration
  * @return Error code
  */
 int8_t PDUS_initInterface(WE_sensorInterface_t* sensorInterface)
@@ -96,7 +101,7 @@ int8_t PDUS_initInterface(WE_sensorInterface_t* sensorInterface)
 
 /**
  * @brief Returns the sensor interface configuration.
- * @param sensorInterface Sensor interface configuration (output parameter)
+ * @param[out] sensorInterface Sensor interface configuration (output parameter)
  * @return Error code
  */
 int8_t PDUS_getInterface(WE_sensorInterface_t* sensorInterface)
@@ -116,7 +121,7 @@ int8_t PDUS_isInterfaceReady()
 
 /**
 * @brief Read the raw pressure
-* @param data Pointer to raw pressure value (unconverted), 15 bits
+* @param[out] data Pointer to raw pressure value (unconverted), 15 bits
 * @retval Error code
 */
 int8_t PDUS_getRawPressure(uint16_t *pressure)
@@ -136,8 +141,8 @@ int8_t PDUS_getRawPressure(uint16_t *pressure)
 
 /**
 * @brief Read the raw pressure and temperature values
-* @param pressure Pointer to raw pressure value (unconverted), 15 bits
-* @param temperature Pointer to raw temperature value (unconverted), 15 bits
+* @param[out] pressure Pointer to raw pressure value (unconverted), 15 bits
+* @param[out] temperature Pointer to raw temperature value (unconverted), 15 bits
 * @retval Error code
 */
 int8_t PDUS_getRawPressureAndTemperature(uint16_t *pressure, uint16_t *temperature)
@@ -162,8 +167,8 @@ int8_t PDUS_getRawPressureAndTemperature(uint16_t *pressure, uint16_t *temperatu
 
 /**
 * @brief Read the pressure and temperature values
-* @param type PDUS sensor type (i.e. pressure ranges) for internal conversion of pressure
-* @param presskPa Pointer to pressure value
+* @param[in] type PDUS sensor type (i.e. pressure ranges) for internal conversion of pressure
+* @param[out] presskPa Pointer to pressure value
 * @retval Error code
 */
 int8_t PDUS_getPressure_float(PDUS_SensorType_t type, float *presskPa)
@@ -186,9 +191,9 @@ int8_t PDUS_getPressure_float(PDUS_SensorType_t type, float *presskPa)
 
 /**
 * @brief Read the pressure and temperature values
-* @param type PDUS sensor type (i.e. pressure ranges) for internal conversion of pressure
-* @param presskPa Pointer to pressure value
-* @param tempDegC Pointer to temperature value
+* @param[in] type PDUS sensor type (i.e. pressure ranges) for internal conversion of pressure
+* @param[out] presskPa Pointer to pressure value
+* @param[out] tempDegC Pointer to temperature value
 * @retval Error code
 */
 int8_t PDUS_getPressureAndTemperature_float(PDUS_SensorType_t type, float *presskPa, float *tempDegC)
@@ -220,9 +225,9 @@ int8_t PDUS_getPressureAndTemperature_float(PDUS_SensorType_t type, float *press
 
 /**
  * @brief Converts a raw pressure value to kPa, depending on the PDUS sensor type.
- * @param type PDUS sensor type (i.e. pressure ranges)
- * @param rawPressure Raw pressure value as returned by the sensor
- * @param presskPa Pointer to pressure value
+ * @param[in] type PDUS sensor type (i.e. pressure ranges)
+ * @param[in] rawPressure Raw pressure value as returned by the sensor
+ * @param[out] presskPa Pointer to pressure value
  * @retval Error code
  */
 uint8_t PDUS_convertPressureToFloat(PDUS_SensorType_t type, uint16_t rawPressure, float *presskPa)
@@ -258,4 +263,4 @@ uint8_t PDUS_convertPressureToFloat(PDUS_SensorType_t type, uint16_t rawPressure
 
 #endif // WE_USE_FLOAT
 
-/**         EOF         */
+/*         EOF         */

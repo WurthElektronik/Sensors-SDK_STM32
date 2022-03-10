@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_HIDS example.
+ *
+ * Demonstrates basic usage of the HIDS humidity sensor connected via I2C.
+ */
 
 #include "WSEN_HIDS_EXAMPLE.h"
 
@@ -263,7 +270,7 @@ void WE_hidsExampleLoop()
  */
 bool HIDS_init(void)
 {
-  /* Initialize sensor interface (use i2c with HIDS address, burst mode deactivated) */
+  /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
   WE_sensorInterface_t interface;
   HIDS_getInterface(&interface);
   interface.interfaceType = WE_i2c;

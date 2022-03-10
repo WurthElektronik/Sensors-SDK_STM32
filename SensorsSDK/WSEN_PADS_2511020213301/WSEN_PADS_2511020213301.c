@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,15 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief Driver file for the WSEN-PADS sensor.
+ */
 
 #include "WSEN_PADS_2511020213301.h"
 
@@ -36,7 +41,7 @@
 static WE_sensorInterface_t padsSensorInterface = {
     .sensorType = WE_PADS,
     .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = PADS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .reserved = 0},
+    .options = {.i2c = {.address = PADS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
                 .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
                 .readTimeout = 1000,
                 .writeTimeout = 1000},
@@ -48,9 +53,9 @@ uint8_t fifoBuffer[PADS_FIFO_BUFFER_SIZE * 5] = {0};
 /**
  * @brief Read data from sensor.
  *
- * @param regAdr Address of register to read from
- * @param numBytesToRead Number of bytes to be read
- * @param data Target buffer
+ * @param[in] regAdr Address of register to read from
+ * @param[in] numBytesToRead Number of bytes to be read
+ * @param[out] data Target buffer
  * @return Error Code
  */
 static inline int8_t PADS_ReadReg(uint8_t regAdr,
@@ -63,9 +68,9 @@ static inline int8_t PADS_ReadReg(uint8_t regAdr,
 /**
  * @brief Write data to sensor.
  *
- * @param regAdr Address of register to write to
- * @param numBytesToWrite Number of bytes to be written
- * @param data Source buffer
+ * @param[in] regAdr Address of register to write to
+ * @param[in] numBytesToWrite Number of bytes to be written
+ * @param[in] data Source buffer
  * @return Error Code
  */
 static inline int8_t PADS_WriteReg(uint8_t regAdr,
@@ -80,7 +85,7 @@ static inline int8_t PADS_WriteReg(uint8_t regAdr,
  *
  * Note that the sensor type can't be changed.
  *
- * @param sensorInterface Sensor interface configuration
+ * @param[in] sensorInterface Sensor interface configuration
  * @return Error code
  */
 int8_t PADS_initInterface(WE_sensorInterface_t* sensorInterface)
@@ -92,7 +97,7 @@ int8_t PADS_initInterface(WE_sensorInterface_t* sensorInterface)
 
 /**
  * @brief Returns the sensor interface configuration.
- * @param sensorInterface Sensor interface configuration (output parameter)
+ * @param[out] sensorInterface Sensor interface configuration (output parameter)
  * @return Error code
  */
 int8_t PADS_getInterface(WE_sensorInterface_t* sensorInterface)
@@ -115,7 +120,7 @@ int8_t PADS_isInterfaceReady()
 *
 * Expected value is PADS_DEVICE_ID_VALUE.
 *
-* @param deviceID The returned device ID.
+* @param[out] deviceID The returned device ID.
 * @retval Error code
 */
 int8_t PADS_getDeviceID(uint8_t *deviceID)
@@ -132,7 +137,7 @@ int8_t PADS_getDeviceID(uint8_t *deviceID)
 *
 * The function can be turned off with PADS_resetAutoRefp().
 *
-* @param autoRefp Turns AUTOREFP function on
+* @param[in] autoRefp Turns AUTOREFP function on
 * @retval Error code
 */
 int8_t PADS_enableAutoRefp(PADS_state_t autoRefp)
@@ -158,7 +163,7 @@ int8_t PADS_enableAutoRefp(PADS_state_t autoRefp)
 *
 * The function can be turned off with PADS_resetAutoRefp().
 *
-* @param autoRefp The returned state
+* @param[out] autoRefp The returned state
 * @retval Error code
 */
 int8_t PADS_isEnablingAutoRefp(PADS_state_t *autoRefp)
@@ -175,7 +180,7 @@ int8_t PADS_isEnablingAutoRefp(PADS_state_t *autoRefp)
 
 /**
 * @brief Turn off the AUTOREFP function
-* @param reset Reset state
+* @param[in] reset Reset state
 * @retval Error code
 */
 int8_t PADS_resetAutoRefp(PADS_state_t reset)
@@ -201,7 +206,7 @@ int8_t PADS_resetAutoRefp(PADS_state_t reset)
 *
 * The function can be turned off with PADS_resetAutoZeroMode().
 *
-* @param autoZero Turns AUTOZERO function on
+* @param[in] autoZero Turns AUTOZERO function on
 * @retval Error code
 */
 int8_t PADS_enableAutoZeroMode(PADS_state_t autoZero)
@@ -227,7 +232,7 @@ int8_t PADS_enableAutoZeroMode(PADS_state_t autoZero)
 *
 * The function can be turned off with PADS_resetAutoZeroMode().
 *
-* @param autoZero The returned state
+* @param[out] autoZero The returned state
 * @retval Error code
 */
 int8_t PADS_isEnablingAutoZeroMode(PADS_state_t *autoZero)
@@ -246,7 +251,7 @@ int8_t PADS_isEnablingAutoZeroMode(PADS_state_t *autoZero)
 
 /**
 * @brief Turn off the AUTOZERO function
-* @param reset Reset state
+* @param[in] reset Reset state
 * @retval Error code
 */
 int8_t PADS_resetAutoZeroMode(PADS_state_t reset)
@@ -265,7 +270,7 @@ int8_t PADS_resetAutoZeroMode(PADS_state_t reset)
 
 /**
 * @brief Enable/disable the differential pressure interrupt [enabled,disabled]
-* @param diffEn Differential pressure interrupt enable state
+* @param[in] diffEn Differential pressure interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableDiffPressureInterrupt(PADS_state_t diffEn)
@@ -284,7 +289,7 @@ int8_t PADS_enableDiffPressureInterrupt(PADS_state_t diffEn)
 
 /**
 * @brief Check if the differential pressure interrupt is enabled
-* @param diffIntState The returned differential interrupt enable state
+* @param[out] diffIntState The returned differential interrupt enable state
 * @retval Error code
 */
 int8_t PADS_isDiffPressureInterruptEnabled(PADS_state_t *diffIntState)
@@ -303,7 +308,7 @@ int8_t PADS_isDiffPressureInterruptEnabled(PADS_state_t *diffIntState)
 
 /**
 * @brief Enable/disable latched interrupt [enabled, disabled]
-* @param state Latched interrupt enable state
+* @param[in] state Latched interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableLatchedInterrupt(PADS_state_t state)
@@ -322,7 +327,7 @@ int8_t PADS_enableLatchedInterrupt(PADS_state_t state)
 
 /**
 * @brief Check if latched interrupts are enabled
-* @param latchInt The returned latched interrupts enable state
+* @param[out] latchInt The returned latched interrupts enable state
 * @retval Error code
 */
 int8_t PADS_isLatchedInterruptEnabled(PADS_state_t *latchInt)
@@ -341,7 +346,7 @@ int8_t PADS_isLatchedInterruptEnabled(PADS_state_t *latchInt)
 
 /**
 * @brief Enable/disable the low pressure interrupt [enabled, disabled]
-* @param state Low pressure interrupt enable state
+* @param[in] state Low pressure interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableLowPressureInterrupt(PADS_state_t state)
@@ -360,7 +365,7 @@ int8_t PADS_enableLowPressureInterrupt(PADS_state_t state)
 
 /**
 * @brief Check if the low pressure interrupt is enabled
-* @param lpint The returned low pressure interrupt enable state
+* @param[out] lpint The returned low pressure interrupt enable state
 * @retval Error code
 */
 int8_t PADS_isLowPressureInterruptEnabled(PADS_state_t *lpint)
@@ -379,7 +384,7 @@ int8_t PADS_isLowPressureInterruptEnabled(PADS_state_t *lpint)
 
 /**
 * @brief Enable/disable the high pressure interrupt [enabled, disabled]
-* @param state High pressure interrupt enable state
+* @param[in] state High pressure interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableHighPressureInterrupt(PADS_state_t state)
@@ -398,7 +403,7 @@ int8_t PADS_enableHighPressureInterrupt(PADS_state_t state)
 
 /**
 * @brief Check if the high pressure interrupt is enabled
-* @param hpint The returned high pressure interrupt enable state
+* @param[out] hpint The returned high pressure interrupt enable state
 * @retval Error code
 */
 int8_t PADS_isHighPressureInterruptEnabled(PADS_state_t *hpint)
@@ -417,7 +422,7 @@ int8_t PADS_isHighPressureInterruptEnabled(PADS_state_t *hpint)
 
 /**
  * @brief Read interrupt source register
- * @param intSource The returned interrupt source register state
+ * @param[out] intSource The returned interrupt source register state
  * @retval Error code
  */
 int8_t PADS_getInterruptSource(PADS_intSource_t *intSource)
@@ -427,7 +432,7 @@ int8_t PADS_getInterruptSource(PADS_intSource_t *intSource)
 
 /**
 * @brief Read the state of the interrupts
-* @param intState Returned state of the interrupts
+* @param[out] intState Returned state of the interrupts
 * @retval Error code
 */
 int8_t PADS_getInterruptStatus(PADS_state_t *intState)
@@ -446,7 +451,7 @@ int8_t PADS_getInterruptStatus(PADS_state_t *intState)
 
 /**
 * @brief Read the state of the differential low pressure interrupt [not active, active]
-* @param lpState The returned state of the differential low pressure interrupt
+* @param[out] lpState The returned state of the differential low pressure interrupt
 * @retval Error code
 */
 int8_t PADS_getLowPressureInterruptStatus(PADS_state_t *lpState)
@@ -465,7 +470,7 @@ int8_t PADS_getLowPressureInterruptStatus(PADS_state_t *lpState)
 
 /**
 * @brief Read the state of the differential high pressure interrupt [not active, active]
-* @param hpState The returned state of the differential high pressure interrupt
+* @param[out] hpState The returned state of the differential high pressure interrupt
 * @retval No error
 */
 int8_t PADS_getHighPressureInterruptStatus(PADS_state_t *hpState)
@@ -484,7 +489,7 @@ int8_t PADS_getHighPressureInterruptStatus(PADS_state_t *hpState)
 
 /**
 * @brief Enable/disable the FIFO full interrupt
-* @param fullState FIFO full interrupt enable state
+* @param[in] fullState FIFO full interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableFifoFullInterrupt(PADS_state_t fullState)
@@ -503,7 +508,7 @@ int8_t PADS_enableFifoFullInterrupt(PADS_state_t fullState)
 
 /**
 * @brief Enable/disable the FIFO threshold interrupt
-* @param threshState FIFO threshold interrupt enable state
+* @param[in] threshState FIFO threshold interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableFifoThresholdInterrupt(PADS_state_t threshState)
@@ -522,7 +527,7 @@ int8_t PADS_enableFifoThresholdInterrupt(PADS_state_t threshState)
 
 /**
 * @brief Enable/disable the FIFO overrun interrupt
-* @param ovrState FIFO overrun interrupt enable state
+* @param[in] ovrState FIFO overrun interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableFifoOverrunInterrupt(PADS_state_t ovrState)
@@ -541,7 +546,7 @@ int8_t PADS_enableFifoOverrunInterrupt(PADS_state_t ovrState)
 
 /**
 * @brief Check if FIFO is full [enabled, disabled]
-* @param fifoFull The returned FIFO full state
+* @param[out] fifoFull The returned FIFO full state
 * @retval Error code
 */
 int8_t PADS_isFifoFull(PADS_state_t *fifoFull)
@@ -560,7 +565,7 @@ int8_t PADS_isFifoFull(PADS_state_t *fifoFull)
 
 /**
 * @brief Check if FIFO fill level has exceeded the user defined threshold [enabled, disabled]
-* @param fifoWtm The returned FIFO threshold reached state
+* @param[out] fifoWtm The returned FIFO threshold reached state
 * @retval Error code
 */
 int8_t PADS_isFifoThresholdReached(PADS_state_t *fifoWtm)
@@ -579,7 +584,7 @@ int8_t PADS_isFifoThresholdReached(PADS_state_t *fifoWtm)
 
 /**
 * @brief Read the FIFO overrun state [enabled, disabled]
-* @param fifoOvr The returned FIFO overrun state
+* @param[out] fifoOvr The returned FIFO overrun state
 * @retval Error code
 */
 int8_t PADS_getFifoOverrunState(PADS_state_t *fifoOvr)
@@ -598,7 +603,7 @@ int8_t PADS_getFifoOverrunState(PADS_state_t *fifoOvr)
 
 /**
 * @brief Enable/disable the data ready signal interrupt
-* @param drdy Data ready interrupt enable state
+* @param[in] drdy Data ready interrupt enable state
 * @retval Error code
 */
 int8_t PADS_enableDataReadyInterrupt(PADS_state_t drdy)
@@ -617,7 +622,7 @@ int8_t PADS_enableDataReadyInterrupt(PADS_state_t drdy)
 
 /**
 * @brief Check if the data ready signal interrupt is enabled [enabled,disabled]
-* @param drdy The returned data ready interrupt enable state
+* @param[out] drdy The returned data ready interrupt enable state
 * @retval Error code
 */
 int8_t PADS_isDataReadyInterruptEnabled(PADS_state_t *drdy)
@@ -636,7 +641,7 @@ int8_t PADS_isDataReadyInterruptEnabled(PADS_state_t *drdy)
 
 /**
 * @brief Configure interrupt events (interrupt event control)
-* @param ctr Interrupt event configuration
+* @param[in] ctr Interrupt event configuration
 * @retval Error code
 */
 int8_t PADS_setInterruptEventControl(PADS_interruptEventControl_t ctr)
@@ -655,7 +660,7 @@ int8_t PADS_setInterruptEventControl(PADS_interruptEventControl_t ctr)
 
 /**
 * @brief Read the interrupt event configuration (interrupt event control)
-* @param intEvent The returned interrupt event configuration
+* @param[out] intEvent The returned interrupt event configuration
 * @retval Error code
 */
 int8_t PADS_getInterruptEventControl(PADS_interruptEventControl_t *intEvent)
@@ -676,7 +681,7 @@ int8_t PADS_getInterruptEventControl(PADS_interruptEventControl_t *intEvent)
  * @brief Set the pressure threshold (relative to reference pressure,
  * both in positive and negative direction).
  *
- * @param thresholdPa Threshold in Pa. Resolution is 6.25 Pa.
+ * @param[in] thresholdPa Threshold in Pa. Resolution is 6.25 Pa.
  * @retval Error code
  */
 int8_t PADS_setPressureThreshold(uint32_t thresholdPa)
@@ -693,7 +698,7 @@ int8_t PADS_setPressureThreshold(uint32_t thresholdPa)
  * @brief Read the pressure threshold (relative to reference pressure,
  * both in positive and negative direction).
  *
- * @param thresholdPa The returned threshold in Pa
+ * @param[out] thresholdPa The returned threshold in Pa
  * @retval Error code
  */
 int8_t PADS_getPressureThreshold(uint32_t *thresholdPa)
@@ -717,7 +722,7 @@ int8_t PADS_getPressureThreshold(uint32_t *thresholdPa)
 *
 * @see PADS_setPressureThreshold()
 *
-* @param thr Pressure threshold LSB
+* @param[in] thr Pressure threshold LSB
 * @retval Error code
 */
 int8_t PADS_setPressureThresholdLSB(uint8_t thr)
@@ -730,7 +735,7 @@ int8_t PADS_setPressureThresholdLSB(uint8_t thr)
 *
 * @see PADS_setPressureThreshold()
 *
-* @param thr Pressure threshold MSB
+* @param[in] thr Pressure threshold MSB
 * @retval Error code
 */
 int8_t PADS_setPressureThresholdMSB(uint8_t thr)
@@ -743,7 +748,7 @@ int8_t PADS_setPressureThresholdMSB(uint8_t thr)
 *
 * @see PADS_getPressureThreshold()
 *
-* @param thrLSB The returned pressure threshold LSB value
+* @param[out] thrLSB The returned pressure threshold LSB value
 * @retval Error code
 */
 int8_t PADS_getPressureThresholdLSB(uint8_t *thrLSB)
@@ -756,7 +761,7 @@ int8_t PADS_getPressureThresholdLSB(uint8_t *thrLSB)
 *
 * @see PADS_getPressureThreshold()
 *
-* @param thrMSB The returned pressure threshold MSB value
+* @param[out] thrMSB The returned pressure threshold MSB value
 * @retval Error code
 */
 int8_t PADS_getPressureThresholdMSB(uint8_t *thrMSB)
@@ -766,7 +771,7 @@ int8_t PADS_getPressureThresholdMSB(uint8_t *thrMSB)
 
 /**
 * @brief Disable the I2C interface
-* @param i2cDisable I2C interface disable state (0: I2C enabled, 1: I2C disabled)
+* @param[in] i2cDisable I2C interface disable state (0: I2C enabled, 1: I2C disabled)
 * @retval Error code
 */
 int8_t PADS_disableI2CInterface(PADS_state_t i2cDisable)
@@ -785,7 +790,7 @@ int8_t PADS_disableI2CInterface(PADS_state_t i2cDisable)
 
 /**
 * @brief Read the I2C interface disable state [enabled, disabled]
-* @param i2cDisabled The returned I2C interface disable state (0: I2C enabled, 1: I2C disabled)
+* @param[out] i2cDisabled The returned I2C interface disable state (0: I2C enabled, 1: I2C disabled)
 * @retval Error code
 */
 int8_t PADS_isI2CInterfaceDisabled(PADS_state_t *i2cDisabled)
@@ -805,7 +810,7 @@ int8_t PADS_isI2CInterfaceDisabled(PADS_state_t *i2cDisabled)
 
 /**
 * @brief Disable/enable the internal pull-down on interrupt pin
-* @param pullDownState Disable pull-down state (0: PD connected; 1: PD disconnected)
+* @param[in] pullDownState Disable pull-down state (0: PD connected; 1: PD disconnected)
 * @retval Error code
 */
 int8_t PADS_disablePullDownIntPin(PADS_state_t pullDownState)
@@ -824,7 +829,7 @@ int8_t PADS_disablePullDownIntPin(PADS_state_t pullDownState)
 
 /**
 * @brief Read the state of the pull down on the interrupt pin
-* @param pinState The returned pull-down state (0: PD connected; 1: PD disconnected)
+* @param[out] pinState The returned pull-down state (0: PD connected; 1: PD disconnected)
 * @retval Error code
 */
 int8_t PADS_isPullDownIntDisabled(PADS_state_t *pinState)
@@ -843,7 +848,7 @@ int8_t PADS_isPullDownIntDisabled(PADS_state_t *pinState)
 
 /**
 * @brief Set internal pull-up on the SAO pin
-* @param saoStatus SAO pull-up state
+* @param[in] saoStatus SAO pull-up state
 * @retval Error code
 */
 int8_t PADS_setSAOPullUp(PADS_state_t saoStatus)
@@ -861,7 +866,7 @@ int8_t PADS_setSAOPullUp(PADS_state_t saoStatus)
 
 /**
 * @brief Read the state of the pull-up on the SAO pin
-* @param saoPinState The returned SAO pull-up state
+* @param[out] saoPinState The returned SAO pull-up state
 * @retval Error code
 */
 int8_t PADS_isSAOPullUp(PADS_state_t *saoPinState)
@@ -880,7 +885,7 @@ int8_t PADS_isSAOPullUp(PADS_state_t *saoPinState)
 
 /**
 * @brief Set internal pull-up on the SDA pin
-* @param sdaStatus SDA pull-up state
+* @param[in] sdaStatus SDA pull-up state
 * @retval Error code
 */
 int8_t PADS_setSDAPullUp(PADS_state_t sdaStatus)
@@ -899,7 +904,7 @@ int8_t PADS_setSDAPullUp(PADS_state_t sdaStatus)
 
 /**
 * @brief Read the state of the pull-up on the SDA pin
-* @param sdaPinState The returned SDA pull-up state
+* @param[out] sdaPinState The returned SDA pull-up state
 * @retval Error code
 */
 int8_t PADS_isSDAPullUp(PADS_state_t *sdaPinState)
@@ -918,7 +923,7 @@ int8_t PADS_isSDAPullUp(PADS_state_t *sdaPinState)
 
 /**
 * @brief Set the output data rate of the sensor
-* @param odr output data rate
+* @param[in] odr output data rate
 * @retval Error code
 */
 int8_t PADS_setOutputDataRate(PADS_outputDataRate_t odr)
@@ -937,7 +942,7 @@ int8_t PADS_setOutputDataRate(PADS_outputDataRate_t odr)
 
 /**
 * @brief Read the output data rate of the sensor
-* @param odr The returned output data rate
+* @param[out] odr The returned output data rate
 * @retval Error code
 */
 int8_t PADS_getOutputDataRate(PADS_outputDataRate_t* odr)
@@ -956,7 +961,7 @@ int8_t PADS_getOutputDataRate(PADS_outputDataRate_t* odr)
 
 /**
 * @brief Enable/disable the low pass filter
-* @param filterEnabled Filter state (0: disabled, 1: enabled)
+* @param[in] filterEnabled Filter state (0: disabled, 1: enabled)
 * @retval Error code
 */
 int8_t PADS_enableLowPassFilter(PADS_state_t filterEnabled)
@@ -975,7 +980,7 @@ int8_t PADS_enableLowPassFilter(PADS_state_t filterEnabled)
 
 /**
 * @brief Check if the low pass filter is enabled
-* @param filterEnabled The returned low pass filter enable state
+* @param[out] filterEnabled The returned low pass filter enable state
 * @retval Error code
 */
 int8_t PADS_isLowPassFilterEnabled(PADS_state_t *filterEnabled)
@@ -994,7 +999,7 @@ int8_t PADS_isLowPassFilterEnabled(PADS_state_t *filterEnabled)
 
 /**
 * @brief Set the low pass filter configuration
-* @param conf Low pass filter configuration
+* @param[in] conf Low pass filter configuration
 * @retval Error code
 */
 int8_t PADS_setLowPassFilterConfig(PADS_filterConf_t conf)
@@ -1013,7 +1018,7 @@ int8_t PADS_setLowPassFilterConfig(PADS_filterConf_t conf)
 
 /**
 * @brief Read the low pass filter configuration
-* @param conf The returned low pass filter configuration
+* @param[out] conf The returned low pass filter configuration
 * @retval Error code
 */
 int8_t PADS_getLowPassFilterConfig(PADS_filterConf_t *conf)
@@ -1032,7 +1037,7 @@ int8_t PADS_getLowPassFilterConfig(PADS_filterConf_t *conf)
 
 /**
 * @brief Enable/disable block data update
-* @param bdu Block data update state
+* @param[in] bdu Block data update state
 * @retval Error code
 */
 int8_t PADS_enableBlockDataUpdate(PADS_state_t bdu)
@@ -1051,7 +1056,7 @@ int8_t PADS_enableBlockDataUpdate(PADS_state_t bdu)
 
 /**
 * @brief Check if block data update is enabled
-* @param bdu The returned block data update enable state
+* @param[out] bdu The returned block data update enable state
 * @retval Error code
 */
 int8_t PADS_isBlockDataUpdateEnabled(PADS_state_t *bdu)
@@ -1070,7 +1075,7 @@ int8_t PADS_isBlockDataUpdateEnabled(PADS_state_t *bdu)
 
 /**
 * @brief (Re)boot the device [enabled, disabled]
-* @param reboot Reboot state
+* @param[in] reboot Reboot state
 * @retval Error code
 */
 int8_t PADS_reboot(PADS_state_t reboot)
@@ -1089,7 +1094,7 @@ int8_t PADS_reboot(PADS_state_t reboot)
 
 /**
 * @brief Read the reboot state
-* @param rebooting The returned reboot state.
+* @param[out] rebooting The returned reboot state.
 * @retval Error code
 */
 int8_t PADS_isRebooting(PADS_state_t *reboot)
@@ -1107,7 +1112,7 @@ int8_t PADS_isRebooting(PADS_state_t *reboot)
 
 /**
 * @brief Read the boot state
-* @param boot The returned Boot state
+* @param[in] boot The returned Boot state
 * @retval Error code
 */
 int8_t PADS_getBootStatus(PADS_state_t *boot)
@@ -1126,7 +1131,7 @@ int8_t PADS_getBootStatus(PADS_state_t *boot)
 
 /**
 * @brief Set the interrupt active level [active high/active low]
-* @param level Interrupt active level
+* @param[in] level Interrupt active level
 * @retval Error code
 */
 int8_t PADS_setInterruptActiveLevel(PADS_interruptActiveLevel_t level)
@@ -1145,7 +1150,7 @@ int8_t PADS_setInterruptActiveLevel(PADS_interruptActiveLevel_t level)
 
 /**
 * @brief Read the interrupt active level
-* @param level The returned interrupt active level
+* @param[out] level The returned interrupt active level
 * @retval Error code
 */
 int8_t PADS_getInterruptActiveLevel(PADS_interruptActiveLevel_t *level)
@@ -1164,7 +1169,7 @@ int8_t PADS_getInterruptActiveLevel(PADS_interruptActiveLevel_t *level)
 
 /**
 * @brief Set the interrupt pin type [push-pull/open-drain]
-* @param pinType Interrupt pin type
+* @param[in] pinType Interrupt pin type
 * @retval Error code
 */
 int8_t PADS_setInterruptPinType(PADS_interruptPinConfig_t pinType)
@@ -1183,7 +1188,7 @@ int8_t PADS_setInterruptPinType(PADS_interruptPinConfig_t pinType)
 
 /**
 * @brief Read the interrupt pin type [push-pull/open-drain]
-* @param pinType The returned interrupt pin type.
+* @param[out] pinType The returned interrupt pin type.
 * @retval Error code
 */
 int8_t PADS_getInterruptPinType(PADS_interruptPinConfig_t *pinType)
@@ -1202,7 +1207,7 @@ int8_t PADS_getInterruptPinType(PADS_interruptPinConfig_t *pinType)
 
 /**
 * @brief Enable/disable the auto address increment feature
-* @param autoInc Auto address increment feature enable state
+* @param[in] autoInc Auto address increment feature enable state
 * @retval Error code
 */
 int8_t PADS_enableAutoIncrement(PADS_state_t autoInc)
@@ -1221,7 +1226,7 @@ int8_t PADS_enableAutoIncrement(PADS_state_t autoInc)
 
 /**
 * @brief Check if the auto address increment feature is enabled
-* @param inc The returned auto address increment feature enable state
+* @param[out] inc The returned auto address increment feature enable state
 * @retval Error code
 */
 int8_t PADS_isAutoIncrementEnabled(PADS_state_t *inc)
@@ -1240,7 +1245,7 @@ int8_t PADS_isAutoIncrementEnabled(PADS_state_t *inc)
 
 /**
 * @brief Set software reset [enabled, disabled]
-* @param swReset Software reset state
+* @param[in] swReset Software reset state
 * @retval Error code
 */
 int8_t PADS_softReset(PADS_state_t mode)
@@ -1259,7 +1264,7 @@ int8_t PADS_softReset(PADS_state_t mode)
 
 /**
 * @brief Read the software reset state [enabled, disabled]
-* @param swReset The returned software reset state.
+* @param[out] swReset The returned software reset state.
 * @retval Error code
 */
 int8_t PADS_getSoftResetState(PADS_state_t *mode)
@@ -1277,7 +1282,7 @@ int8_t PADS_getSoftResetState(PADS_state_t *mode)
 
 /**
 * @brief Set the power mode of the sensor [low noise, low current]
-* @param mode Power mode
+* @param[in] mode Power mode
 * @retval Error code
 */
 int8_t PADS_setPowerMode(PADS_powerMode_t mode)
@@ -1296,7 +1301,7 @@ int8_t PADS_setPowerMode(PADS_powerMode_t mode)
 
 /**
 * @brief Read the power mode [low noise, low current]
-* @param mode The returned power mode
+* @param[out] mode The returned power mode
 * @retval Error code
 */
 int8_t PADS_getPowerMode(PADS_powerMode_t *mode)
@@ -1314,7 +1319,7 @@ int8_t PADS_getPowerMode(PADS_powerMode_t *mode)
 
 /**
 * @brief Enable/disable the one shot mode
-* @param oneShot One shot bit state
+* @param[in] oneShot One shot bit state
 * @retval Error code
 */
 int8_t PADS_enableOneShot(PADS_state_t oneShot)
@@ -1333,7 +1338,7 @@ int8_t PADS_enableOneShot(PADS_state_t oneShot)
 
 /**
 * @brief Check if one shot mode is enabled
-* @param oneShot The returned one shot bit state
+* @param[out] oneShot The returned one shot bit state
 * @retval Error code
 */
 int8_t PADS_isOneShotEnabled(PADS_state_t *oneShot)
@@ -1352,7 +1357,7 @@ int8_t PADS_isOneShotEnabled(PADS_state_t *oneShot)
 
 /**
 * @brief Set LSB part of the pressure offset value
-* @param offset LSB part of the pressure offset value
+* @param[in] offset LSB part of the pressure offset value
 * @retval Error code
 */
 int8_t PADS_setPressureOffsetLSB(uint8_t offset)
@@ -1362,7 +1367,7 @@ int8_t PADS_setPressureOffsetLSB(uint8_t offset)
 
 /**
 * @brief Read the LSB part of the pressure offset value
-* @param offset The returned LSB part of the pressure offset value
+* @param[out] offset The returned LSB part of the pressure offset value
 * @retval Error code
 */
 int8_t PADS_getPressureOffsetLSB(uint8_t *offset)
@@ -1372,7 +1377,7 @@ int8_t PADS_getPressureOffsetLSB(uint8_t *offset)
 
 /**
 * @brief Set MSB part of the pressure offset value
-* @param offset MSB part of the pressure offset value
+* @param[in] offset MSB part of the pressure offset value
 * @retval Error code
 */
 int8_t PADS_setPressureOffsetMSB(uint8_t offset)
@@ -1382,7 +1387,7 @@ int8_t PADS_setPressureOffsetMSB(uint8_t offset)
 
 /**
 * @brief Read the MSB part of the pressure offset value
-* @param offset The returned MSB part of the pressure offset value
+* @param[out] offset The returned MSB part of the pressure offset value
 * @retval Error code
 */
 int8_t PADS_getPressureOffsetMSB(uint8_t *offset)
@@ -1392,7 +1397,7 @@ int8_t PADS_getPressureOffsetMSB(uint8_t *offset)
 
 /**
 * @brief Set the FIFO mode
-* @param fifoMode FIFO mode to be set
+* @param[in] fifoMode FIFO mode to be set
 * @retval Error code
 */
 int8_t PADS_setFifoMode(PADS_fifoMode_t fifoMode)
@@ -1411,7 +1416,7 @@ int8_t PADS_setFifoMode(PADS_fifoMode_t fifoMode)
 
 /**
 * @brief Read the FIFO mode
-* @param fifoMode The returned FIFO mode
+* @param[out] fifoMode The returned FIFO mode
 * @retval Error code
 */
 int8_t PADS_getFifoMode(PADS_fifoMode_t *fifoMode)
@@ -1431,7 +1436,7 @@ int8_t PADS_getFifoMode(PADS_fifoMode_t *fifoMode)
 
 /**
 * @brief Set stop on user-defined FIFO threshold level
-* @param state Stop on FIFO threshold state
+* @param[in] state Stop on FIFO threshold state
 * @retval Error code
 */
 int8_t PADS_enableStopOnThreshold(PADS_state_t state)
@@ -1450,7 +1455,7 @@ int8_t PADS_enableStopOnThreshold(PADS_state_t state)
 
 /**
 * @brief Check if stopping on user-defined threshold level is enabled
-* @param state Stop on FIFO threshold enable state
+* @param[out] state Stop on FIFO threshold enable state
 * @retval Error code
 */
 int8_t PADS_isStopOnThresholdEnabled(PADS_state_t *state)
@@ -1469,7 +1474,7 @@ int8_t PADS_isStopOnThresholdEnabled(PADS_state_t *state)
 
 /**
 * @brief Set the FIFO threshold level
-* @param fifoThr FIFO threshold level (value between 0 and 127)
+* @param[in] fifoThr FIFO threshold level (value between 0 and 127)
 * @retval Error code
 */
 int8_t PADS_setFifoThreshold(uint8_t fifoThr)
@@ -1488,7 +1493,7 @@ int8_t PADS_setFifoThreshold(uint8_t fifoThr)
 
 /**
 * @brief Read the FIFO threshold level
-* @param fifoThr The returned FIFO threshold level
+* @param[out] fifoThr The returned FIFO threshold level
 * @retval Error code
 */
 int8_t PADS_getFifoThreshold(uint8_t *fifoThr)
@@ -1507,7 +1512,7 @@ int8_t PADS_getFifoThreshold(uint8_t *fifoThr)
 
 /**
 * @brief Read the current FIFO fill level
-* @param fifoLevel The returned FIFO fill level
+* @param[out] fifoLevel The returned FIFO fill level
 * @retval Error code
 */
 int8_t PADS_getFifoFillLevel(uint8_t *fifoLevel)
@@ -1520,7 +1525,7 @@ int8_t PADS_getFifoFillLevel(uint8_t *fifoLevel)
  *
  * Note: The reference pressure is set automatically when enabling AUTOZERO or AUTOREFP.
  *
- * @param referencePressurePa The returned reference pressure in Pa
+ * @param[out] referencePressurePa The returned reference pressure in Pa
  * @retval Error code
  */
 int8_t PADS_getReferencePressure(uint32_t *referencePressurePa)
@@ -1529,7 +1534,7 @@ int8_t PADS_getReferencePressure(uint32_t *referencePressurePa)
   {
     return WE_FAIL;
   }
-  *referencePressurePa = (*referencePressurePa * 100) / 4096;
+  *referencePressurePa = PADS_convertPressure_int(*referencePressurePa);
   return WE_SUCCESS;
 }
 
@@ -1538,7 +1543,7 @@ int8_t PADS_getReferencePressure(uint32_t *referencePressurePa)
  *
  * Note: The reference pressure is set automatically when enabling AUTOZERO or AUTOREFP.
  *
- * @param referencePressure The returned raw reference pressure.
+ * @param[out] referencePressure The returned raw reference pressure.
  * @retval Error code
  */
 int8_t PADS_getRawReferencePressure(uint32_t *referencePressure)
@@ -1558,7 +1563,7 @@ int8_t PADS_getRawReferencePressure(uint32_t *referencePressure)
 
 /**
 * @brief Read the LSB of the reference pressure
-* @param lowReferenceValue The returned reference pressure LSB
+* @param[out] lowReferenceValue The returned reference pressure LSB
 * @retval Error code
 */
 int8_t PADS_getReferencePressureLSB(uint8_t *lowReferenceValue)
@@ -1568,7 +1573,7 @@ int8_t PADS_getReferencePressureLSB(uint8_t *lowReferenceValue)
 
 /**
 * @brief Read the MSB of the reference pressure
-* @param highReferenceValue The returned reference pressure MSB
+* @param[out] highReferenceValue The returned reference pressure MSB
 * @retval Error code
 */
 int8_t PADS_getReferencePressureMSB(uint8_t *highReferenceValue)
@@ -1578,7 +1583,7 @@ int8_t PADS_getReferencePressureMSB(uint8_t *highReferenceValue)
 
 /**
 * @brief Check if the temperature data register has been overwritten
-* @param state The returned temperature data overwritten state
+* @param[out] state The returned temperature data overwritten state
 * @retval Error code
 */
 int8_t PADS_getTemperatureOverrunStatus(PADS_state_t *state)
@@ -1597,7 +1602,7 @@ int8_t PADS_getTemperatureOverrunStatus(PADS_state_t *state)
 
 /**
 * @brief Check if the pressure data register has been overwritten
-* @param state The returned pressure data overwritten state
+* @param[out] state The returned pressure data overwritten state
 * @retval Error code
 */
 int8_t PADS_getPressureOverrunStatus(PADS_state_t *state)
@@ -1616,7 +1621,7 @@ int8_t PADS_getPressureOverrunStatus(PADS_state_t *state)
 
 /**
 * @brief Check if new pressure data is available
-* @param state The returned pressure data availability state
+* @param[out] state The returned pressure data availability state
 * @retval Error code
 */
 int8_t PADS_isPressureDataAvailable(PADS_state_t *state)
@@ -1634,7 +1639,7 @@ int8_t PADS_isPressureDataAvailable(PADS_state_t *state)
 
 /**
 * @brief Check if new temperature data is available
-* @param state The returned temperature data availability state
+* @param[out] state The returned temperature data availability state
 * @retval Error code
 */
 int8_t PADS_isTemperatureDataAvailable(PADS_state_t *state)
@@ -1653,7 +1658,7 @@ int8_t PADS_isTemperatureDataAvailable(PADS_state_t *state)
 
 /**
 * @brief Read the raw measured pressure value
-* @param rawPres The returned raw pressure
+* @param[out] rawPres The returned raw pressure
 * @retval Error code
 */
 int8_t PADS_getRawPressure(int32_t *rawPres)
@@ -1675,7 +1680,7 @@ int8_t PADS_getRawPressure(int32_t *rawPres)
 
 /**
 * @brief Read the raw measured temperature value
-* @param rawTemp The returned raw temperature
+* @param[out] rawTemp The returned raw temperature
 * @retval Error code
 */
 int8_t PADS_getRawTemperature(int16_t *rawTemp)
@@ -1695,8 +1700,8 @@ int8_t PADS_getRawTemperature(int16_t *rawTemp)
 
 /**
 * @brief Read one or more raw pressure values from FIFO
-* @param numSamples Number of samples to read
-* @param rawPres The returned FIFO pressure measurement(s)
+* @param[in] numSamples Number of samples to read
+* @param[out] rawPres The returned FIFO pressure measurement(s)
 * @retval Error code
 */
 int8_t PADS_getFifoRawPressure(uint8_t numSamples, int32_t *rawPres)
@@ -1725,8 +1730,8 @@ int8_t PADS_getFifoRawPressure(uint8_t numSamples, int32_t *rawPres)
 
 /**
 * @brief Reads one or more raw temperature values from FIFO
-* @param numSamples Number of samples to read
-* @param rawTemp The returned FIFO temperature measurement(s)
+* @param[in] numSamples Number of samples to read
+* @param[out] rawTemp The returned FIFO temperature measurement(s)
 * @retval Error code
 */
 int8_t PADS_getFifoRawTemperature(uint8_t numSamples, int16_t *rawTemp)
@@ -1753,9 +1758,9 @@ int8_t PADS_getFifoRawTemperature(uint8_t numSamples, int16_t *rawTemp)
 
 /**
 * @brief Reads one or more raw pressure and temperature values from FIFO
-* @param numSamples Number of samples to read
-* @param rawPres The returned FIFO pressure measurement(s)
-* @param rawTemp The returned FIFO temperature measurement(s)
+* @param[in] numSamples Number of samples to read
+* @param[out] rawPres The returned FIFO pressure measurement(s)
+* @param[out] rawTemp The returned FIFO temperature measurement(s)
 * @retval Error code
 */
 int8_t PADS_getFifoRawValues(uint8_t numSamples, int32_t *rawPres, int16_t *rawTemp)
@@ -1792,7 +1797,7 @@ int8_t PADS_getFifoRawValues(uint8_t numSamples, int32_t *rawPres, int16_t *rawT
 * might contain differential pressure values (e.g. if AUTOZERO is enabled).
 * In that case, the function PADS_getDifferentialPressure_int() should be used.
 *
-* @param pressPa The returned pressure measurement
+* @param[out] pressPa The returned pressure measurement
 * @retval Error code
 */
 int8_t PADS_getPressure_int(int32_t *pressPa)
@@ -1800,7 +1805,7 @@ int8_t PADS_getPressure_int(int32_t *pressPa)
   int32_t rawPressure = 0;
   if (PADS_getRawPressure(&rawPressure) == WE_SUCCESS)
   {
-    *pressPa = (rawPressure * 100) / 4096;
+    *pressPa = PADS_convertPressure_int(rawPressure);
   }
   else
   {
@@ -1815,7 +1820,7 @@ int8_t PADS_getPressure_int(int32_t *pressPa)
 * Use this function if the sensor is configured to write differential pressure
 * values to the output register (e.g. if AUTOZERO is enabled).
 *
-* @param pressPa The returned differential pressure measurement
+* @param[out] pressPa The returned differential pressure measurement
 * @retval Error code
 */
 int8_t PADS_getDifferentialPressure_int(int32_t *pressPa)
@@ -1823,7 +1828,7 @@ int8_t PADS_getDifferentialPressure_int(int32_t *pressPa)
   int32_t rawPressure = 0;
   if (PADS_getRawPressure(&rawPressure) == WE_SUCCESS)
   {
-    *pressPa = (rawPressure * 100 * 256) / 4096;
+    *pressPa = PADS_convertDifferentialPressure_int(rawPressure);
   }
   else
   {
@@ -1834,7 +1839,7 @@ int8_t PADS_getDifferentialPressure_int(int32_t *pressPa)
 
 /**
 * @brief Read the measured temperature value in 0.01 °C
-* @param temperature The returned temperature measurement
+* @param[out] temperature The returned temperature measurement
 * @retval Error code
 */
 int8_t PADS_getTemperature_int(int16_t *temperature)
@@ -1844,8 +1849,8 @@ int8_t PADS_getTemperature_int(int16_t *temperature)
 
 /**
  * @brief Read one or more pressure values from FIFO.
- * @param numSamples Number of samples to read
- * @param pressPa The returned FIFO pressure measurement(s) in Pa
+ * @param[in] numSamples Number of samples to read
+ * @param[out] pressPa The returned FIFO pressure measurement(s) in Pa
  * @retval Error code
  */
 int8_t PADS_getFifoPressure_int(uint8_t numSamples, int32_t *pressPa)
@@ -1857,7 +1862,7 @@ int8_t PADS_getFifoPressure_int(uint8_t numSamples, int32_t *pressPa)
 
   for (uint8_t i = 0; i < numSamples; i++)
   {
-    pressPa[i] = (pressPa[i] * 100) / 4096;
+    pressPa[i] = PADS_convertPressure_int(pressPa[i]);
   }
 
   return WE_SUCCESS;
@@ -1865,8 +1870,8 @@ int8_t PADS_getFifoPressure_int(uint8_t numSamples, int32_t *pressPa)
 
 /**
  * @brief Read one or more temperature values from FIFO.
- * @param numSamples Number of samples to read
- * @param temperature The returned FIFO temperature measurement(s) in 0.01 °C
+ * @param[in] numSamples Number of samples to read
+ * @param[out] temperature The returned FIFO temperature measurement(s) in 0.01 °C
  * @retval Error code
  */
 int8_t PADS_getFifoTemperature_int(uint8_t numSamples, int16_t *temperature)
@@ -1876,9 +1881,9 @@ int8_t PADS_getFifoTemperature_int(uint8_t numSamples, int16_t *temperature)
 
 /**
 * @brief Reads one or more pressure and temperature values from FIFO
-* @param numSamples Number of samples to read
-* @param pressPa The returned FIFO pressure measurement(s) in Pa
-* @param temperature The returned FIFO temperature measurement(s) in 0.01 °C
+* @param[in] numSamples Number of samples to read
+* @param[out] pressPa The returned FIFO pressure measurement(s) in Pa
+* @param[out] temperature The returned FIFO temperature measurement(s) in 0.01 °C
 * @retval Error code
 */
 int8_t PADS_getFifoValues_int(uint8_t numSamples, int32_t *pressPa, int16_t *temperature)
@@ -1890,17 +1895,49 @@ int8_t PADS_getFifoValues_int(uint8_t numSamples, int32_t *pressPa, int16_t *tem
 
   for (uint8_t i = 0; i < numSamples; i++)
   {
-    pressPa[i] = (pressPa[i] * 100) / 4096;
+    pressPa[i] = PADS_convertPressure_int(pressPa[i]);
   }
 
   return WE_SUCCESS;
+}
+
+/**
+* @brief Converts the supplied raw pressure to [Pa]
+*
+* Note that, depending on the mode of operation, the sensor's output register
+* might contain differential pressure values (e.g. if AUTOZERO is enabled).
+* In that case, the function PADS_convertDifferentialPressure_int() should be used.
+*
+* @retval Pressure in [Pa]
+*/
+int32_t PADS_convertPressure_int(int32_t rawPres)
+{
+  return (rawPres * 100) / 4096;
+}
+
+/**
+* @brief Converts the supplied raw differential pressure to [Pa]
+*
+* Use this function if the sensor is configured to write differential pressure
+* values to the output register (e.g. if AUTOZERO is enabled).
+*
+* @retval Differential pressure in [Pa]
+*/
+int32_t PADS_convertDifferentialPressure_int(int32_t rawPres)
+{
+  return (rawPres * 25600) / 4096;
 }
 
 #ifdef WE_USE_FLOAT
 
 /**
 * @brief Read the measured pressure value in kPa
-* @param presskPa The returned pressure measurement
+*
+* Note that, depending on the mode of operation, the sensor's output register
+* might contain differential pressure values (e.g. if AUTOZERO is enabled).
+* In that case, the function PADS_getDifferentialPressure_float() should be used.
+*
+* @param[out] presskPa The returned pressure measurement
 * @retval Error code
 */
 int8_t PADS_getPressure_float(float *presskPa)
@@ -1908,8 +1945,30 @@ int8_t PADS_getPressure_float(float *presskPa)
   int32_t rawPressure = 0;
   if (PADS_getRawPressure(&rawPressure) == WE_SUCCESS)
   {
-    *presskPa = (float) rawPressure;
-    *presskPa = *presskPa / 40960;
+    *presskPa = PADS_convertPressure_float(rawPressure);
+  }
+  else
+  {
+    return WE_FAIL;
+  }
+  return WE_SUCCESS;
+}
+
+/**
+* @brief Read the measured differential pressure value in kPa
+*
+* Use this function if the sensor is configured to write differential pressure
+* values to the output register (e.g. if AUTOZERO is enabled).
+*
+* @param[out] presskPa The returned pressure measurement
+* @retval Error code
+*/
+int8_t PADS_getDifferentialPressure_float(float *presskPa)
+{
+  int32_t rawPressure = 0;
+  if (PADS_getRawPressure(&rawPressure) == WE_SUCCESS)
+  {
+    *presskPa = PADS_convertDifferentialPressure_float(rawPressure);
   }
   else
   {
@@ -1920,7 +1979,7 @@ int8_t PADS_getPressure_float(float *presskPa)
 
 /**
 * @brief Read the measured temperature value in °C
-* @param tempDegC The returned temperature measurement
+* @param[out] tempDegC The returned temperature measurement
 * @retval Error code
 */
 int8_t PADS_getTemperature_float(float *tempDegC)
@@ -1941,7 +2000,7 @@ int8_t PADS_getTemperature_float(float *tempDegC)
 
 /**
 * @brief Read the pressure value from FIFO in kPa
-* @param presskPa The returned FIFO pressure measurement
+* @param[out] presskPa The returned FIFO pressure measurement
 * @retval Error code
 */
 int8_t PADS_getFifoPressure_float(float *presskPa)
@@ -1949,8 +2008,7 @@ int8_t PADS_getFifoPressure_float(float *presskPa)
   int32_t rawPressure = 0;
   if (PADS_getFifoRawPressure(1, &rawPressure) == WE_SUCCESS)
   {
-    *presskPa = (float) rawPressure;
-    *presskPa = *presskPa / 40960;
+    *presskPa = PADS_convertPressure_float(rawPressure);
   }
   else
   {
@@ -1961,7 +2019,7 @@ int8_t PADS_getFifoPressure_float(float *presskPa)
 
 /**
 * @brief Read the temperature value from FIFO in °C
-* @param tempDegC The returned FIFO temperature measurement
+* @param[out] tempDegC The returned FIFO temperature measurement
 * @retval Error code
 */
 int8_t PADS_getFifoTemperature_float(float *tempDegC)
@@ -1980,6 +2038,33 @@ int8_t PADS_getFifoTemperature_float(float *tempDegC)
   return WE_SUCCESS;
 }
 
+/**
+* @brief Converts the supplied raw pressure to [kPa]
+*
+* Note that, depending on the mode of operation, the sensor's output register
+* might contain differential pressure values (e.g. if AUTOZERO is enabled).
+* In that case, the function PADS_convertDifferentialPressure_float() should be used.
+*
+* @retval Pressure in [kPa]
+*/
+float PADS_convertPressure_float(int32_t rawPres)
+{
+  return ((float) rawPres) / 40960;
+}
+
+/**
+* @brief Converts the supplied raw differential pressure to [kPa]
+*
+* Use this function if the sensor is configured to write differential pressure
+* values to the output register (e.g. if AUTOZERO is enabled).
+*
+* @retval Differential pressure in [kPa]
+*/
+float PADS_convertDifferentialPressure_float(int32_t rawPres)
+{
+  return ((float) rawPres) * 0.00625;
+}
+
 #endif /* WE_USE_FLOAT */
 
-/**         EOF         */
+/*         EOF         */

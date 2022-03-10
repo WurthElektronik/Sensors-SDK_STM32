@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,15 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief Driver file for the WSEN-ITDS sensor.
+ */
 
 #include "WSEN_ITDS_2533020201601.h"
 
@@ -36,18 +41,29 @@
 static WE_sensorInterface_t itdsSensorInterface = {
     .sensorType = WE_ITDS,
     .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = ITDS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .reserved = 0},
+    .options = {.i2c = {.address = ITDS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
                 .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
                 .readTimeout = 1000,
                 .writeTimeout = 1000},
     .handle = 0};
 
+
+/**
+ * @brief Stores the current value of the full scale parameter.
+
+ * The value is updated when calling ITDS_setFullScale() or 
+ * ITDS_getFullScale().
+ * 
+ */
+static ITDS_fullScale_t currentFullScale = ITDS_twoG;
+
+
 /**
  * @brief Read data from sensor.
  *
- * @param regAdr Address of register to read from
- * @param numBytesToRead Number of bytes to be read
- * @param data Target buffer
+ * @param[in] regAdr Address of register to read from
+ * @param[in] numBytesToRead Number of bytes to be read
+ * @param[out] data Target buffer
  * @return Error Code
  */
 static inline int8_t ITDS_ReadReg(uint8_t regAdr,
@@ -60,9 +76,9 @@ static inline int8_t ITDS_ReadReg(uint8_t regAdr,
 /**
  * @brief Write data to sensor.
  *
- * @param regAdr Address of register to write to
- * @param numBytesToWrite Number of bytes to be written
- * @param data Source buffer
+ * @param[in] regAdr Address of register to write to
+ * @param[in] numBytesToWrite Number of bytes to be written
+ * @param[in] data Source buffer
  * @return Error Code
  */
 static inline int8_t ITDS_WriteReg(uint8_t regAdr,
@@ -77,7 +93,7 @@ static inline int8_t ITDS_WriteReg(uint8_t regAdr,
  *
  * Note that the sensor type can't be changed.
  *
- * @param sensorInterface Sensor interface configuration
+ * @param[in] sensorInterface Sensor interface configuration
  * @return Error code
  */
 int8_t ITDS_initInterface(WE_sensorInterface_t* sensorInterface)
@@ -89,7 +105,7 @@ int8_t ITDS_initInterface(WE_sensorInterface_t* sensorInterface)
 
 /**
  * @brief Returns the sensor interface configuration.
- * @param sensorInterface Sensor interface configuration (output parameter)
+ * @param[out] sensorInterface Sensor interface configuration (output parameter)
  * @return Error code
  */
 int8_t ITDS_getInterface(WE_sensorInterface_t* sensorInterface)
@@ -110,9 +126,9 @@ int8_t ITDS_isInterfaceReady()
 /**
 * @brief Read the device ID
 *
-* Expected value is TIDS_DEVICE_ID_VALUE.
+* Expected value is ITDS_DEVICE_ID_VALUE.
 *
-* @param deviceID The returned device ID.
+* @param[out] deviceID The returned device ID.
 * @retval Error code
 */
 int8_t ITDS_getDeviceID(uint8_t *deviceID)
@@ -125,7 +141,7 @@ int8_t ITDS_getDeviceID(uint8_t *deviceID)
 
 /**
 * @brief Set the output data rate
-* @param odr Output data rate
+* @param[in] odr Output data rate
 * @retval Error code
 */
 int8_t ITDS_setOutputDataRate(ITDS_outputDataRate_t odr)
@@ -144,7 +160,7 @@ int8_t ITDS_setOutputDataRate(ITDS_outputDataRate_t odr)
 
 /**
 * @brief Read the output data rate
-* @param odr The returned output data rate.
+* @param[out] odr The returned output data rate.
 * @retval Error code
 */
 int8_t ITDS_getOutputDataRate(ITDS_outputDataRate_t *odr)
@@ -163,7 +179,7 @@ int8_t ITDS_getOutputDataRate(ITDS_outputDataRate_t *odr)
 
 /**
 * @brief Set the operating mode
-* @param opMode Operating mode
+* @param[in] opMode Operating mode
 * @retval Error code
 */
 int8_t ITDS_setOperatingMode(ITDS_operatingMode_t opMode)
@@ -182,7 +198,7 @@ int8_t ITDS_setOperatingMode(ITDS_operatingMode_t opMode)
 
 /**
 * @brief Read the operating mode
-* @param opMode The returned operating mode.
+* @param[out] opMode The returned operating mode.
 * @retval Error code
 */
 int8_t ITDS_getOperatingMode(ITDS_operatingMode_t *opMode)
@@ -201,7 +217,7 @@ int8_t ITDS_getOperatingMode(ITDS_operatingMode_t *opMode)
 
 /**
 * @brief Set the power mode
-* @param powerMode Power mode
+* @param[in] powerMode Power mode
 * @retval Error code
 */
 int8_t ITDS_setPowerMode(ITDS_powerMode_t powerMode)
@@ -220,7 +236,7 @@ int8_t ITDS_setPowerMode(ITDS_powerMode_t powerMode)
 
 /**
 * @brief Read the power mode
-* @param powerMode The returned power mode.
+* @param[out] powerMode The returned power mode.
 * @retval Error code
 */
 int8_t ITDS_getPowerMode(ITDS_powerMode_t *powerMode)
@@ -241,7 +257,7 @@ int8_t ITDS_getPowerMode(ITDS_powerMode_t *powerMode)
 
 /**
 * @brief (Re)boot the device [enabled, disabled]
-* @param reboot Reboot state
+* @param[in] reboot Reboot state
 * @retval Error code
 */
 int8_t ITDS_reboot(ITDS_state_t reboot)
@@ -260,7 +276,7 @@ int8_t ITDS_reboot(ITDS_state_t reboot)
 
 /**
 * @brief Read the reboot state
-* @param rebooting The returned reboot state.
+* @param[out] rebooting The returned reboot state.
 * @retval Error code
 */
 int8_t ITDS_isRebooting(ITDS_state_t *rebooting)
@@ -274,12 +290,12 @@ int8_t ITDS_isRebooting(ITDS_state_t *rebooting)
 
   *rebooting = (ITDS_state_t) ctrl2.boot;
 
-  return  WE_SUCCESS;
+  return WE_SUCCESS;
 }
 
 /**
 * @brief Set software reset [enabled, disabled]
-* @param swReset Software reset state
+* @param[in] swReset Software reset state
 * @retval Error code
 */
 int8_t ITDS_softReset(ITDS_state_t swReset)
@@ -298,7 +314,7 @@ int8_t ITDS_softReset(ITDS_state_t swReset)
 
 /**
 * @brief Read the software reset state [enabled, disabled]
-* @param swReset The returned software reset state.
+* @param[out] swReset The returned software reset state.
 * @retval Error code
 */
 int8_t ITDS_getSoftResetState(ITDS_state_t *swReset)
@@ -317,7 +333,7 @@ int8_t ITDS_getSoftResetState(ITDS_state_t *swReset)
 
 /**
 * @brief Disconnect CS pin pull up [pull up connected, pull up disconnected]
-* @param disconnectPU CS pin pull up state
+* @param[in] disconnectPU CS pin pull up state
 * @retval Error code
 */
 int8_t ITDS_setCSPullUpDisconnected(ITDS_state_t disconnectPU)
@@ -336,7 +352,7 @@ int8_t ITDS_setCSPullUpDisconnected(ITDS_state_t disconnectPU)
 
 /**
 * @brief Read the CS pin pull up state [pull up connected, pull up disconnected]
-* @param puDisconnected The returned CS pin pull up state
+* @param[out] puDisconnected The returned CS pin pull up state
 * @retval Error code
 */
 int8_t ITDS_isCSPullUpDisconnected(ITDS_state_t *puDisconnected)
@@ -356,7 +372,7 @@ int8_t ITDS_isCSPullUpDisconnected(ITDS_state_t *puDisconnected)
 
 /**
 * @brief Enable/disable block data update mode
-* @param bdu Block data update state
+* @param[in] bdu Block data update state
 * @retval Error code
 */
 int8_t ITDS_enableBlockDataUpdate(ITDS_state_t bdu)
@@ -375,7 +391,7 @@ int8_t ITDS_enableBlockDataUpdate(ITDS_state_t bdu)
 
 /**
 * @brief Read the block data update state
-* @param bdu The returned block data update state
+* @param[out] bdu The returned block data update state
 * @retval Error code
 */
 int8_t ITDS_isBlockDataUpdateEnabled(ITDS_state_t *bdu)
@@ -393,7 +409,7 @@ int8_t ITDS_isBlockDataUpdateEnabled(ITDS_state_t *bdu)
 
 /**
 * @brief Enable/disable auto increment mode
-* @param autoIncr Auto increment mode state
+* @param[in] autoIncr Auto increment mode state
 * @retval Error code
 */
 int8_t ITDS_enableAutoIncrement(ITDS_state_t autoIncr)
@@ -412,7 +428,7 @@ int8_t ITDS_enableAutoIncrement(ITDS_state_t autoIncr)
 
 /**
 * @brief Read the auto increment mode state
-* @param autoIncr The returned auto increment mode state
+* @param[out] autoIncr The returned auto increment mode state
 * @retval Error code
 */
 int8_t ITDS_isAutoIncrementEnabled(ITDS_state_t *autoIncr)
@@ -431,7 +447,7 @@ int8_t ITDS_isAutoIncrementEnabled(ITDS_state_t *autoIncr)
 
 /**
 * @brief Disable the I2C interface
-* @param i2cDisable I2C interface disable state (0: I2C enabled, 1: I2C disabled)
+* @param[in] i2cDisable I2C interface disable state (0: I2C enabled, 1: I2C disabled)
 * @retval Error code
 */
 int8_t ITDS_disableI2CInterface(ITDS_state_t i2cDisable)
@@ -450,7 +466,7 @@ int8_t ITDS_disableI2CInterface(ITDS_state_t i2cDisable)
 
 /**
 * @brief Read the I2C interface disable state [enabled, disabled]
-* @param i2cDisabled The returned I2C interface disable state (0: I2C enabled, 1: I2C disabled)
+* @param[out] i2cDisabled The returned I2C interface disable state (0: I2C enabled, 1: I2C disabled)
 * @retval Error code
 */
 int8_t ITDS_isI2CInterfaceDisabled(ITDS_state_t *i2cDisabled)
@@ -471,8 +487,8 @@ int8_t ITDS_isI2CInterfaceDisabled(ITDS_state_t *i2cDisabled)
 /* CTRL REG 3 */
 
 /**
-* @brief Enable self test mode
-* @param selfTest Self test mode (0: disabled, 1: enabled)
+* @brief Set self test mode
+* @param[in] selfTest Self test mode
 * @retval Error code
 */
 int8_t ITDS_setSelfTestMode(ITDS_selfTestConfig_t selfTest)
@@ -490,8 +506,8 @@ int8_t ITDS_setSelfTestMode(ITDS_selfTestConfig_t selfTest)
 }
 
 /**
-* @brief Read the self test mode state
-* @param selfTest The returned self test mode state.
+* @brief Read the self test mode
+* @param[out] selfTest The returned self test mode
 * @retval Error code
 */
 int8_t ITDS_getSelfTestMode(ITDS_selfTestConfig_t *selfTest)
@@ -510,7 +526,7 @@ int8_t ITDS_getSelfTestMode(ITDS_selfTestConfig_t *selfTest)
 
 /**
 * @brief Set the interrupt pin type [push-pull/open-drain]
-* @param pinType Interrupt pin type
+* @param[in] pinType Interrupt pin type
 * @retval Error code
 */
 int8_t ITDS_setInterruptPinType(ITDS_interruptPinConfig_t pinType)
@@ -529,7 +545,7 @@ int8_t ITDS_setInterruptPinType(ITDS_interruptPinConfig_t pinType)
 
 /**
 * @brief Read the interrupt pin type [push-pull/open-drain]
-* @param pinType The returned interrupt pin type.
+* @param[out] pinType The returned interrupt pin type.
 * @retval Error code
 */
 int8_t ITDS_getInterruptPinType(ITDS_interruptPinConfig_t *pinType)
@@ -548,7 +564,7 @@ int8_t ITDS_getInterruptPinType(ITDS_interruptPinConfig_t *pinType)
 
 /**
 * @brief Enable/disable latched interrupts
-* @param lir Latched interrupts state
+* @param[in] lir Latched interrupts state
 * @retval Error code
 */
 int8_t ITDS_enableLatchedInterrupt(ITDS_state_t lir)
@@ -567,7 +583,7 @@ int8_t ITDS_enableLatchedInterrupt(ITDS_state_t lir)
 
 /**
 * @brief Read the latched interrupts state [enabled, disabled]
-* @param lir The returned latched interrupts state.
+* @param[out] lir The returned latched interrupts state.
 * @retval Error code
 */
 int8_t ITDS_isLatchedInterruptEnabled(ITDS_state_t *lir)
@@ -586,7 +602,7 @@ int8_t ITDS_isLatchedInterruptEnabled(ITDS_state_t *lir)
 
 /**
 * @brief Set the interrupt active level [active high/active low]
-* @param level Interrupt active level
+* @param[in] level Interrupt active level
 * @retval Error code
 */
 int8_t ITDS_setInterruptActiveLevel(ITDS_interruptActiveLevel_t level)
@@ -605,7 +621,7 @@ int8_t ITDS_setInterruptActiveLevel(ITDS_interruptActiveLevel_t level)
 
 /**
 * @brief Read the interrupt active level
-* @param level The returned interrupt active level
+* @param[out] level The returned interrupt active level
 * @retval Error code
 */
 int8_t ITDS_getInterruptActiveLevel(ITDS_interruptActiveLevel_t *level)
@@ -624,7 +640,7 @@ int8_t ITDS_getInterruptActiveLevel(ITDS_interruptActiveLevel_t *level)
 
 /**
 * @brief Request single data conversion
-* @param start Set to true to trigger single data conversion.
+* @param[in] start Set to true to trigger single data conversion.
 * @retval Error code
 */
 int8_t ITDS_startSingleDataConversion(ITDS_state_t start)
@@ -643,7 +659,7 @@ int8_t ITDS_startSingleDataConversion(ITDS_state_t start)
 
 /**
 * @brief Returns true if single data conversion has been requested.
-* @param start Is set to true if single data conversion has been requested.
+* @param[out] start Is set to true if single data conversion has been requested.
 * @retval Error code
 */
 int8_t ITDS_isSingleDataConversionStarted(ITDS_state_t *start)
@@ -662,7 +678,7 @@ int8_t ITDS_isSingleDataConversionStarted(ITDS_state_t *start)
 
 /**
 * @brief Set the single data conversion (on-demand) trigger.
-* @param conversionTrigger Single data conversion (on-demand) trigger
+* @param[in] conversionTrigger Single data conversion (on-demand) trigger
 * @retval Error code
 */
 int8_t ITDS_setSingleDataConversionTrigger(ITDS_singleDataConversionTrigger_t conversionTrigger)
@@ -681,7 +697,7 @@ int8_t ITDS_setSingleDataConversionTrigger(ITDS_singleDataConversionTrigger_t co
 
 /**
 * @brief Read the single data conversion (on-demand) trigger
-* @param conversionTrigger The returned single data conversion (on-demand) trigger.
+* @param[out] conversionTrigger The returned single data conversion (on-demand) trigger.
 * @retval Error code
 */
 int8_t ITDS_getSingleDataConversionTrigger(ITDS_singleDataConversionTrigger_t *conversionTrigger)
@@ -703,7 +719,7 @@ int8_t ITDS_getSingleDataConversionTrigger(ITDS_singleDataConversionTrigger_t *c
 
 /**
 * @brief Enable/disable the 6D orientation changed interrupt on INT_0
-* @param int06D The 6D orientation changed interrupt enable state
+* @param[in] int06D The 6D orientation changed interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enable6DOnINT0(ITDS_state_t int06D)
@@ -722,7 +738,7 @@ int8_t ITDS_enable6DOnINT0(ITDS_state_t int06D)
 
 /**
 * @brief Check if the 6D interrupt on INT_0 is enabled
-* @param int06D The returned 6D interrupt enable state
+* @param[out] int06D The returned 6D interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_is6DOnINT0Enabled(ITDS_state_t *int06D)
@@ -741,7 +757,7 @@ int8_t ITDS_is6DOnINT0Enabled(ITDS_state_t *int06D)
 
 /**
 * @brief Enable/disable the single-tap interrupt on INT_0
-* @param int0SingleTap Single-tap interrupt enable state
+* @param[in] int0SingleTap Single-tap interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableSingleTapINT0(ITDS_state_t int0SingleTap)
@@ -760,7 +776,7 @@ int8_t ITDS_enableSingleTapINT0(ITDS_state_t int0SingleTap)
 
 /**
 * @brief Check if the single-tap interrupt on INT_0 is enabled
-* @param int0SingleTap The returned single-tap interrupt enable state
+* @param[out] int0SingleTap The returned single-tap interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isSingleTapINT0Enabled(ITDS_state_t *int0SingleTap)
@@ -779,7 +795,7 @@ int8_t ITDS_isSingleTapINT0Enabled(ITDS_state_t *int0SingleTap)
 
 /**
 * @brief Enable/disable the wake-up interrupt on INT_0
-* @param int0WakeUp Wake-up interrupt enable state
+* @param[in] int0WakeUp Wake-up interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableWakeUpOnINT0(ITDS_state_t int0WakeUp)
@@ -798,7 +814,7 @@ int8_t ITDS_enableWakeUpOnINT0(ITDS_state_t int0WakeUp)
 
 /**
 * @brief Check if the wake-up interrupt on INT_0 is enabled
-* @param int0WakeUp The returned wake-up interrupt enable state
+* @param[out] int0WakeUp The returned wake-up interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isWakeUpOnINT0Enabled(ITDS_state_t *int0WakeUp)
@@ -816,7 +832,7 @@ int8_t ITDS_isWakeUpOnINT0Enabled(ITDS_state_t *int0WakeUp)
 
 /**
 * @brief Enable/disable the free-fall interrupt on INT_0
-* @param int0FreeFall Free-fall interrupt enable state
+* @param[in] int0FreeFall Free-fall interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFreeFallINT0(ITDS_state_t int0FreeFall)
@@ -835,7 +851,7 @@ int8_t ITDS_enableFreeFallINT0(ITDS_state_t int0FreeFall)
 
 /**
 * @brief Check if the free-fall interrupt on INT_0 is enabled
-* @param int0FreeFall The returned free-fall enable state
+* @param[out] int0FreeFall The returned free-fall enable state
 * @retval Error code
 */
 int8_t ITDS_isFreeFallINT0Enabled(ITDS_state_t *int0FreeFall)
@@ -855,7 +871,7 @@ int8_t ITDS_isFreeFallINT0Enabled(ITDS_state_t *int0FreeFall)
 
 /**
 * @brief Enable/disable the double-tap interrupt on INT_0
-* @param int0DoubleTap The double-tap interrupt enable state
+* @param[in] int0DoubleTap The double-tap interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableDoubleTapINT0(ITDS_state_t int0DoubleTap)
@@ -874,7 +890,7 @@ int8_t ITDS_enableDoubleTapINT0(ITDS_state_t int0DoubleTap)
 
 /**
 * @brief Check if the double-tap interrupt on INT_0 is enabled
-* @param int0DoubleTap The returned double-tap interrupt enable state
+* @param[out] int0DoubleTap The returned double-tap interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isDoubleTapINT0Enabled(ITDS_state_t *int0DoubleTap)
@@ -893,7 +909,7 @@ int8_t ITDS_isDoubleTapINT0Enabled(ITDS_state_t *int0DoubleTap)
 
 /**
 * @brief Enable/disable the FIFO full interrupt on INT_0
-* @param int0FifoFull FIFO full interrupt enable state
+* @param[in] int0FifoFull FIFO full interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFifoFullINT0(ITDS_state_t int0FifoFull)
@@ -912,7 +928,7 @@ int8_t ITDS_enableFifoFullINT0(ITDS_state_t int0FifoFull)
 
 /**
 * @brief Check if the FIFO full interrupt on INT_0 is enabled
-* @param int0FifoFull The returned FIFO full interrupt enable state
+* @param[out] int0FifoFull The returned FIFO full interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isFifoFullINT0Enabled(ITDS_state_t *int0FifoFull)
@@ -931,7 +947,7 @@ int8_t ITDS_isFifoFullINT0Enabled(ITDS_state_t *int0FifoFull)
 
 /**
 * @brief Enable/disable the FIFO threshold interrupt on INT_0
-* @param int0FifoThreshold FIFO threshold interrupt enable state
+* @param[in] int0FifoThreshold FIFO threshold interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFifoThresholdINT0(ITDS_state_t int0FifoThreshold)
@@ -950,7 +966,7 @@ int8_t ITDS_enableFifoThresholdINT0(ITDS_state_t int0FifoThreshold)
 
 /**
 * @brief Check if the FIFO threshold interrupt on INT_0 is enabled
-* @param int0FifoThreshold The returned FIFO threshold interrupt enable state
+* @param[out] int0FifoThreshold The returned FIFO threshold interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isFifoThresholdINT0Enabled(ITDS_state_t *int0FifoThreshold)
@@ -969,7 +985,7 @@ int8_t ITDS_isFifoThresholdINT0Enabled(ITDS_state_t *int0FifoThreshold)
 
 /**
 * @brief Enable/disable the data-ready interrupt on INT_0
-* @param int0DataReady Data-ready interrupt enable state
+* @param[in] int0DataReady Data-ready interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableDataReadyINT0(ITDS_state_t int0DataReady)
@@ -988,7 +1004,7 @@ int8_t ITDS_enableDataReadyINT0(ITDS_state_t int0DataReady)
 
 /**
 * @brief Check if the data-ready interrupt on INT_0 is enabled
-* @param int0DataReady The returned data-ready interrupt enable State
+* @param[out] int0DataReady The returned data-ready interrupt enable State
 * @retval Error code
 */
 int8_t ITDS_isDataReadyINT0Enabled(ITDS_state_t *int0DataReady)
@@ -1010,7 +1026,7 @@ int8_t ITDS_isDataReadyINT0Enabled(ITDS_state_t *int0DataReady)
 
 /**
 * @brief Enable/disable the sleep status interrupt on INT_1
-* @param int1SleepStatus Sleep status interrupt enable state
+* @param[in] int1SleepStatus Sleep status interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableSleepStatusINT1(ITDS_state_t int1SleepStatus)
@@ -1029,7 +1045,7 @@ int8_t ITDS_enableSleepStatusINT1(ITDS_state_t int1SleepStatus)
 
 /**
 * @brief Check if the sleep status interrupt on INT_1 is enabled
-* @param int1SleepStatus The returned sleep status interrupt enable state
+* @param[out] int1SleepStatus The returned sleep status interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isSleepStatusINT1Enabled(ITDS_state_t *int1SleepStatus)
@@ -1050,7 +1066,7 @@ int8_t ITDS_isSleepStatusINT1Enabled(ITDS_state_t *int1SleepStatus)
 * @brief Enable/disable the sleep status change interrupt on INT_1
 * (signaling transition from active to inactive and vice versa)
 *
-* @param int1SleepChange Sleep status change signal on INT_1
+* @param[in] int1SleepChange Sleep status change signal on INT_1
 * @retval Error code
 */
 int8_t ITDS_enableSleepStatusChangeINT1(ITDS_state_t int1SleepChange)
@@ -1071,7 +1087,7 @@ int8_t ITDS_enableSleepStatusChangeINT1(ITDS_state_t int1SleepChange)
 * @brief Check if the sleep status change interrupt on INT_1 is enabled
 * (signaling transition from active to inactive and vice versa)
 *
-* @param int1SleepChange The returned sleep status change interrupt state
+* @param[out] int1SleepChange The returned sleep status change interrupt state
 * @retval Error code
 */
 int8_t ITDS_isSleepStatusChangeINT1Enabled(ITDS_state_t *int1SleepChange)
@@ -1090,7 +1106,7 @@ int8_t ITDS_isSleepStatusChangeINT1Enabled(ITDS_state_t *int1SleepChange)
 
 /**
 * @brief Enable/disable the boot interrupt on INT_1
-* @param int1Boot Boot interrupt enable state
+* @param[in] int1Boot Boot interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableBootStatusINT1(ITDS_state_t int1Boot)
@@ -1109,7 +1125,7 @@ int8_t ITDS_enableBootStatusINT1(ITDS_state_t int1Boot)
 
 /**
 * @brief Check if the boot interrupt on INT_1 is enabled
-* @param int1Boot The returned boot interrupt enable state
+* @param[out] int1Boot The returned boot interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isBootStatusINT1Enabled(ITDS_state_t *int1Boot)
@@ -1128,7 +1144,7 @@ int8_t ITDS_isBootStatusINT1Enabled(ITDS_state_t *int1Boot)
 
 /**
 * @brief Enable/disable the temperature data-ready interrupt on INT_1
-* @param int1TempDataReady The temperature data-ready interrupt enable state
+* @param[in] int1TempDataReady The temperature data-ready interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableTempDataReadyINT1(ITDS_state_t int1TempDataReady)
@@ -1147,7 +1163,7 @@ int8_t ITDS_enableTempDataReadyINT1(ITDS_state_t int1TempDataReady)
 
 /**
 * @brief Check if the temperature data-ready interrupt on INT_1 is enabled
-* @param int1TempDataReady The returned temperature data-ready interrupt enable state
+* @param[out] int1TempDataReady The returned temperature data-ready interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isTempDataReadyINT1Enabled(ITDS_state_t *int1TempDataReady)
@@ -1166,7 +1182,7 @@ int8_t ITDS_isTempDataReadyINT1Enabled(ITDS_state_t *int1TempDataReady)
 
 /**
 * @brief Enable/disable the FIFO overrun interrupt on INT_1
-* @param int1FifoOverrun FIFO overrun interrupt enable state
+* @param[in] int1FifoOverrun FIFO overrun interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFifoOverrunIntINT1(ITDS_state_t int1FifoOverrun)
@@ -1185,7 +1201,7 @@ int8_t ITDS_enableFifoOverrunIntINT1(ITDS_state_t int1FifoOverrun)
 
 /**
 * @brief Check if the FIFO overrun interrupt on INT_1 is enabled
-* @param int1FifoOverrun The returned FIFO overrun interrupt enable state
+* @param[out] int1FifoOverrun The returned FIFO overrun interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isFifoOverrunIntINT1Enabled(ITDS_state_t *int1FifoOverrun)
@@ -1203,7 +1219,7 @@ int8_t ITDS_isFifoOverrunIntINT1Enabled(ITDS_state_t *int1FifoOverrun)
 
 /**
 * @brief Enable/disable the FIFO full interrupt on INT_1
-* @param int1FifoFull FIFO full interrupt enable state
+* @param[in] int1FifoFull FIFO full interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFifoFullINT1(ITDS_state_t int1FifoFull)
@@ -1222,7 +1238,7 @@ int8_t ITDS_enableFifoFullINT1(ITDS_state_t int1FifoFull)
 
 /**
 * @brief Check if the FIFO full interrupt on INT_1 is enabled
-* @param int1FifoFull The returned FIFO full interrupt enable state
+* @param[out] int1FifoFull The returned FIFO full interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isFifoFullINT1Enabled(ITDS_state_t *int1FifoFull)
@@ -1241,7 +1257,7 @@ int8_t ITDS_isFifoFullINT1Enabled(ITDS_state_t *int1FifoFull)
 
 /**
 * @brief Enable/disable the FIFO threshold interrupt on INT_1
-* @param int1FifoThresholdInt FIFO threshold interrupt enable state
+* @param[in] int1FifoThresholdInt FIFO threshold interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableFifoThresholdINT1(ITDS_state_t int1FifoThresholdInt)
@@ -1260,7 +1276,7 @@ int8_t ITDS_enableFifoThresholdINT1(ITDS_state_t int1FifoThresholdInt)
 
 /**
 * @brief Check if the FIFO threshold interrupt on INT_1 is enabled
-* @param int1FifoThresholdInt The returned FIFO threshold interrupt enable state
+* @param[out] int1FifoThresholdInt The returned FIFO threshold interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isFifoThresholdINT1Enabled(ITDS_state_t *int1FifoThresholdInt)
@@ -1278,7 +1294,7 @@ int8_t ITDS_isFifoThresholdINT1Enabled(ITDS_state_t *int1FifoThresholdInt)
 
 /**
 * @brief Enable/disable the data-ready interrupt on INT_1
-* @param int1DataReadyInt Data-ready interrupt enable state
+* @param[in] int1DataReadyInt Data-ready interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_enableDataReadyINT1(ITDS_state_t int1DataReadyInt)
@@ -1297,7 +1313,7 @@ int8_t ITDS_enableDataReadyINT1(ITDS_state_t int1DataReadyInt)
 
 /**
 * @brief Check if the data-ready interrupt on INT_1 is enabled
-* @param int1DataReadyInt The returned data-ready interrupt enable state
+* @param[out] int1DataReadyInt The returned data-ready interrupt enable state
 * @retval Error code
 */
 int8_t ITDS_isDataReadyINT1Enabled(ITDS_state_t *int1DataReadyInt)
@@ -1319,7 +1335,7 @@ int8_t ITDS_isDataReadyINT1Enabled(ITDS_state_t *int1DataReadyInt)
 
 /**
 * @brief Set the filtering cut-off
-* @param filteringCutoff Filtering cut-off
+* @param[in] filteringCutoff Filtering cut-off
 * @retval Error code
 */
 int8_t ITDS_setFilteringCutoff(ITDS_bandwidth_t filteringCutoff)
@@ -1338,7 +1354,7 @@ int8_t ITDS_setFilteringCutoff(ITDS_bandwidth_t filteringCutoff)
 
 /**
 * @brief Read filtering cut-off
-* @param filteringCutoff The returned filtering cut-off
+* @param[out] filteringCutoff The returned filtering cut-off
 * @retval Error code
 */
 int8_t ITDS_getFilteringCutoff(ITDS_bandwidth_t *filteringCutoff)
@@ -1357,7 +1373,7 @@ int8_t ITDS_getFilteringCutoff(ITDS_bandwidth_t *filteringCutoff)
 
 /**
 * @brief Set the full scale
-* @param fullScale Full scale
+* @param[in] fullScale Full scale
 * @retval Error code
 */
 int8_t ITDS_setFullScale(ITDS_fullScale_t fullScale)
@@ -1371,12 +1387,20 @@ int8_t ITDS_setFullScale(ITDS_fullScale_t fullScale)
 
   ctrl6.fullScale = fullScale;
 
-  return ITDS_WriteReg(ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+  int8_t errCode = ITDS_WriteReg(ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+
+  /* Store current full scale value to allow convenient conversion of sensor readings */
+  if (WE_SUCCESS == errCode)
+  {
+    currentFullScale = fullScale;
+  }
+
+  return errCode;
 }
 
 /**
 * @brief Read the full scale
-* @param fullScale The returned full scale.
+* @param[out] fullScale The returned full scale.
 * @retval Error code
 */
 int8_t ITDS_getFullScale(ITDS_fullScale_t *fullScale)
@@ -1389,13 +1413,16 @@ int8_t ITDS_getFullScale(ITDS_fullScale_t *fullScale)
   }
 
   *fullScale = (ITDS_fullScale_t) ctrl6.fullScale;
+  
+  /* Store current full scale value to allow convenient conversion of sensor readings */
+  currentFullScale = *fullScale;
 
   return WE_SUCCESS;
 }
 
 /**
 * @brief Set the filter type [low-pass filter/high-pass filter]
-* @param filterType Filter Type
+* @param[in] filterType Filter Type
 * @retval Error code
 */
 int8_t ITDS_setFilterPath(ITDS_filterType_t filterType)
@@ -1414,7 +1441,7 @@ int8_t ITDS_setFilterPath(ITDS_filterType_t filterType)
 
 /**
 * @brief Read the filter type
-* @param filterType The returned filter type
+* @param[out] filterType The returned filter type
 * @retval Error code
 */
 int8_t ITDS_getFilterPath(ITDS_filterType_t *filterType)
@@ -1433,7 +1460,7 @@ int8_t ITDS_getFilterPath(ITDS_filterType_t *filterType)
 
 /**
 * @brief Enable/disable the low noise configuration
-* @param lowNoise Low noise configuration
+* @param[in] lowNoise Low noise configuration
 * @retval Error code
 */
 int8_t ITDS_enableLowNoise(ITDS_state_t lowNoise)
@@ -1452,7 +1479,7 @@ int8_t ITDS_enableLowNoise(ITDS_state_t lowNoise)
 
 /**
 * @brief Read the low noise configuration
-* @param lowNoise The returned low noise configuration
+* @param[out] lowNoise The returned low noise configuration
 * @retval Error code
 */
 int8_t ITDS_isLowNoiseEnabled(ITDS_state_t *lowNoise)
@@ -1475,7 +1502,7 @@ int8_t ITDS_isLowNoiseEnabled(ITDS_state_t *lowNoise)
 
 /**
 * @brief Get overall sensor event status
-* @param status The returned sensor event data
+* @param[out] status The returned sensor event data
 * @retval Error code
 */
 int8_t ITDS_getStatusRegister(ITDS_status_t *status)
@@ -1485,7 +1512,7 @@ int8_t ITDS_getStatusRegister(ITDS_status_t *status)
 
 /**
 * @brief Check if new acceleration samples are available.
-* @param dataReady The returned data-ready state.
+* @param[out] dataReady The returned data-ready state.
 * @retval Error code
 */
 int8_t ITDS_isAccelerationDataReady(ITDS_state_t *dataReady)
@@ -1504,7 +1531,7 @@ int8_t ITDS_isAccelerationDataReady(ITDS_state_t *dataReady)
 
 /**
 * @brief Read the single-tap event state [not detected/detected]
-* @param singleTap The returned single-tap event state.
+* @param[out] singleTap The returned single-tap event state.
 * @retval Error code
 */
 int8_t ITDS_getSingleTapState(ITDS_state_t *singleTap)
@@ -1523,7 +1550,7 @@ int8_t ITDS_getSingleTapState(ITDS_state_t *singleTap)
 
 /**
 * @brief Read the double-tap event state [not detected/detected]
-* @param doubleTap The returned double-tap event state
+* @param[out] doubleTap The returned double-tap event state
 * @retval Error code
 */
 int8_t ITDS_getDoubleTapState(ITDS_state_t *doubleTap)
@@ -1541,8 +1568,8 @@ int8_t ITDS_getDoubleTapState(ITDS_state_t *doubleTap)
 }
 
 /**
-* @brief Read the sleep event state [not detected/detected]
-* @param sleepState The returned sleep event state.
+* @brief Read the sleep state [not sleeping/sleeping]
+* @param[out] sleepState The returned sleep state.
 * @retval Error code
 */
 int8_t ITDS_getSleepState(ITDS_state_t *sleepState)
@@ -1564,7 +1591,7 @@ int8_t ITDS_getSleepState(ITDS_state_t *sleepState)
 
 /**
 * @brief Read the raw X-axis acceleration sensor output
-* @param xRawAcc The returned raw X-axis acceleration
+* @param[out] xRawAcc The returned raw X-axis acceleration
 * @retval Error code
 */
 int8_t ITDS_getRawAccelerationX(int16_t *xRawAcc)
@@ -1589,23 +1616,23 @@ int8_t ITDS_getRawAccelerationX(int16_t *xRawAcc)
 
 /**
 * @brief Read the raw Y-axis acceleration sensor output
-* @param yRawAcc The returned raw Y-axis acceleration
+* @param[out] yRawAcc The returned raw Y-axis acceleration
 * @retval Error code
 */
 int8_t ITDS_getRawAccelerationY(int16_t *yRawAcc)
 {
-  int16_t yAxisAcceleration = 0;
+  int16_t yAxisAccelerationRaw = 0;
   uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg( ITDS_Y_OUT_L_REG, 2, tmp))
+  if (WE_FAIL == ITDS_ReadReg(ITDS_Y_OUT_L_REG, 2, tmp))
   {
     return WE_FAIL;
   }
 
-  yAxisAcceleration = (int16_t) (tmp[1] << 8);
-  yAxisAcceleration |= (int16_t) tmp[0];
+  yAxisAccelerationRaw = (int16_t) (tmp[1] << 8);
+  yAxisAccelerationRaw |= (int16_t) tmp[0];
 
-  *yRawAcc = yAxisAcceleration;
+  *yRawAcc = yAxisAccelerationRaw;
   return WE_SUCCESS;
 }
 
@@ -1614,23 +1641,23 @@ int8_t ITDS_getRawAccelerationY(int16_t *yRawAcc)
 
 /**
 * @brief Read the raw Z-axis acceleration sensor output
-* @param zRawAcc The returned raw Z-axis acceleration
+* @param[out] zRawAcc The returned raw Z-axis acceleration
 * @retval Error code
 */
 int8_t ITDS_getRawAccelerationZ(int16_t *zRawAcc)
 {
-  int16_t zAxisAcceleration = 0;
+  int16_t zAxisAccelerationRaw = 0;
   uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg( ITDS_Z_OUT_L_REG, 2, tmp))
+  if (WE_FAIL == ITDS_ReadReg(ITDS_Z_OUT_L_REG, 2, tmp))
   {
     return WE_FAIL;
   }
 
-  zAxisAcceleration = (int16_t) (tmp[1] << 8);
-  zAxisAcceleration |= (int16_t) tmp[0];
+  zAxisAccelerationRaw = (int16_t) (tmp[1] << 8);
+  zAxisAccelerationRaw |= (int16_t) tmp[0];
 
-  *zRawAcc = zAxisAcceleration;
+  *zRawAcc = zAxisAccelerationRaw;
   return WE_SUCCESS;
 }
 
@@ -1638,10 +1665,10 @@ int8_t ITDS_getRawAccelerationZ(int16_t *zRawAcc)
 /**
  * @brief Returns one or more acceleration samples (raw) for all axes.
  *
- * @param numSamples Number of samples to be read (1-32)
- * @param xRawAcc X-axis raw acceleration
- * @param yRawAcc Y-axis raw acceleration
- * @param zRawAcc Z-axis raw acceleration
+ * @param[in] numSamples Number of samples to be read (1-32)
+ * @param[out] xRawAcc X-axis raw acceleration
+ * @param[out] yRawAcc Y-axis raw acceleration
+ * @param[out] zRawAcc Z-axis raw acceleration
  * @retval Error code
  */
 int8_t ITDS_getRawAccelerations(uint8_t numSamples,
@@ -1688,12 +1715,408 @@ int8_t ITDS_getRawAccelerations(uint8_t numSamples,
   return WE_SUCCESS;
 }
 
+#ifdef WE_USE_FLOAT
+
+/**
+ * @brief Reads the X axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to 
+ * calling this function.
+ *
+ * @param[out] xAcc X axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationX_float(float *xAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationX(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *xAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Reads the Y axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to
+ * calling this function.
+ *
+ * @param[out] yAcc Y axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationY_float(float *yAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationY(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *yAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Reads the Z axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to
+ * calling this function.
+ *
+ * @param[out] zAcc Z axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationZ_float(float *zAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationZ(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *zAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Returns one or more acceleration samples in [mg] for all axes.
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to 
+ * calling this function.
+ *
+ * @param[in] numSamples Number of samples to be read (1-32)
+ * @param[out] xAcc X-axis acceleration in [mg]
+ * @param[out] yAcc Y-axis acceleration in [mg]
+ * @param[out] zAcc Z-axis acceleration in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerations_float(uint8_t numSamples,
+                                   float *xAcc,
+                                   float *yAcc,
+                                   float *zAcc)
+{
+  /* Max. buffer size is 192 (32 slot, 16 bit values) */
+  uint8_t buffer[192];
+
+  if (numSamples > 32)
+  {
+    return WE_FAIL;
+  }
+
+  if (WE_FAIL == ITDS_ReadReg(ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
+  {
+    return WE_FAIL;
+  }
+
+  uint16_t sample;
+  uint8_t *bufferPtr = buffer;
+  for (uint8_t i = 0; i < numSamples; i++)
+  {
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    xAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
+
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    yAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
+
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    zAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
+  }
+
+  return WE_SUCCESS;
+}
+
+/**
+* @brief Converts the supplied raw acceleration into [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @param[in] fullScale Accelerometer full scale
+* @retval The converted acceleration in [mg]
+*/
+float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale)
+{
+  switch (fullScale)
+  {
+  case ITDS_twoG:
+    return ITDS_convertAccelerationFs2g_float(acc);
+
+  case ITDS_fourG:
+    return ITDS_convertAccelerationFs4g_float(acc);
+
+  case ITDS_eightG:
+    return ITDS_convertAccelerationFs8g_float(acc);
+
+  case ITDS_sixteenG:
+    return ITDS_convertAccelerationFs16g_float(acc);
+
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_twoG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+float ITDS_convertAccelerationFs2g_float(int16_t acc)
+{
+  return ((float) acc) * 0.061f;
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_fourG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+float ITDS_convertAccelerationFs4g_float(int16_t acc)
+{
+  return ((float) acc) * 0.122f;
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_eightG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+float ITDS_convertAccelerationFs8g_float(int16_t acc)
+{
+  return ((float) acc) * 0.244f;
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_sixteenG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+float ITDS_convertAccelerationFs16g_float(int16_t acc)
+{
+  return ((float) acc) * 0.488f;
+}
+#endif /* WE_USE_FLOAT */
+
+
+/**
+ * @brief Reads the X axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to
+ * calling this function.
+ *
+ * @param[out] xAcc X axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationX_int(int16_t *xAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationX(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *xAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Reads the Y axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to
+ * calling this function.
+ *
+ * @param[out] yAcc Y axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationY_int(int16_t *yAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationY(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *yAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Reads the Z axis acceleration in [mg].
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to
+ * calling this function.
+ *
+ * @param[out] zAcc Z axis acceleration value in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerationZ_int(int16_t *zAcc)
+{
+  int16_t rawAcc;
+  if (WE_FAIL == ITDS_getRawAccelerationZ(&rawAcc))
+  {
+    return WE_FAIL;
+  }
+  *zAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+  return WE_SUCCESS;
+}
+
+/**
+ * @brief Returns one or more acceleration samples in [mg] for all axes.
+ *
+ * Note that this functions relies on the current full scale value. 
+ * Make sure that the current full scale value is known by calling 
+ * ITDS_setFullScale() or ITDS_getFullScale() at least once prior to 
+ * calling this function.
+ *
+ * @param[in] numSamples Number of samples to be read (1-32)
+ * @param[out] xAcc X-axis acceleration in [mg]
+ * @param[out] yAcc Y-axis acceleration in [mg]
+ * @param[out] zAcc Z-axis acceleration in [mg]
+ * @retval Error code
+ */
+int8_t ITDS_getAccelerations_int(uint8_t numSamples,
+                                 int16_t *xAcc,
+                                 int16_t *yAcc,
+                                 int16_t *zAcc)
+{
+  /* Max. buffer size is 192 (32 slot, 16 bit values) */
+  uint8_t buffer[192];
+
+  if (numSamples > 32)
+  {
+    return WE_FAIL;
+  }
+
+  if (WE_FAIL == ITDS_ReadReg(ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
+  {
+    return WE_FAIL;
+  }
+
+  uint16_t sample;
+  uint8_t *bufferPtr = buffer;
+  for (uint8_t i = 0; i < numSamples; i++)
+  {
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    xAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
+
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    yAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
+
+    sample = ((int16_t) *bufferPtr);
+    bufferPtr++;
+    sample |= (int16_t) ((*bufferPtr) << 8);
+    bufferPtr++;
+    zAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
+  }
+
+  return WE_SUCCESS;
+}
+
+/**
+* @brief Converts the supplied raw acceleration into [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @param[in] fullScale Accelerometer full scale
+* @retval The converted acceleration in [mg]
+*/
+int16_t ITDS_convertAcceleration_int(int16_t acc, ITDS_fullScale_t fullScale)
+{
+  switch (fullScale)
+  {
+  case ITDS_twoG:
+    return ITDS_convertAccelerationFs2g_int(acc);
+
+  case ITDS_sixteenG:
+    return ITDS_convertAccelerationFs16g_int(acc);
+
+  case ITDS_fourG:
+    return ITDS_convertAccelerationFs4g_int(acc);
+
+  case ITDS_eightG:
+    return ITDS_convertAccelerationFs8g_int(acc);
+
+  default:
+    return 0;
+  }
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_twoG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+int16_t ITDS_convertAccelerationFs2g_int(int16_t acc)
+{
+  return (int16_t) ((((int32_t) acc) * 61) / 1000);
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_fourG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+int16_t ITDS_convertAccelerationFs4g_int(int16_t acc)
+{
+  return (int16_t) ((((int32_t) acc) * 122) / 1000);
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_eightG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+int16_t ITDS_convertAccelerationFs8g_int(int16_t acc)
+{
+  return (int16_t) ((((int32_t) acc) * 244) / 1000);
+}
+
+/**
+* @brief Converts the supplied raw acceleration sampled using
+* ITDS_sixteenG to [mg]
+* @param[in] acc Raw acceleration value (accelerometer output)
+* @retval The converted acceleration in [mg]
+*/
+int16_t ITDS_convertAccelerationFs16g_int(int16_t acc)
+{
+  return (int16_t) ((((int32_t) acc) * 488) / 1000);
+}
+
 
 /* ITDS_T_OUT_REG */
 
 /**
 * @brief Read the 8 bit temperature
-* @param temp8bit The returned temperature
+* @param[out] temp8bit The returned temperature
 * @retval Error code
 */
 
@@ -1711,7 +2134,7 @@ int8_t ITDS_getTemperature8bit(uint8_t *temp8bit)
 
 /**
 * @brief Read the 12 bit temperature
-* @param temp12bit The returned temperature
+* @param[out] temp12bit The returned temperature
 * @retval Error code
 */
 int8_t  ITDS_getRawTemperature12bit(int16_t *temp12bit)
@@ -1739,7 +2162,7 @@ int8_t  ITDS_getRawTemperature12bit(int16_t *temp12bit)
 
 /**
 * @brief Read the 12 bit temperature in °C
-* @param tempDegC The returned temperature
+* @param[out] tempDegC The returned temperature
 * @retval Error code
 */
 int8_t  ITDS_getTemperature12bit(float *tempDegC)
@@ -1763,7 +2186,7 @@ int8_t  ITDS_getTemperature12bit(float *tempDegC)
 
 /**
 * @brief Set the FIFO threshold of the sensor
-* @param fifoThreshold FIFO threshold (value between 0 and 31)
+* @param[in] fifoThreshold FIFO threshold (value between 0 and 31)
 * @retval Error code
 */
 int8_t ITDS_setFifoThreshold(uint8_t fifoThreshold)
@@ -1782,7 +2205,7 @@ int8_t ITDS_setFifoThreshold(uint8_t fifoThreshold)
 
 /**
 * @brief Read the FIFO threshold
-* @param fifoThreshold The returned FIFO threshold (value between 0 and 31)
+* @param[out] fifoThreshold The returned FIFO threshold (value between 0 and 31)
 * @retval Error code
 */
 int8_t ITDS_getFifoThreshold(uint8_t *fifoThreshold)
@@ -1801,7 +2224,7 @@ int8_t ITDS_getFifoThreshold(uint8_t *fifoThreshold)
 
 /**
 * @brief Set the FIFO mode
-* @param fifoMode FIFO mode
+* @param[in] fifoMode FIFO mode
 * @retval Error code
 */
 int8_t ITDS_setFifoMode(ITDS_FifoMode_t fifoMode)
@@ -1820,7 +2243,7 @@ int8_t ITDS_setFifoMode(ITDS_FifoMode_t fifoMode)
 
 /**
 * @brief Read the FIFO mode
-* @param fifoMode The returned FIFO mode
+* @param[out] fifoMode The returned FIFO mode
 * @retval Error code
 */
 int8_t ITDS_getFifoMode(ITDS_FifoMode_t *fifoMode)
@@ -1842,7 +2265,7 @@ int8_t ITDS_getFifoMode(ITDS_FifoMode_t *fifoMode)
 
 /**
 * @brief Read the FIFO samples status
-* @param fifoSamplesStatus The returned FIFO samples status
+* @param[out] fifoSamplesStatus The returned FIFO samples status
 * @retval Error code
 */
 int8_t ITDS_getFifoSamplesRegister(ITDS_fifoSamples_t *fifoSamplesStatus)
@@ -1854,7 +2277,7 @@ int8_t ITDS_getFifoSamplesRegister(ITDS_fifoSamples_t *fifoSamplesStatus)
 * @brief Read the FIFO threshold state [FIFO filling is lower than threshold level /
 * FIFO filling is equal to or higher than the threshold level]
 *
-* @param fifoThr The returned FIFO threshold state
+* @param[out] fifoThr The returned FIFO threshold state
 * @retval Error code
 */
 int8_t ITDS_isFifoThresholdReached(ITDS_state_t *fifoThr)
@@ -1875,7 +2298,7 @@ int8_t ITDS_isFifoThresholdReached(ITDS_state_t *fifoThr)
 * @brief Read the FIFO overrun state [FIFO is not completely filled /
 * FIFO completely filled and at least one sample has been overwritten]
 *
-* @param fifoOverrun The returned FIFO overrun state.
+* @param[out] fifoOverrun The returned FIFO overrun state.
 * @retval Error code
 */
 int8_t ITDS_getFifoOverrunState(ITDS_state_t *fifoOverrun)
@@ -1894,7 +2317,7 @@ int8_t ITDS_getFifoOverrunState(ITDS_state_t *fifoOverrun)
 
 /**
 * @brief Read the FIFO fill level
-* @param fifoFill The returned FIFO fill level (0-32)
+* @param[out] fifoFill The returned FIFO fill level (0-32)
 * @retval Error code
 */
 int8_t ITDS_getFifoFillLevel(uint8_t *fifoFill)
@@ -1916,7 +2339,7 @@ int8_t ITDS_getFifoFillLevel(uint8_t *fifoFill)
 
 /**
 * @brief Enable/disable 4D orientation detection
-* @param detection4D The 4D orientation detection enable state
+* @param[in] detection4D The 4D orientation detection enable state
 * @retval Error code
 */
 int8_t ITDS_enable4DDetection(ITDS_state_t detection4D)
@@ -1935,7 +2358,7 @@ int8_t ITDS_enable4DDetection(ITDS_state_t detection4D)
 
 /**
 * @brief Check if 4D orientation detection is enabled
-* @param detection4D The returned 4D orientation detection enable state.
+* @param[out] detection4D The returned 4D orientation detection enable state.
 * @retval Error code
 */
 int8_t ITDS_is4DDetectionEnabled(ITDS_state_t *detection4D)
@@ -1954,7 +2377,7 @@ int8_t ITDS_is4DDetectionEnabled(ITDS_state_t *detection4D)
 
 /**
 * @brief Set the tap threshold for axis X
-* @param tapThresholdX Tap threshold for axis X (5 bits)
+* @param[in] tapThresholdX Tap threshold for axis X (5 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapThresholdX(uint8_t tapThresholdX)
@@ -1973,7 +2396,7 @@ int8_t ITDS_setTapThresholdX(uint8_t tapThresholdX)
 
 /**
 * @brief Read the tap threshold for axis X
-* @param tapThresholdX The returned tap threshold for axis X
+* @param[out] tapThresholdX The returned tap threshold for axis X
 * @retval Error code
 */
 int8_t ITDS_getTapThresholdX(uint8_t *tapThresholdX)
@@ -1985,14 +2408,14 @@ int8_t ITDS_getTapThresholdX(uint8_t *tapThresholdX)
     return WE_FAIL;
   }
 
-  *tapThresholdX = (ITDS_state_t) tapXThresh.xAxisTapThreshold;
+  *tapThresholdX = tapXThresh.xAxisTapThreshold;
 
   return WE_SUCCESS;
 }
 
 /**
 * @brief Set the 6D orientation detection threshold (degrees)
-* @param threshold6D 6D orientation detection threshold
+* @param[in] threshold6D 6D orientation detection threshold
 * @retval Error code
 */
 int8_t ITDS_set6DThreshold(ITDS_thresholdDegree_t threshold6D)
@@ -2011,7 +2434,7 @@ int8_t ITDS_set6DThreshold(ITDS_thresholdDegree_t threshold6D)
 
 /**
 * @brief Read the 6D orientation detection threshold (degrees)
-* @param threshold6D The returned 6D orientation detection threshold
+* @param[out] threshold6D The returned 6D orientation detection threshold
 * @retval Error code
 */
 int8_t ITDS_get6DThreshold(ITDS_thresholdDegree_t *threshold6D)
@@ -2033,7 +2456,7 @@ int8_t ITDS_get6DThreshold(ITDS_thresholdDegree_t *threshold6D)
 
 /**
 * @brief Set the tap threshold for axis Y
-* @param tapThresholdY Tap threshold for axis Y (5 bits)
+* @param[in] tapThresholdY Tap threshold for axis Y (5 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapThresholdY(uint8_t tapThresholdY)
@@ -2052,7 +2475,7 @@ int8_t ITDS_setTapThresholdY(uint8_t tapThresholdY)
 
 /**
 * @brief Read the tap threshold for axis Y
-* @param tapThresholdY The returned tap threshold for axis Y.
+* @param[out] tapThresholdY The returned tap threshold for axis Y.
 * @retval Error code
 */
 int8_t ITDS_getTapThresholdY(uint8_t *tapThresholdY)
@@ -2070,7 +2493,7 @@ int8_t ITDS_getTapThresholdY(uint8_t *tapThresholdY)
 
 /**
 * @brief Set the axis tap detection priority
-* @param priority Axis tap detection priority
+* @param[in] priority Axis tap detection priority
 * @retval Error code
 */
 int8_t ITDS_setTapAxisPriority(ITDS_tapAxisPriority_t priority)
@@ -2089,7 +2512,7 @@ int8_t ITDS_setTapAxisPriority(ITDS_tapAxisPriority_t priority)
 
 /**
 * @brief Read the axis tap detection priority
-* @param priority The returned axis tap detection priority
+* @param[out] priority The returned axis tap detection priority
 * @retval Error code
 */
 int8_t ITDS_getTapAxisPriority(ITDS_tapAxisPriority_t *priority)
@@ -2111,7 +2534,7 @@ int8_t ITDS_getTapAxisPriority(ITDS_tapAxisPriority_t *priority)
 
 /**
 * @brief Set the tap threshold for axis Z
-* @param tapThresholdZ Tap threshold for axis Z (5 bits)
+* @param[in] tapThresholdZ Tap threshold for axis Z (5 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapThresholdZ(uint8_t tapThresholdZ)
@@ -2130,7 +2553,7 @@ int8_t ITDS_setTapThresholdZ(uint8_t tapThresholdZ)
 
 /**
 * @brief Read the tap threshold for axis Z
-* @param tapThresholdZ The returned tap threshold for axis Z.
+* @param[out] tapThresholdZ The returned tap threshold for axis Z.
 * @retval Error code
 */
 int8_t ITDS_getTapThresholdZ(uint8_t *tapThresholdZ)
@@ -2149,7 +2572,7 @@ int8_t ITDS_getTapThresholdZ(uint8_t *tapThresholdZ)
 
 /**
 * @brief Enable/disable tap recognition in X direction
-* @param tapX Tap X direction state
+* @param[in] tapX Tap X direction state
 * @retval Error code
 */
 int8_t ITDS_enableTapX(ITDS_state_t tapX)
@@ -2168,7 +2591,7 @@ int8_t ITDS_enableTapX(ITDS_state_t tapX)
 
 /**
 * @brief Check if detection of tap events in X direction is enabled
-* @param tapX The returned tap X direction state
+* @param[out] tapX The returned tap X direction state
 * @retval Error code
 */
 int8_t ITDS_isTapXEnabled(ITDS_state_t *tapX)
@@ -2187,7 +2610,7 @@ int8_t ITDS_isTapXEnabled(ITDS_state_t *tapX)
 
 /**
 * @brief Enable/disable tap recognition in Y direction
-* @param tapY Tap Y direction state
+* @param[in] tapY Tap Y direction state
 * @retval Error code
 */
 int8_t ITDS_enableTapY(ITDS_state_t tapY)
@@ -2206,7 +2629,7 @@ int8_t ITDS_enableTapY(ITDS_state_t tapY)
 
 /**
 * @brief Check if detection of tap events in Y direction is enabled
-* @param tapY The returned tap Y direction state
+* @param[out] tapY The returned tap Y direction state
 * @retval Error code
 */
 int8_t ITDS_isTapYEnabled(ITDS_state_t *tapY)
@@ -2225,7 +2648,7 @@ int8_t ITDS_isTapYEnabled(ITDS_state_t *tapY)
 
 /**
 * @brief Enable/disable tap recognition in Z direction
-* @param tapZ Tap Z direction state
+* @param[in] tapZ Tap Z direction state
 * @retval Error code
 */
 int8_t ITDS_enableTapZ(ITDS_state_t tapZ)
@@ -2244,7 +2667,7 @@ int8_t ITDS_enableTapZ(ITDS_state_t tapZ)
 
 /**
 * @brief Check if detection of tap events in Z direction is enabled
-* @param tapZ The returned tap Z direction state
+* @param[out] tapZ The returned tap Z direction state
 * @retval Error code
 */
 int8_t ITDS_isTapZEnabled(ITDS_state_t *tapZ)
@@ -2266,7 +2689,7 @@ int8_t ITDS_isTapZEnabled(ITDS_state_t *tapZ)
 
 /**
 * @brief Set the maximum duration time gap for double-tap recognition (LATENCY)
-* @param latencyTime Latency value (4 bits)
+* @param[in] latencyTime Latency value (4 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapLatencyTime(uint8_t latencyTime)
@@ -2285,7 +2708,7 @@ int8_t ITDS_setTapLatencyTime(uint8_t latencyTime)
 
 /**
 * @brief Read the maximum duration time gap for double-tap recognition (LATENCY)
-* @param latencyTime The returned latency time
+* @param[out] latencyTime The returned latency time
 * @retval Error code
 */
 int8_t ITDS_getTapLatencyTime(uint8_t *latencyTime)
@@ -2297,14 +2720,14 @@ int8_t ITDS_getTapLatencyTime(uint8_t *latencyTime)
     return WE_FAIL;
   }
 
-  *latencyTime = (ITDS_state_t) intDuration.latency;
+  *latencyTime = intDuration.latency;
 
   return WE_SUCCESS;
 }
 
 /**
 * @brief Set the expected quiet time after a tap detection (QUIET)
-* @param quietTime Quiet time value (2 bits)
+* @param[in] quietTime Quiet time value (2 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapQuietTime(uint8_t quietTime)
@@ -2323,7 +2746,7 @@ int8_t ITDS_setTapQuietTime(uint8_t quietTime)
 
 /**
 * @brief Read the expected quiet time after a tap detection (QUIET)
-* @param quietTime The returned quiet time
+* @param[out] quietTime The returned quiet time
 * @retval Error code
 */
 int8_t ITDS_getTapQuietTime(uint8_t *quietTime)
@@ -2336,14 +2759,14 @@ int8_t ITDS_getTapQuietTime(uint8_t *quietTime)
     return WE_FAIL;
   }
 
-  *quietTime = (ITDS_state_t) intDuration.quiet;
+  *quietTime = intDuration.quiet;
 
   return WE_SUCCESS;
 }
 
 /**
 * @brief Set the maximum duration of over-threshold events (SHOCK)
-* @param shockTime Shock time value (2 bits)
+* @param[in] shockTime Shock time value (2 bits)
 * @retval Error code
 */
 int8_t ITDS_setTapShockTime(uint8_t shockTime)
@@ -2362,7 +2785,7 @@ int8_t ITDS_setTapShockTime(uint8_t shockTime)
 
 /**
 * @brief Read the maximum duration of over-threshold events (SHOCK)
-* @param shockTime The returned shock time.
+* @param[out] shockTime The returned shock time.
 * @retval Error code
 */
 int8_t ITDS_getTapShockTime(uint8_t *shockTime)
@@ -2384,7 +2807,7 @@ int8_t ITDS_getTapShockTime(uint8_t *shockTime)
 
 /**
 * @brief Enable/disable the single and double-tap event OR only single-tap event
-* @param doubleTap Tap event state [0: only single, 1: single and double-tap]
+* @param[in] doubleTap Tap event state [0: only single, 1: single and double-tap]
 * @retval Error code
 */
 int8_t ITDS_enableDoubleTapEvent(ITDS_state_t doubleTap)
@@ -2403,7 +2826,7 @@ int8_t ITDS_enableDoubleTapEvent(ITDS_state_t doubleTap)
 
 /**
 * @brief Check if double-tap events are enabled
-* @param doubleTap The returned tap event state [0: only single, 1: single and double-tap]
+* @param[out] doubleTap The returned tap event state [0: only single, 1: single and double-tap]
 * @retval Error code
 */
 int8_t ITDS_isDoubleTapEventEnabled(ITDS_state_t *doubleTap)
@@ -2422,7 +2845,7 @@ int8_t ITDS_isDoubleTapEventEnabled(ITDS_state_t *doubleTap)
 
 /**
 * @brief Enable/disable inactivity (sleep) detection
-* @param inactivity Sleep detection enable state
+* @param[in] inactivity Sleep detection enable state
 * @retval Error code
 */
 int8_t ITDS_enableInactivityDetection(ITDS_state_t inactivity)
@@ -2441,7 +2864,7 @@ int8_t ITDS_enableInactivityDetection(ITDS_state_t inactivity)
 
 /**
 * @brief Check if inactivity (sleep) detection is enabled
-* @param inactivity The returned inactivity (sleep) detection enable state.
+* @param[out] inactivity The returned inactivity (sleep) detection enable state.
 * @retval Error code
 */
 int8_t ITDS_isInactivityDetectionEnabled(ITDS_state_t *inactivity)
@@ -2460,7 +2883,7 @@ int8_t ITDS_isInactivityDetectionEnabled(ITDS_state_t *inactivity)
 
 /**
 * @brief Set wake-up threshold
-* @param wakeUpThresh Wake-up threshold (six bits)
+* @param[in] wakeUpThresh Wake-up threshold (six bits)
 * @retval Error code
 */
 int8_t ITDS_setWakeUpThreshold(uint8_t wakeUpThresh)
@@ -2479,7 +2902,7 @@ int8_t ITDS_setWakeUpThreshold(uint8_t wakeUpThresh)
 
 /**
 * @brief Read the wake-up threshold
-* @param wakeUpThresh The returned wake-up threshold.
+* @param[out] wakeUpThresh The returned wake-up threshold.
 * @retval Error code
 */
 int8_t ITDS_getWakeUpThreshold(uint8_t *wakeUpThresh)
@@ -2501,7 +2924,7 @@ int8_t ITDS_getWakeUpThreshold(uint8_t *wakeUpThresh)
 
 /**
 * @brief Set free-fall duration MSB
-* @param freeFallDurationMsb Free-fall duration MSB
+* @param[in] freeFallDurationMsb Free-fall duration MSB
 * @retval Error code
 */
 int8_t ITDS_setFreeFallDurationMSB(ITDS_state_t freeFallDurationMsb)
@@ -2520,7 +2943,7 @@ int8_t ITDS_setFreeFallDurationMSB(ITDS_state_t freeFallDurationMsb)
 
 /**
 * @brief Read the free-fall duration MSB
-* @param freeFallDurationMsb The returned free-fall duration MSB
+* @param[out] freeFallDurationMsb The returned free-fall duration MSB
 * @retval Error code
 */
 int8_t ITDS_getFreeFallDurationMSB(ITDS_state_t *freeFallDurationMsb)
@@ -2538,7 +2961,7 @@ int8_t ITDS_getFreeFallDurationMSB(ITDS_state_t *freeFallDurationMsb)
 
 /**
 * @brief Enable/disable stationary detection
-* @param stationary Stationary detection enable state
+* @param[in] stationary Stationary detection enable state
 * @retval Error code
 */
 int8_t ITDS_enableStationaryDetection(ITDS_state_t stationary)
@@ -2557,7 +2980,7 @@ int8_t ITDS_enableStationaryDetection(ITDS_state_t stationary)
 
 /**
 * @brief Check if stationary detection is enabled
-* @param stationary The returned stationary detection enable state
+* @param[out] stationary The returned stationary detection enable state
 * @retval Error code
 */
 int8_t ITDS_isStationaryDetectionEnabled(ITDS_state_t *stationary)
@@ -2576,7 +2999,7 @@ int8_t ITDS_isStationaryDetectionEnabled(ITDS_state_t *stationary)
 
 /**
 * @brief Set wake-up duration
-* @param duration Wake-up duration (two bits)
+* @param[in] duration Wake-up duration (two bits)
 * @retval Error code
 */
 int8_t ITDS_setWakeUpDuration(uint8_t duration)
@@ -2595,7 +3018,7 @@ int8_t ITDS_setWakeUpDuration(uint8_t duration)
 
 /**
 * @brief Read the wake-up duration
-* @param duration The returned wake-up duration (two bits)
+* @param[out] duration The returned wake-up duration (two bits)
 * @retval Error code
 */
 int8_t ITDS_getWakeUpDuration(uint8_t *duration)
@@ -2614,7 +3037,7 @@ int8_t ITDS_getWakeUpDuration(uint8_t *duration)
 
 /**
 * @brief Set the sleep mode duration
-* @param duration Sleep mode duration (4 bits)
+* @param[in] duration Sleep mode duration (4 bits)
 * @retval Error code
 */
 int8_t ITDS_setSleepDuration(uint8_t duration)
@@ -2633,7 +3056,7 @@ int8_t ITDS_setSleepDuration(uint8_t duration)
 
 /**
 * @brief Read the sleep mode duration
-* @param duration The returned sleep mode duration
+* @param[out] duration The returned sleep mode duration
 * @retval Error code
 */
 int8_t ITDS_getSleepDuration(uint8_t *duration)
@@ -2655,7 +3078,7 @@ int8_t ITDS_getSleepDuration(uint8_t *duration)
 
 /**
 * @brief Set the free-fall duration (both LSB and MSB).
-* @param freeFallDuration Free-fall duration (6 bits)
+* @param[in] freeFallDuration Free-fall duration (6 bits)
 * @retval Error code
 */
 int8_t ITDS_setFreeFallDuration(uint8_t freeFallDuration)
@@ -2670,7 +3093,7 @@ int8_t ITDS_setFreeFallDuration(uint8_t freeFallDuration)
 
 /**
 * @brief Read the free-fall duration (both LSB and MSB).
-* @param freeFallDuration The returned free-fall duration (6 bits)
+* @param[out] freeFallDuration The returned free-fall duration (6 bits)
 * @retval Error code
 */
 int8_t ITDS_getFreeFallDuration(uint8_t *freeFallDuration)
@@ -2694,7 +3117,7 @@ int8_t ITDS_getFreeFallDuration(uint8_t *freeFallDuration)
 
 /**
 * @brief Set free-fall duration LSB
-* @param freeFallDurationLsb Free-fall duration LSB (5 bits)
+* @param[in] freeFallDurationLsb Free-fall duration LSB (5 bits)
 * @retval Error code
 */
 int8_t ITDS_setFreeFallDurationLSB(uint8_t freeFallDurationLsb)
@@ -2713,7 +3136,7 @@ int8_t ITDS_setFreeFallDurationLSB(uint8_t freeFallDurationLsb)
 
 /**
 * @brief Read the free-fall duration LSB
-* @param freeFallDurationLsb The returned free-fall duration LSB (5 bits)
+* @param[out] freeFallDurationLsb The returned free-fall duration LSB (5 bits)
 * @retval Error code
 */
 int8_t ITDS_getFreeFallDurationLSB(uint8_t *freeFallDurationLsb)
@@ -2731,7 +3154,7 @@ int8_t ITDS_getFreeFallDurationLSB(uint8_t *freeFallDurationLsb)
 
 /**
 * @brief Set free-fall threshold
-* @param threshold Encoded free-fall threshold value (3 bits)
+* @param[in] threshold Encoded free-fall threshold value (3 bits)
 * @retval Error code
 */
 int8_t ITDS_setFreeFallThreshold(ITDS_FreeFallThreshold_t threshold)
@@ -2750,7 +3173,7 @@ int8_t ITDS_setFreeFallThreshold(ITDS_FreeFallThreshold_t threshold)
 
 /**
 * @brief Read the free-fall threshold
-* @param threshold The returned encoded free-fall threshold value (3 bits)
+* @param[out] threshold The returned encoded free-fall threshold value (3 bits)
 * @retval Error code
 */
 int8_t ITDS_getFreeFallThreshold(ITDS_FreeFallThreshold_t *threshold)
@@ -2772,7 +3195,7 @@ int8_t ITDS_getFreeFallThreshold(ITDS_FreeFallThreshold_t *threshold)
 
 /**
 * @brief Read the status detect register state
-* @param statusDetect The returned status detect register state
+* @param[out] statusDetect The returned status detect register state
 * @retval Error code
 */
 int8_t ITDS_getStatusDetectRegister(ITDS_statusDetect_t *statusDetect)
@@ -2782,7 +3205,7 @@ int8_t ITDS_getStatusDetectRegister(ITDS_statusDetect_t *statusDetect)
 
 /**
 * @brief Check if new temperature samples are available.
-* @param dataReady The returned data-ready state
+* @param[out] dataReady The returned data-ready state
 * @retval Error code
 */
 int8_t ITDS_isTemperatureDataReady(ITDS_state_t *dataReady)
@@ -2803,7 +3226,7 @@ int8_t ITDS_isTemperatureDataReady(ITDS_state_t *dataReady)
 
 /**
 * @brief Read the overall wake-up event status
-* @param status The returned wake-up event status
+* @param[out] status The returned wake-up event status
 * @retval Error code
 */
 int8_t ITDS_getWakeUpEventRegister(ITDS_wakeUpEvent_t *status)
@@ -2813,7 +3236,7 @@ int8_t ITDS_getWakeUpEventRegister(ITDS_wakeUpEvent_t *status)
 
 /**
 * @brief Read the wake-up event detection status on axis X
-* @param wakeUpX The returned wake-up event detection status on axis X.
+* @param[out] wakeUpX The returned wake-up event detection status on axis X.
 * @retval Error code
 */
 int8_t ITDS_isWakeUpXEvent(ITDS_state_t *wakeUpX)
@@ -2832,7 +3255,7 @@ int8_t ITDS_isWakeUpXEvent(ITDS_state_t *wakeUpX)
 
 /**
 * @brief Read the wake-up event detection status on axis Y
-* @param wakeUpY The returned wake-up event detection status on axis Y.
+* @param[out] wakeUpY The returned wake-up event detection status on axis Y.
 * @retval Error code
 */
 int8_t ITDS_isWakeUpYEvent(ITDS_state_t *wakeUpY)
@@ -2851,7 +3274,7 @@ int8_t ITDS_isWakeUpYEvent(ITDS_state_t *wakeUpY)
 
 /**
 * @brief Read the wake-up event detection status on axis Z
-* @param wakeUpZ The returned wake-up event detection status on axis Z.
+* @param[out] wakeUpZ The returned wake-up event detection status on axis Z.
 * @retval Error code
 */
 int8_t ITDS_isWakeUpZEvent(ITDS_state_t *wakeUpZ)
@@ -2870,7 +3293,7 @@ int8_t ITDS_isWakeUpZEvent(ITDS_state_t *wakeUpZ)
 
 /**
 * @brief Read the wake-up event detection status (wake-up event on any axis)
-* @param wakeUpState The returned wake-up event detection state.
+* @param[out] wakeUpState The returned wake-up event detection state.
 * @retval Error code
 */
 int8_t ITDS_isWakeUpEvent(ITDS_state_t *wakeUpState)
@@ -2889,7 +3312,7 @@ int8_t ITDS_isWakeUpEvent(ITDS_state_t *wakeUpState)
 
 /**
 * @brief Read the free-fall event state [not detected/detected]
-* @param freeFall The returned free-fall event status.
+* @param[out] freeFall The returned free-fall event status.
 * @retval Error code
 */
 int8_t ITDS_isFreeFallEvent(ITDS_state_t *freeFall)
@@ -2911,7 +3334,7 @@ int8_t ITDS_isFreeFallEvent(ITDS_state_t *freeFall)
 
 /**
 * @brief Read the overall tap event status
-* @param status The returned tap event status status
+* @param[out] status The returned tap event status
 * @retval Error code
 */
 int8_t ITDS_getTapEventRegister(ITDS_tapEvent_t *status)
@@ -2921,7 +3344,7 @@ int8_t ITDS_getTapEventRegister(ITDS_tapEvent_t *status)
 
 /**
 * @brief Read the tap event status (tap event on any axis)
-* @param tapEventState The returned tap event state
+* @param[out] tapEventState The returned tap event state
 * @retval Error code
 */
 int8_t ITDS_isTapEvent(ITDS_state_t *tapEventState)
@@ -2940,7 +3363,7 @@ int8_t ITDS_isTapEvent(ITDS_state_t *tapEventState)
 
 /**
 * @brief Read the tap event acceleration sign (direction of tap event)
-* @param tapSign The returned tap event acceleration sign
+* @param[out] tapSign The returned tap event acceleration sign
 * @retval Error code
 */
 int8_t ITDS_getTapSign(ITDS_tapSign_t *tapSign)
@@ -2959,7 +3382,7 @@ int8_t ITDS_getTapSign(ITDS_tapSign_t *tapSign)
 
 /**
 * @brief Read the tap event status on axis X
-* @param tapXAxis The returned tap event status on axis X.
+* @param[out] tapXAxis The returned tap event status on axis X.
 * @retval Error code
 */
 int8_t ITDS_isTapEventXAxis(ITDS_state_t *tapXAxis)
@@ -2978,7 +3401,7 @@ int8_t ITDS_isTapEventXAxis(ITDS_state_t *tapXAxis)
 
 /**
 * @brief Read the tap event status on axis Y
-* @param tapYAxis The returned tap event status on axis Y.
+* @param[out] tapYAxis The returned tap event status on axis Y.
 * @retval Error code
 */
 int8_t ITDS_isTapEventYAxis(ITDS_state_t *tapYAxis)
@@ -2997,14 +3420,14 @@ int8_t ITDS_isTapEventYAxis(ITDS_state_t *tapYAxis)
 
 /**
 * @brief Read the tap event status on axis Z
-* @param tapZAxis The returned tap event status on axis Z.
+* @param[out] tapZAxis The returned tap event status on axis Z.
 * @retval Error code
 */
 int8_t ITDS_isTapEventZAxis(ITDS_state_t *tapZAxis)
 {
   ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg( ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
+  if (WE_FAIL == ITDS_ReadReg(ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
   {
     return WE_FAIL;
   }
@@ -3019,7 +3442,7 @@ int8_t ITDS_isTapEventZAxis(ITDS_state_t *tapZAxis)
 
 /**
 * @brief Read register containing info on 6D orientation change event.
-* @param status The returned 6D event status.
+* @param[out] status The returned 6D event status.
 * @retval Error code
 */
 int8_t ITDS_get6dEventRegister(ITDS_6dEvent_t *status)
@@ -3029,14 +3452,14 @@ int8_t ITDS_get6dEventRegister(ITDS_6dEvent_t *status)
 
 /**
  * @brief Check if 6D orientation change event has occurred.
- * @param orientationChanged The returned 6D orientation change event status
+ * @param[out] orientationChanged The returned 6D orientation change event status
  * @retval Error code
  */
 int8_t ITDS_has6dOrientationChanged(ITDS_state_t *orientationChanged)
 {
   ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg( ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
+  if (WE_FAIL == ITDS_ReadReg(ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
   {
     return WE_FAIL;
   }
@@ -3048,7 +3471,7 @@ int8_t ITDS_has6dOrientationChanged(ITDS_state_t *orientationChanged)
 
 /**
 * @brief Read the XL over threshold state (6D orientation)
-* @param xlOverThreshold The returned XL over threshold state
+* @param[out] xlOverThreshold The returned XL over threshold state
 * @retval Error code
 */
 int8_t ITDS_isXLOverThreshold(ITDS_state_t *xlOverThreshold)
@@ -3067,7 +3490,7 @@ int8_t ITDS_isXLOverThreshold(ITDS_state_t *xlOverThreshold)
 
 /**
 * @brief Read the XH over threshold state (6D orientation)
-* @param xhOverThreshold The returned XH over threshold state
+* @param[out] xhOverThreshold The returned XH over threshold state
 * @retval Error code
 */
 int8_t ITDS_isXHOverThreshold(ITDS_state_t *xhOverThreshold)
@@ -3086,7 +3509,7 @@ int8_t ITDS_isXHOverThreshold(ITDS_state_t *xhOverThreshold)
 
 /**
 * @brief Read the YL over threshold state (6D orientation)
-* @param ylOverThreshold The returned YL over threshold state
+* @param[out] ylOverThreshold The returned YL over threshold state
 * @retval Error code
 */
 int8_t ITDS_isYLOverThreshold(ITDS_state_t *ylOverThreshold)
@@ -3105,7 +3528,7 @@ int8_t ITDS_isYLOverThreshold(ITDS_state_t *ylOverThreshold)
 
 /**
 * @brief Read the YH over threshold state (6D orientation)
-* @param yhOverThreshold The returned YH over threshold state
+* @param[out] yhOverThreshold The returned YH over threshold state
 * @retval Error code
 */
 int8_t ITDS_isYHOverThreshold(ITDS_state_t *yhOverThreshold)
@@ -3123,7 +3546,7 @@ int8_t ITDS_isYHOverThreshold(ITDS_state_t *yhOverThreshold)
 
 /**
 * @brief Read the ZL over threshold state (6D orientation)
-* @param zlOverThreshold The returned ZL over threshold state
+* @param[out] zlOverThreshold The returned ZL over threshold state
 * @retval Error code
 */
 int8_t ITDS_isZLOverThreshold(ITDS_state_t *zlOverThreshold)
@@ -3142,7 +3565,7 @@ int8_t ITDS_isZLOverThreshold(ITDS_state_t *zlOverThreshold)
 
 /**
 * @brief Read the ZH over threshold state (6D orientation)
-* @param zhOverThreshold The returned ZH over threshold state
+* @param[out] zhOverThreshold The returned ZH over threshold state
 * @retval Error code
 */
 int8_t ITDS_isZHOverThreshold(ITDS_state_t *zhOverThreshold)
@@ -3164,7 +3587,7 @@ int8_t ITDS_isZHOverThreshold(ITDS_state_t *zhOverThreshold)
 
 /**
 * @brief Read register containing info on all interrupt events
-* @param events The returned interrupt events status
+* @param[out] events The returned interrupt events status
 * @retval Error code
 */
 int8_t ITDS_getAllInterruptEvents(ITDS_allInterruptEvents_t *events)
@@ -3174,7 +3597,7 @@ int8_t ITDS_getAllInterruptEvents(ITDS_allInterruptEvents_t *events)
 
 /**
 * @brief Read the sleep change interrupt event state
-* @param sleep The returned sleep change interrupt event state
+* @param[out] sleep The returned sleep change interrupt event state
 * @retval Error code
 */
 int8_t ITDS_isSleepChangeEvent(ITDS_state_t *sleep)
@@ -3196,62 +3619,62 @@ int8_t ITDS_isSleepChangeEvent(ITDS_state_t *sleep)
 
 /**
 * @brief Set the user offset for axis X (for output data and/or wake-up)
-* @param offsetValueXAxis User offset for axis X
+* @param[in] offsetValueXAxis User offset for axis X
 * @retval Error code
 */
-int8_t ITDS_setOffsetValueX(uint8_t offsetValueXAxis)
+int8_t ITDS_setOffsetValueX(int8_t offsetValueXAxis)
 {
-  return ITDS_WriteReg(ITDS_X_OFS_USR_REG, 1, &offsetValueXAxis);
+  return ITDS_WriteReg(ITDS_X_OFS_USR_REG, 1, (uint8_t *) &offsetValueXAxis);
 }
 
 /**
 * @brief Read the user offset for axis X (for output data and/or wake-up)
-* @param offsetvalueXAxis The returned user offset for axis X.
+* @param[out] offsetvalueXAxis The returned user offset for axis X.
 * @retval Error code
 */
-int8_t ITDS_getOffsetValueX(uint8_t *offsetvalueXAxis)
+int8_t ITDS_getOffsetValueX(int8_t *offsetvalueXAxis)
 {
-  return ITDS_ReadReg(ITDS_X_OFS_USR_REG, 1, offsetvalueXAxis);
+  return ITDS_ReadReg(ITDS_X_OFS_USR_REG, 1, (uint8_t *) offsetvalueXAxis);
 }
 
 /**
 * @brief Set the user offset for axis Y (for output data and/or wake-up)
-* @param offsetValueYAxis User offset for axis Y
+* @param[in] offsetValueYAxis User offset for axis Y
 * @retval Error code
 */
-int8_t ITDS_setOffsetValueY(uint8_t offsetValueYAxis)
+int8_t ITDS_setOffsetValueY(int8_t offsetValueYAxis)
 {
-  return ITDS_WriteReg(ITDS_Y_OFS_USR_REG, 1, &offsetValueYAxis);
+  return ITDS_WriteReg(ITDS_Y_OFS_USR_REG, 1, (uint8_t *) &offsetValueYAxis);
 }
 
 /**
 * @brief Read the user offset for axis Y (for output data and/or wake-up)
-* @param offsetValueYAxis The returned user offset for axis Y.
+* @param[out] offsetValueYAxis The returned user offset for axis Y.
 * @retval Error code
 */
-int8_t ITDS_getOffsetValueY(uint8_t *offsetValueYAxis)
+int8_t ITDS_getOffsetValueY(int8_t *offsetValueYAxis)
 {
-  return ITDS_ReadReg(ITDS_Y_OFS_USR_REG, 1, offsetValueYAxis);
+  return ITDS_ReadReg(ITDS_Y_OFS_USR_REG, 1, (uint8_t *) offsetValueYAxis);
 }
 
 /**
 * @brief Set the user offset for axis Z (for output data and/or wake-up)
-* @param offsetvalueZAxis The user offset for axis Z
+* @param[in] offsetvalueZAxis The user offset for axis Z
 * @retval Error code
 */
-int8_t ITDS_setOffsetValueZ(uint8_t offsetvalueZAxis)
+int8_t ITDS_setOffsetValueZ(int8_t offsetvalueZAxis)
 {
-  return ITDS_WriteReg(ITDS_Z_OFS_USR_REG, 1, &offsetvalueZAxis);
+  return ITDS_WriteReg(ITDS_Z_OFS_USR_REG, 1, (uint8_t *) &offsetvalueZAxis);
 }
 
 /**
 * @brief Read the user offset for axis Z (for output data and/or wake-up)
-* @param offsetValueZAxis The returned user offset for axis Z.
+* @param[out] offsetValueZAxis The returned user offset for axis Z.
 * @retval Error code
 */
-int8_t ITDS_getOffsetValueZ(uint8_t *offsetValueZAxis)
+int8_t ITDS_getOffsetValueZ(int8_t *offsetValueZAxis)
 {
-  return ITDS_ReadReg(ITDS_Z_OFS_USR_REG, 1, offsetValueZAxis);
+  return ITDS_ReadReg(ITDS_Z_OFS_USR_REG, 1, (uint8_t *) offsetValueZAxis);
 }
 
 
@@ -3259,7 +3682,7 @@ int8_t ITDS_getOffsetValueZ(uint8_t *offsetValueZAxis)
 
 /**
 * @brief Select the data ready interrupt mode [latched mode / pulsed mode]
-* @param drdyPulsed Data ready interrupt mode
+* @param[in] drdyPulsed Data ready interrupt mode
 * @retval Error code
 */
 int8_t ITDS_setDataReadyPulsed(ITDS_drdyPulse_t drdyPulsed)
@@ -3278,7 +3701,7 @@ int8_t ITDS_setDataReadyPulsed(ITDS_drdyPulse_t drdyPulsed)
 
 /**
 * @brief Read the data ready interrupt mode [latched mode / pulsed mode]
-* @param drdyPulsed The returned data ready interrupt mode
+* @param[out] drdyPulsed The returned data ready interrupt mode
 * @retval Error code
 */
 int8_t ITDS_isDataReadyPulsed(ITDS_drdyPulse_t *drdyPulsed)
@@ -3297,7 +3720,7 @@ int8_t ITDS_isDataReadyPulsed(ITDS_drdyPulse_t *drdyPulsed)
 
 /**
 * @brief Enable signal routing from INT_1 to INT_0
-* @param int1OnInt0 Signal routing INT_1 to INT_0 state
+* @param[in] int1OnInt0 Signal routing INT_1 to INT_0 state
 * @retval Error code
 */
 int8_t ITDS_setInt1OnInt0(ITDS_state_t int1OnInt0)
@@ -3316,7 +3739,7 @@ int8_t ITDS_setInt1OnInt0(ITDS_state_t int1OnInt0)
 
 /**
 * @brief Check if signal routing from INT_1 to INT_0 is enabled
-* @param int1OnInt0 The returned routing enable state.
+* @param[out] int1OnInt0 The returned routing enable state.
 * @retval Error code
 */
 int8_t ITDS_getInt1OnInt0(ITDS_state_t *int1OnInt0)
@@ -3335,7 +3758,7 @@ int8_t ITDS_getInt1OnInt0(ITDS_state_t *int1OnInt0)
 
 /**
 * @brief Enable/disable interrupts
-* @param interrupts Interrupts enable state
+* @param[in] interrupts Interrupts enable state
 * @retval Error code
 */
 int8_t ITDS_enableInterrupts(ITDS_state_t interrupts)
@@ -3354,7 +3777,7 @@ int8_t ITDS_enableInterrupts(ITDS_state_t interrupts)
 
 /**
 * @brief Check if interrupts are enabled
-* @param interrupts The returned interrupts enable state.
+* @param[out] interrupts The returned interrupts enable state.
 * @retval Error code
 */
 int8_t ITDS_areInterruptsEnabled(ITDS_state_t *interrupts)
@@ -3373,7 +3796,7 @@ int8_t ITDS_areInterruptsEnabled(ITDS_state_t *interrupts)
 
 /**
 * @brief Enable/disable the application of the user offset values to output data
-* @param applyOffset State
+* @param[in] applyOffset State
 * @retval Error code
 */
 int8_t ITDS_enableApplyOffset(ITDS_state_t applyOffset)
@@ -3392,7 +3815,7 @@ int8_t ITDS_enableApplyOffset(ITDS_state_t applyOffset)
 
 /**
 * @brief Check if application of user offset values to output data is enabled.
-* @param applyOffset Returned enable state.
+* @param[out] applyOffset Returned enable state.
 * @retval Error code
 */
 int8_t ITDS_isApplyOffsetEnabled(ITDS_state_t *applyOffset)
@@ -3411,7 +3834,7 @@ int8_t ITDS_isApplyOffsetEnabled(ITDS_state_t *applyOffset)
 
 /**
 * @brief Enable/disable the application of user offset values to data only for wake-up functions
-* @param applyOffset State
+* @param[in] applyOffset State
 * @retval Error code
 */
 int8_t ITDS_enableApplyWakeUpOffset(ITDS_state_t applyOffset)
@@ -3430,7 +3853,7 @@ int8_t ITDS_enableApplyWakeUpOffset(ITDS_state_t applyOffset)
 
 /**
 * @brief Check if application user offset values to data only for wake-up functions is enabled
-* @param applyOffset The returned enable state
+* @param[out] applyOffset The returned enable state
 * @retval Error code
 */
 int8_t ITDS_isApplyWakeUpOffsetEnabled(ITDS_state_t *applyOffset)
@@ -3449,7 +3872,7 @@ int8_t ITDS_isApplyWakeUpOffsetEnabled(ITDS_state_t *applyOffset)
 
 /**
 * @brief Set the weight of the user offset words
-* @param offsetWeight Offset weight
+* @param[in] offsetWeight Offset weight
 * @retval Error code
 */
 int8_t ITDS_setOffsetWeight(ITDS_state_t offsetWeight)
@@ -3468,7 +3891,7 @@ int8_t ITDS_setOffsetWeight(ITDS_state_t offsetWeight)
 
 /**
 * @brief Read the weight of the user offset words
-* @param offsetWeight The returned offset weight.
+* @param[out] offsetWeight The returned offset weight.
 * @retval Error code
 */
 int8_t ITDS_getOffsetWeight(ITDS_state_t *offsetWeight)
@@ -3487,7 +3910,7 @@ int8_t ITDS_getOffsetWeight(ITDS_state_t *offsetWeight)
 
 /**
 * @brief Enable/disable high pass filter reference mode
-* @param refMode State
+* @param[in] refMode State
 * @retval Error code
 */
 int8_t ITDS_enableHighPassRefMode(ITDS_state_t refMode)
@@ -3506,7 +3929,7 @@ int8_t ITDS_enableHighPassRefMode(ITDS_state_t refMode)
 
 /**
 * @brief Check if high pass filter reference mode is enabled
-* @param refMode The returned reference mode state
+* @param[out] refMode The returned reference mode state
 * @retval Error code
 */
 int8_t ITDS_isHighPassRefModeEnabled(ITDS_state_t *refMode)
@@ -3525,7 +3948,7 @@ int8_t ITDS_isHighPassRefModeEnabled(ITDS_state_t *refMode)
 
 /**
 * @brief Enable/disable the low pass filter for 6D orientation detection
-* @param lowPassOn6D state
+* @param[in] lowPassOn6D Low pass filter enable state
 * @retval Error code
 */
 int8_t ITDS_enableLowPassOn6D(ITDS_state_t lowPassOn6D)
@@ -3544,7 +3967,7 @@ int8_t ITDS_enableLowPassOn6D(ITDS_state_t lowPassOn6D)
 
 /**
 * @brief Check if the low pass filter for 6D orientation detection is enabled
-* @param lowPassOn6D The returned enable state
+* @param[out] lowPassOn6D The returned low pass filter enable state
 * @retval Error code
 */
 int8_t ITDS_isLowPassOn6DEnabled(ITDS_state_t *lowPassOn6D)

@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,15 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief Driver file for the WSEN-HIDS sensor.
+ */
 
 #include "WSEN_HIDS_2523020210001.h"
 
@@ -36,7 +41,7 @@
 static WE_sensorInterface_t hidsSensorInterface = {
     .sensorType = WE_HIDS,
     .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = HIDS_ADDRESS_I2C_0, .burstMode = 0, .slaveTransmitterMode = 0, .reserved = 0},
+    .options = {.i2c = {.address = HIDS_ADDRESS_I2C_0, .burstMode = 1, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 1, .reserved = 0},
                 .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
                 .readTimeout = 1000,
                 .writeTimeout = 1000},
@@ -88,9 +93,9 @@ static int8_t HIDS_get_T1_degC();
 /**
  * @brief Read data from sensor.
  *
- * @param regAdr Address of register to read from
- * @param numBytesToRead Number of bytes to be read
- * @param data Target buffer
+ * @param[in] regAdr Address of register to read from
+ * @param[in] numBytesToRead Number of bytes to be read
+ * @param[out] data Target buffer
  * @return Error Code
  */
 static inline int8_t HIDS_ReadReg(uint8_t regAdr,
@@ -103,9 +108,9 @@ static inline int8_t HIDS_ReadReg(uint8_t regAdr,
 /**
  * @brief Write data to sensor.
  *
- * @param regAdr Address of register to write to
- * @param numBytesToWrite Number of bytes to be written
- * @param data Source buffer
+ * @param[in] regAdr Address of register to write to
+ * @param[in] numBytesToWrite Number of bytes to be written
+ * @param[in] data Source buffer
  * @return Error Code
  */
 static inline int8_t HIDS_WriteReg(uint8_t regAdr,
@@ -120,7 +125,7 @@ static inline int8_t HIDS_WriteReg(uint8_t regAdr,
  *
  * Note that the sensor type can't be changed.
  *
- * @param sensorInterface Sensor interface configuration
+ * @param[in] sensorInterface Sensor interface configuration
  * @return Error code
  */
 int8_t HIDS_initInterface(WE_sensorInterface_t* sensorInterface)
@@ -132,7 +137,7 @@ int8_t HIDS_initInterface(WE_sensorInterface_t* sensorInterface)
 
 /**
  * @brief Returns the sensor interface configuration.
- * @param sensorInterface Sensor interface configuration (output parameter)
+ * @param[out] sensorInterface Sensor interface configuration (output parameter)
  * @return Error code
  */
 int8_t HIDS_getInterface(WE_sensorInterface_t* sensorInterface)
@@ -155,7 +160,7 @@ int8_t HIDS_isInterfaceReady()
 *
 * The expected value is HIDS_DEVICE_ID_VALUE.
 *
-* @param deviceID The returned device ID.
+* @param[out] deviceID The returned device ID.
 * @return Error code
 */
 int8_t HIDS_getDeviceID(uint8_t *deviceID)
@@ -165,7 +170,7 @@ int8_t HIDS_getDeviceID(uint8_t *deviceID)
 
 /**
 * @brief Set the humidity average configuration
-* @param avgHum Humidity average parameter
+* @param[in] avgHum Humidity average parameter
 * @return Error code
 */
 uint8_t HIDS_setHumidityAverageConfig(HIDS_humidityAverageConfig_t avgHum)
@@ -184,7 +189,7 @@ uint8_t HIDS_setHumidityAverageConfig(HIDS_humidityAverageConfig_t avgHum)
 
 /**
 * @brief Read the humidity average configuration
-* @param avgHum The returned humidity average configuration
+* @param[out] avgHum The returned humidity average configuration
 * @return Error code
 */
 uint8_t HIDS_getHumidityAverageConfig(HIDS_humidityAverageConfig_t *avgHum)
@@ -203,7 +208,7 @@ uint8_t HIDS_getHumidityAverageConfig(HIDS_humidityAverageConfig_t *avgHum)
 
 /**
 * @brief Set the temperature average configuration
-* @param avgTemp Temperature average parameter
+* @param[in] avgTemp Temperature average parameter
 * @return Error code
 */
 uint8_t HIDS_setTemperatureAverageConfig(HIDS_temperatureAverageConfig_t avgTemp)
@@ -222,7 +227,7 @@ uint8_t HIDS_setTemperatureAverageConfig(HIDS_temperatureAverageConfig_t avgTemp
 
 /**
 * @brief Read the temperature average configuration
-* @param avgTemp The returned temperature average configuration
+* @param[out] avgTemp The returned temperature average configuration
 * @return Error code
 */
 uint8_t HIDS_getTemperatureAverageConfig(HIDS_temperatureAverageConfig_t *avgTemp)
@@ -241,7 +246,7 @@ uint8_t HIDS_getTemperatureAverageConfig(HIDS_temperatureAverageConfig_t *avgTem
 
 /**
 * @brief Set the output data rate of the sensor
-* @param odr Output data rate
+* @param[in] odr Output data rate
 * @return Error code
 */
 int8_t HIDS_setOutputDataRate(HIDS_outputDataRate_t odr)
@@ -260,7 +265,7 @@ int8_t HIDS_setOutputDataRate(HIDS_outputDataRate_t odr)
 
 /**
 * @brief Read the output data rate of the sensor
-* @param odr The returned output data rate
+* @param[out] odr The returned output data rate
 * @return Error code
 */
 int8_t HIDS_getOutputDataRate(HIDS_outputDataRate_t *odr)
@@ -279,7 +284,7 @@ int8_t HIDS_getOutputDataRate(HIDS_outputDataRate_t *odr)
 
 /**
 * @brief Enable/disable block data update mode
-* @param bdu Block data update state
+* @param[in] bdu Block data update state
 * @retval Error code
 */
 int8_t HIDS_enableBlockDataUpdate(HIDS_state_t bdu)
@@ -298,7 +303,7 @@ int8_t HIDS_enableBlockDataUpdate(HIDS_state_t bdu)
 
 /**
 * @brief Read the block data update state
-* @param bdu The returned block data update state
+* @param[out] bdu The returned block data update state
 * @return Error code
 */
 int8_t HIDS_isBlockDataUpdateEnabled(HIDS_state_t *bdu)
@@ -317,7 +322,7 @@ int8_t HIDS_isBlockDataUpdateEnabled(HIDS_state_t *bdu)
 
 /**
 * @brief Set the power control mode
-* @param pd Power control mode
+* @param[in] pd Power control mode
 * @return Error code
 */
 int8_t HIDS_setPowerMode(HIDS_powerMode_t pd)
@@ -336,7 +341,7 @@ int8_t HIDS_setPowerMode(HIDS_powerMode_t pd)
 
 /**
 * @brief Read the power control mode
-* @param pd The returned power control mode
+* @param[out] pd The returned power control mode
 * @return Error code
 */
 int8_t HIDS_getPowerMode(HIDS_powerMode_t *pd)
@@ -358,7 +363,7 @@ int8_t HIDS_getPowerMode(HIDS_powerMode_t *pd)
 *
 * Note: Depends on ctrl_reg_1.ODR = '00' (one-shot mode)
 *
-* @param oneShot One shot bit state
+* @param[in] oneShot One shot bit state
 * @return Error code
 */
 int8_t HIDS_enableOneShot(HIDS_state_t oneShot)
@@ -377,7 +382,7 @@ int8_t HIDS_enableOneShot(HIDS_state_t oneShot)
 
 /**
 * @brief Read the one shot bit state
-* @param oneShot The returned one shot bit state
+* @param[out] oneShot The returned one shot bit state
 * @return Error code
 */
 int8_t HIDS_isOneShotEnabled(HIDS_state_t *oneShot)
@@ -396,7 +401,7 @@ int8_t HIDS_isOneShotEnabled(HIDS_state_t *oneShot)
 
 /**
 * @brief Enable/disable the heater
-* @param heater Heater state
+* @param[in] heater Heater state
 * @return Error code
 */
 int8_t HIDS_enableHeater(HIDS_state_t heater)
@@ -415,7 +420,7 @@ int8_t HIDS_enableHeater(HIDS_state_t heater)
 
 /**
 * @brief Read the heater state
-* @param heater The returned heater state
+* @param[out] heater The returned heater state
 * @return Error code
 */
 int8_t HIDS_isHeaterEnabled(HIDS_state_t *heater)
@@ -434,7 +439,7 @@ int8_t HIDS_isHeaterEnabled(HIDS_state_t *heater)
 
 /**
 * @brief Enable the memory reboot
-* @param reboot Reboot state
+* @param[in] reboot Reboot state
 * @return Error code
 */
 int8_t HIDS_reboot(HIDS_state_t reboot)
@@ -453,7 +458,7 @@ int8_t HIDS_reboot(HIDS_state_t reboot)
 
 /**
 * @brief Read the reboot state
-* @param reboot The returned reboot state
+* @param[out] reboot The returned reboot state
 * @return Error code
 */
 int8_t HIDS_isRebooting(HIDS_state_t *rebooting)
@@ -472,7 +477,7 @@ int8_t HIDS_isRebooting(HIDS_state_t *rebooting)
 
 /**
 * @brief Enable/disable the data ready interrupt
-* @param drdy Data ready interrupt enabled/disabled
+* @param[in] drdy Data ready interrupt enabled/disabled
 * @return Error code
 */
 int8_t HIDS_enableDataReadyInterrupt(HIDS_state_t drdy)
@@ -491,7 +496,7 @@ int8_t HIDS_enableDataReadyInterrupt(HIDS_state_t drdy)
 
 /**
 * @brief Read the data ready interrupt enable state
-* @param drdy The returned data ready enable state
+* @param[out] drdy The returned data ready enable state
 * @return Error code
 */
 int8_t HIDS_isDataReadyInterruptEnabled(HIDS_state_t *drdy)
@@ -510,7 +515,7 @@ int8_t HIDS_isDataReadyInterruptEnabled(HIDS_state_t *drdy)
 
 /**
 * @brief Set the (data ready) interrupt pin type
-* @param pinConfig Interrupt pin type (push-pull / open drain)
+* @param[in] pinConfig Interrupt pin type (push-pull / open drain)
 * @return Error code
 */
 int8_t HIDS_setInterruptPinType(HIDS_interruptPinConfig_t pinType)
@@ -529,7 +534,7 @@ int8_t HIDS_setInterruptPinType(HIDS_interruptPinConfig_t pinType)
 
 /**
 * @brief Read the (data ready) interrupt pin type
-* @param pinConfig The returned interrupt pin type (push-pull / open drain)
+* @param[out] pinConfig The returned interrupt pin type (push-pull / open drain)
 * @return Error code
 */
 int8_t HIDS_getInterruptPinType(HIDS_interruptPinConfig_t *pinType)
@@ -548,7 +553,7 @@ int8_t HIDS_getInterruptPinType(HIDS_interruptPinConfig_t *pinType)
 
 /**
 * @brief Set the (data ready) output interrupt pin level
-* @param level Level of output interrupt pin
+* @param[in] level Level of output interrupt pin
 * @return Error code
 */
 int8_t HIDS_setInterruptActiveLevel(HIDS_interruptActiveLevel_t level)
@@ -567,7 +572,7 @@ int8_t HIDS_setInterruptActiveLevel(HIDS_interruptActiveLevel_t level)
 
 /**
 * @brief Read the (data ready) output interrupt pin level
-* @param level The returned output interrupt pin level
+* @param[out] level The returned output interrupt pin level
 * @return Error code
 */
 int8_t HIDS_getInterruptActiveLevel(HIDS_interruptActiveLevel_t *level)
@@ -586,7 +591,7 @@ int8_t HIDS_getInterruptActiveLevel(HIDS_interruptActiveLevel_t *level)
 
 /**
 * @brief Check if a new humidity data sample is available
-* @param state Is set to true if a new sample is available
+* @param[out] state Is set to true if a new sample is available
 * @return Error code
 */
 int8_t HIDS_isHumidityDataAvailable(HIDS_state_t *state)
@@ -605,7 +610,7 @@ int8_t HIDS_isHumidityDataAvailable(HIDS_state_t *state)
 
 /**
 * @brief Check if a new temperature data sample is available
-* @param state Is set to true if a new sample is available
+* @param[out] state Is set to true if a new sample is available
 * @return Error code
 */
 int8_t HIDS_isTemperatureDataAvailable(HIDS_state_t *state)
@@ -624,7 +629,7 @@ int8_t HIDS_isTemperatureDataAvailable(HIDS_state_t *state)
 
 /**
 * @brief Read a raw humidity value
-* @param rawHumidity The returned raw humidity
+* @param[out] rawHumidity The returned raw humidity
 * @return Error code
 */
 int8_t HIDS_getRawHumidity(int16_t *rawHumidity)
@@ -645,7 +650,7 @@ int8_t HIDS_getRawHumidity(int16_t *rawHumidity)
 
 /**
 * @brief Read a raw temperature value
-* @param rawTemp The returned raw temperature
+* @param[out] rawTemp The returned raw temperature
 * @return Error code
 */
 int8_t HIDS_getRawTemperature(int16_t *rawTemp)
@@ -666,8 +671,8 @@ int8_t HIDS_getRawTemperature(int16_t *rawTemp)
 
 /**
 * @brief Read raw temperature and humidity values
-* @param rawHumidity The returned raw humidity
-* @param rawTemp The returned raw temperature
+* @param[out] rawHumidity The returned raw humidity
+* @param[out] rawTemp The returned raw temperature
 * @return Error code
 */
 int8_t HIDS_getRawValues(int16_t *rawHumidity, int16_t *rawTemp)
@@ -697,13 +702,50 @@ int8_t HIDS_getRawValues(int16_t *rawHumidity, int16_t *rawTemp)
 *
 * Note: Architecture must support float
 *
-* @param humidity The returned humidity in %
+* @param[out] humidity The returned humidity in %
 * @return Error code
 */
 int8_t HIDS_getHumidity_float(float *humidity)
 {
   int16_t rawHumidity;
+  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
+  {
+    *humidity = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertHumidity_float(rawHumidity, humidity);
+}
 
+/**
+* @brief Read the temperature
+*
+* Note: Architecture must support float
+*
+* @param[out] tempDegC The returned temperature in °C
+* @return Error code
+*/
+int8_t HIDS_getTemperature_float(float *tempDegC)
+{
+  int16_t tempRaw;
+  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
+  {
+    *tempDegC = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertTemperature_float(tempRaw, tempDegC);
+}
+
+/**
+* @brief Convert raw humidity to humidity in %
+*
+* Note: Architecture must support float
+*
+* @param[in] rawHumidity The raw humidity to be converted
+* @param[out] humidity The returned humidity in %
+* @return Error code
+*/
+int8_t HIDS_convertHumidity_float(int16_t rawHumidity, float *humidity)
+{
   if (hidsCalibrationData.calibrationPresent == 0)
   {
     if (WE_FAIL == HIDS_readCalibrationData())
@@ -711,12 +753,6 @@ int8_t HIDS_getHumidity_float(float *humidity)
       *humidity = 0;
       return WE_FAIL;
     }
-  }
-
-  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
   }
 
   *humidity = ((((float) hidsCalibrationData.H1_rh - (float) hidsCalibrationData.H0_rh) * ((float) rawHumidity - (float) hidsCalibrationData.H0_T0_out))) /
@@ -735,17 +771,16 @@ int8_t HIDS_getHumidity_float(float *humidity)
 }
 
 /**
-* @brief Read the temperature
+* @brief Convert raw temperature to temperature in °C
 *
 * Note: Architecture must support float
 *
-* @param tempDegC The returned temperature in °C
+* @param[in] rawTemp The raw temperature to be converted
+* @param[out] tempDegC The returned temperature in °C
 * @return Error code
 */
-int8_t HIDS_getTemperature_float(float *tempDegC)
+int8_t HIDS_convertTemperature_float(int16_t rawTemp, float *tempDegC)
 {
-  int16_t tempRaw;
-
   if (hidsCalibrationData.calibrationPresent == 0)
   {
     if (WE_FAIL == HIDS_readCalibrationData())
@@ -755,33 +790,60 @@ int8_t HIDS_getTemperature_float(float *tempDegC)
     }
   }
 
-  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
-  {
-    *tempDegC = 0;
-    return WE_FAIL;
-  }
-
   // Decode temperature
   // Calculate temperature in degrees Celsius
   // Provide signed Celsius measurement unit
 
-  *tempDegC = (float) (((int16_t) tempRaw - (int16_t) hidsCalibrationData.T0_out) * (float) ((int16_t) hidsCalibrationData.T1_degC - (int16_t) hidsCalibrationData.T0_degC)) /
+  *tempDegC = (float) (((int16_t) rawTemp - (int16_t) hidsCalibrationData.T0_out) * (float) ((int16_t) hidsCalibrationData.T1_degC - (int16_t) hidsCalibrationData.T0_degC)) /
       (float) ((int16_t) hidsCalibrationData.T1_out - (int16_t) hidsCalibrationData.T0_out) + (float) ((int16_t) hidsCalibrationData.T0_degC);
 
   return WE_SUCCESS;
 }
+
 #endif /* WE_USE_FLOAT */
 
 
 
 /**
 * @brief Read the humidity
-* @param humidity The returned humidity in 0...100 % RH
+* @param[out] humidity The returned humidity in 0...100 % RH
 * @return Error code
 */
 int8_t HIDS_getHumidity_int8(int8_t *humidity)
 {
   int16_t rawHumidity;
+  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
+  {
+    *humidity = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertHumidity_int8(rawHumidity, humidity);
+}
+
+/**
+* @brief Read the temperature
+* @param[out] tempDegC The returned temperature in -40...+85 °C
+* @return Error code
+*/
+int8_t HIDS_getTemperature_int8(int8_t *tempDegC)
+{
+  int16_t tempRaw;
+  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
+  {
+    *tempDegC = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertTemperature_int8(tempRaw, tempDegC);
+}
+
+/**
+* @brief Convert raw humidity to 0...100 % RH
+* @param[in] rawHumidity The raw humidity to be converted
+* @param[out] humidity The returned humidity in 0...100 % RH
+* @return Error code
+*/
+int8_t HIDS_convertHumidity_int8(int16_t rawHumidity, int8_t *humidity)
+{
   int32_t relHum;
 
   if (hidsCalibrationData.calibrationPresent == 0)
@@ -790,12 +852,6 @@ int8_t HIDS_getHumidity_int8(int8_t *humidity)
     {
       return WE_FAIL;
     }
-  }
-
-  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
   }
 
   relHum = (((int32_t) hidsCalibrationData.H1_rh - (int32_t) hidsCalibrationData.H0_rh) * ((int32_t) rawHumidity - (int32_t) hidsCalibrationData.H0_T0_out)) /
@@ -816,13 +872,13 @@ int8_t HIDS_getHumidity_int8(int8_t *humidity)
 }
 
 /**
-* @brief Read the temperature
-* @param tempDegC The returned temperature in -40...+85 °C
+* @brief Convert raw temperature to °C
+* @param[in] rawTemp The raw temperature to be converted
+* @param[out] tempDegC The returned temperature in -40...+85 °C
 * @return Error code
 */
-int8_t HIDS_getTemperature_int8(int8_t *tempDegC)
+int8_t HIDS_convertTemperature_int8(int16_t rawTemp, int8_t *tempDegC)
 {
-  int16_t tempRaw;
   int32_t tTemp;
 
   if (hidsCalibrationData.calibrationPresent == 0)
@@ -834,14 +890,8 @@ int8_t HIDS_getTemperature_int8(int8_t *tempDegC)
     }
   }
 
-  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
-  {
-    *tempDegC = 0;
-    return WE_FAIL;
-  }
-
   // Calculate temperature in full degrees
-  tTemp = (((int32_t) tempRaw - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) /
+  tTemp = (((int32_t) rawTemp - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) /
       ((int32_t) hidsCalibrationData.T1_out - (int32_t) hidsCalibrationData.T0_out) + (int32_t) hidsCalibrationData.T0_degC;
 
   if (tTemp > 85)
@@ -860,12 +910,44 @@ int8_t HIDS_getTemperature_int8(int8_t *tempDegC)
 
 /**
  * @brief Read the humidity
- * @param humidity The returned humidity in 0.01%
+ * @param[out] humidity The returned humidity in 0.01%
  * @return Error code
  */
 int8_t HIDS_getHumidity_uint16(uint16_t *humidity)
 {
   int16_t rawHumidity;
+  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
+  {
+    *humidity = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertHumidity_uint16(rawHumidity, humidity);
+}
+
+/**
+ * @brief Read the temperature
+ * @param[out] temperature The returned temperature in 0.01°C
+ * @return Error code
+ */
+int8_t HIDS_getTemperature_int16(int16_t *temperature)
+{
+  int16_t tempRaw;
+  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
+  {
+    *temperature = 0;
+    return WE_FAIL;
+  }
+  return HIDS_convertTemperature_int16(tempRaw, temperature);
+}
+
+/**
+ * @brief Convert raw humidity to 0.01%
+ * @param[in] rawHumidity The raw humidity to be converted
+ * @param[out] humidity The returned humidity in 0.01%
+ * @return Error code
+ */
+int8_t HIDS_convertHumidity_uint16(int16_t rawHumidity, uint16_t *humidity)
+{
   int32_t relHum;
   
   if (hidsCalibrationData.calibrationPresent == 0)
@@ -875,12 +957,6 @@ int8_t HIDS_getHumidity_uint16(uint16_t *humidity)
       *humidity = 0;
       return WE_FAIL;
     }
-  }
-
-  if (WE_FAIL == HIDS_getRawHumidity(&rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
   }
 
   // Decode Humidity
@@ -906,13 +982,13 @@ int8_t HIDS_getHumidity_uint16(uint16_t *humidity)
 }
 
 /**
- * @brief Read the temperature
- * @param temperature The returned temperature in 0.01°C
+ * @brief Convert raw temperature to 0.01°C
+ * @param[in] rawTemp The raw temperature to be converted
+ * @param[out] temperature The returned temperature in 0.01°C
  * @return Error code
  */
-int8_t HIDS_getTemperature_int16(int16_t *temperature)
+int8_t HIDS_convertTemperature_int16(int16_t rawTemp, int16_t *temperature)
 {
-  int16_t tempRaw;
   int32_t tTemp;
 
   if (hidsCalibrationData.calibrationPresent == 0)
@@ -924,17 +1000,11 @@ int8_t HIDS_getTemperature_int16(int16_t *temperature)
     }
   }
 
-  if (WE_FAIL == HIDS_getRawTemperature(&tempRaw))
-  {
-    *temperature = 0;
-    return WE_FAIL;
-  }
-
   // Decode temperature
   // Calculate temperature in decimal of degree
   // centigrade i.e. 15.0 = 1500.
 
-  tTemp = ((((int32_t) tempRaw - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) * 100) /
+  tTemp = ((((int32_t) rawTemp - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) * 100) /
       ((int32_t) hidsCalibrationData.T1_out - (int32_t) hidsCalibrationData.T0_out) + (((int32_t) hidsCalibrationData.T0_degC) * 100);
 
   // provide signed celsius*100 measurement unit
@@ -1203,4 +1273,4 @@ static int8_t HIDS_get_T1_degC()
   return WE_SUCCESS;
 }
 
-/**         EOF         */
+/*         EOF         */

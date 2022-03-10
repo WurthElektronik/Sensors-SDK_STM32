@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS SPI example.
+ *
+ * Demonstrates basic usage of the ITDS accelerometer connected via SPI.
+ */
 
 #include "WSEN_ITDS_SPI_EXAMPLE.h"
 
@@ -83,7 +90,7 @@ void WE_itdsSpiExampleInit()
 void WE_itdsSpiExampleLoop()
 {
   /* This example puts the sensor in high performance mode and polls data every second.
-   * See the WSEN_ITDS i2c example for basic usage of the sensor and the various WSEN_*
+   * See the WSEN_ITDS i2c example for basic usage of the sensor and the various WSEN_ITDS_*
    * examples for specific usage scenarios. */
 
   /* Wait until the value is ready to read */
@@ -93,46 +100,22 @@ void WE_itdsSpiExampleLoop()
     ITDS_isAccelerationDataReady(&dataReady);
   } while (dataReady == ITDS_disable);
 
-  /* Read raw acceleration values */
-  int16_t xRawAcc = 0;
-  int16_t yRawAcc = 0;
-  int16_t zRawAcc = 0;
-  if (ITDS_getRawAccelerationX(&xRawAcc) != WE_SUCCESS)
+  /* Retrieve and print acceleration data.
+   * Here, the acceleration values of all axes in [mg] are read in one go.
+   * Note that as an alternative, there are also functions to get the values for single
+   * axes or to get the raw, unconverted values. */
+
+  int16_t xAcc, yAcc, zAcc;
+  if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
   {
-    debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-    xRawAcc = 0;
+    debugPrintAcceleration_int("X", xAcc);
+    debugPrintAcceleration_int("Y", yAcc);
+    debugPrintAcceleration_int("Z", zAcc);
   }
-  if (ITDS_getRawAccelerationY(&yRawAcc) != WE_SUCCESS)
+  else
   {
-    debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-    yRawAcc = 0;
+    debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
   }
-  if (ITDS_getRawAccelerationZ(&zRawAcc) != WE_SUCCESS)
-  {
-    debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-    zRawAcc = 0;
-  }
-
-  /* Shift by 2 as 14bit resolution is used in high performance mode */
-  xRawAcc = xRawAcc >> 2;
-  yRawAcc = yRawAcc >> 2;
-  zRawAcc = zRawAcc >> 2;
-
-  int32_t xAcceleration = 0;
-  int32_t yAcceleration = 0;
-  int32_t zAcceleration = 0;
-
-  xAcceleration = (int32_t) xRawAcc;
-  xAcceleration = (xAcceleration * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-  debugPrintAcceleration_int("X", xAcceleration);
-
-  yAcceleration = (int32_t) yRawAcc;
-  yAcceleration = (yAcceleration * 1952) / 1000;
-  debugPrintAcceleration_int("Y", yAcceleration);
-
-  zAcceleration = (int32_t) zRawAcc;
-  zAcceleration = (zAcceleration * 1952) / 1000;
-  debugPrintAcceleration_int("Z", zAcceleration);
 
   /* Wait 1s */
   HAL_Delay(1000);

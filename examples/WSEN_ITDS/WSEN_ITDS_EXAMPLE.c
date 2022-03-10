@@ -1,4 +1,4 @@
-/**
+/*
  ***************************************************************************************************
  * This file is part of Sensors SDK:
  * https://www.we-online.com/sensors, https://github.com/WurthElektronik/Sensors-SDK_STM32
@@ -18,10 +18,17 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2021 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
- **/
+ */
+
+/**
+ * @file
+ * @brief WSEN_ITDS example.
+ *
+ * Demonstrates basic usage of the ITDS accelerometer connected via I2C.
+ */
 
 #include "WSEN_ITDS_EXAMPLE.h"
 
@@ -209,9 +216,6 @@ void ITDS_startHighPerformanceMode()
   debugPrintln("Starting high performance mode...");
 
   ITDS_state_t dataReady = ITDS_disable;
-  int16_t xRawAcc = 0;
-  int16_t yRawAcc = 0;
-  int16_t zRawAcc = 0;
 
   /* Enable high performance mode */
   ITDS_setOperatingMode(ITDS_highPerformance);
@@ -234,74 +238,45 @@ void ITDS_startHighPerformanceMode()
       ITDS_isAccelerationDataReady(&dataReady);
     } while (dataReady == ITDS_disable);
 
-    /* Read raw acceleration values */
-    if (ITDS_getRawAccelerationX(&xRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-      xRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationY(&yRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-      yRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationZ(&zRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-      zRawAcc = 0;
-    }
-
-    /* Shift by 2 as 14bit resolution is used in high performance mode */
-    xRawAcc = xRawAcc >> 2;
-    yRawAcc = yRawAcc >> 2;
-    zRawAcc = zRawAcc >> 2;
+    /* Below, you'll find examples for reading acceleration values of all axes in [mg],
+     * either as float or as integer. Note that as an alternative, there are also
+     * functions to get the values for single axes or to get the raw, unconverted values. */
 
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
-      float xAcceleration = 0.0f;
-      float yAcceleration = 0.0f;
-      float zAcceleration = 0.0f;
+      float xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_float("X", xAcc);
+        debugPrintAcceleration_float("Y", yAcc);
+        debugPrintAcceleration_float("Z", zAcc);
 
-      xAcceleration = (float) xRawAcc;
-      xAcceleration = xAcceleration / 1000;  /* mg to g */
-      xAcceleration = xAcceleration * 1.952; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-      debugPrintAcceleration_float("X", xAcceleration);
-
-      yAcceleration = (float) yRawAcc;
-      yAcceleration = yAcceleration / 1000;
-      yAcceleration = yAcceleration * 1.952;
-      debugPrintAcceleration_float("Y", yAcceleration);
-
-      zAcceleration = (float) zRawAcc;
-      zAcceleration = zAcceleration / 1000;
-      zAcceleration = zAcceleration * 1.952;
-      debugPrintAcceleration_float("Z", zAcceleration);
-
-      float accSum = sqrtf((xAcceleration * xAcceleration) +
-              (yAcceleration * yAcceleration) +
-              (zAcceleration * zAcceleration));
-      debugPrintAcceleration_float("sum", accSum);
+        float accSum = sqrtf((xAcc * xAcc) +
+                (yAcc * yAcc) +
+                (zAcc * zAcc));
+        debugPrintAcceleration_float("sum", accSum);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_float(): NOT OK ****");
+      }
     }
 
 #endif
 
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
-      int32_t xAcceleration = 0;
-      int32_t yAcceleration = 0;
-      int32_t zAcceleration = 0;
-
-      xAcceleration = (int32_t) xRawAcc;
-      xAcceleration = (xAcceleration * 1952) / 1000; /* Multiply with sensitivity 1.952 in high performance mode, 14bit, and full scale +-16g */
-      debugPrintAcceleration_int("X", xAcceleration);
-
-      yAcceleration = (int32_t) yRawAcc;
-      yAcceleration = (yAcceleration * 1952) / 1000;
-      debugPrintAcceleration_int("Y", yAcceleration);
-
-      zAcceleration = (int32_t) zRawAcc;
-      zAcceleration = (zAcceleration * 1952) / 1000;
-      debugPrintAcceleration_int("Z", zAcceleration);
+      int16_t xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_int("X", xAcc);
+        debugPrintAcceleration_int("Y", yAcc);
+        debugPrintAcceleration_int("Z", zAcc);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
+      }
     }
 
 #endif // ITDS_EXAMPLE_ENABLE_INT
@@ -321,9 +296,6 @@ void ITDS_startNormalMode()
   debugPrintln("Starting normal mode...");
 
   ITDS_state_t dataReady = ITDS_disable;
-  int16_t xRawAcc = 0;
-  int16_t yRawAcc = 0;
-  int16_t zRawAcc = 0;
 
   /* Enable normal mode*/
   ITDS_setOperatingMode(ITDS_normalOrLowPower);
@@ -347,75 +319,45 @@ void ITDS_startNormalMode()
       ITDS_isAccelerationDataReady(&dataReady);
     } while (dataReady == ITDS_disable);
 
-    /* Read raw acceleration values */
-    if (ITDS_getRawAccelerationX(&xRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-      xRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationY(&yRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-      yRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationZ(&zRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-      zRawAcc = 0;
-    }
-
-    /* Shift by 2 as 14bit resolution is used in normal mode */
-    xRawAcc = xRawAcc >> 2;
-    yRawAcc = yRawAcc >> 2;
-    zRawAcc = zRawAcc >> 2;
-
+    /* Below, you'll find examples for reading acceleration values of all axes in [mg],
+     * either as float or as integer. Note that as an alternative, there are also
+     * functions to get the values for single axes or to get the raw, unconverted values. */
 
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
-      float xAcceleration = 0.0f;
-      float yAcceleration = 0.0f;
-      float zAcceleration = 0.0f;
+      float xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_float("X", xAcc);
+        debugPrintAcceleration_float("Y", yAcc);
+        debugPrintAcceleration_float("Z", zAcc);
 
-      xAcceleration = (float) xRawAcc;
-      xAcceleration = xAcceleration / 1000;  /* mg to g */
-      xAcceleration = xAcceleration * 1.952; /* Multiply with sensitivity 1.952 in normal mode, 14bit, and full scale +-16g */
-      debugPrintAcceleration_float("X", xAcceleration);
-
-      yAcceleration = (float) yRawAcc;
-      yAcceleration = yAcceleration / 1000;
-      yAcceleration = yAcceleration * 1.952;
-      debugPrintAcceleration_float("Y", yAcceleration);
-
-      zAcceleration = (float) zRawAcc;
-      zAcceleration = zAcceleration / 1000;
-      zAcceleration = zAcceleration * 1.952;
-      debugPrintAcceleration_float("Z", zAcceleration);
-
-      float accSum = sqrtf((xAcceleration * xAcceleration) +
-              (yAcceleration * yAcceleration) +
-              (zAcceleration * zAcceleration));
-      debugPrintAcceleration_float("sum", accSum);
+        float accSum = sqrtf((xAcc * xAcc) +
+                (yAcc * yAcc) +
+                (zAcc * zAcc));
+        debugPrintAcceleration_float("sum", accSum);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_float(): NOT OK ****");
+      }
     }
 
 #endif
 
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
-      int32_t xAcceleration = 0;
-      int32_t yAcceleration = 0;
-      int32_t zAcceleration = 0;
-
-      xAcceleration = (int32_t) xRawAcc;
-      xAcceleration = (xAcceleration * 1952) / 1000; /* Multiply with sensitivity 1.952 in normal mode, 14bit, and full scale +-16g */
-      debugPrintAcceleration_int("X", xAcceleration);
-
-      yAcceleration = (int32_t) yRawAcc;
-      yAcceleration = (yAcceleration * 1952) / 1000;
-      debugPrintAcceleration_int("Y", yAcceleration);
-
-      zAcceleration = (int32_t) zRawAcc;
-      zAcceleration = (zAcceleration * 1952) / 1000;
-      debugPrintAcceleration_int("Z", zAcceleration);
+      int16_t xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_int("X", xAcc);
+        debugPrintAcceleration_int("Y", yAcc);
+        debugPrintAcceleration_int("Z", zAcc);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
+      }
     }
 
 #endif // ITDS_EXAMPLE_ENABLE_INT
@@ -435,9 +377,6 @@ void ITDS_startLowPowerMode()
   debugPrintln("Starting low power mode...");
 
   ITDS_state_t dataReady = ITDS_disable;
-  int16_t xRawAcc = 0;
-  int16_t yRawAcc = 0;
-  int16_t zRawAcc = 0;
 
   /* Enable low power mode */
   ITDS_setOperatingMode(ITDS_normalOrLowPower);
@@ -461,75 +400,45 @@ void ITDS_startLowPowerMode()
       ITDS_isAccelerationDataReady(&dataReady);
     } while (dataReady == ITDS_disable);
 
-    /* Read raw acceleration values */
-    if (ITDS_getRawAccelerationX(&xRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationX(): NOT OK ****");
-      xRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationY(&yRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationY(): NOT OK ****");
-      yRawAcc = 0;
-    }
-    if (ITDS_getRawAccelerationZ(&zRawAcc) != WE_SUCCESS)
-    {
-      debugPrintln("**** ITDS_getRawAccelerationZ(): NOT OK ****");
-      zRawAcc = 0;
-    }
-
-    /* Shift by 4 as 12bit resolution is used in low power mode */
-    xRawAcc = xRawAcc >> 4;
-    yRawAcc = yRawAcc >> 4;
-    zRawAcc = zRawAcc >> 4;
-
+    /* Below, you'll find examples for reading acceleration values of all axes in [mg],
+     * either as float or as integer. Note that as an alternative, there are also
+     * functions to get the values for single axes or to get the raw, unconverted values. */
 
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
-      float xAcceleration = 0.0f;
-      float yAcceleration = 0.0f;
-      float zAcceleration = 0.0f;
+      float xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_float("X", xAcc);
+        debugPrintAcceleration_float("Y", yAcc);
+        debugPrintAcceleration_float("Z", zAcc);
 
-      xAcceleration = (float) xRawAcc;
-      xAcceleration = xAcceleration / 1000;  /* mg to g */
-      xAcceleration = xAcceleration * 7.808; /* Multiply with sensitivity 7.808 in low power mode, 12 bit, and full scale +-16g */
-      debugPrintAcceleration_float("X", xAcceleration);
-
-      yAcceleration = (float) yRawAcc;
-      yAcceleration = yAcceleration / 1000;
-      yAcceleration = yAcceleration * 7.808;
-      debugPrintAcceleration_float("Y", yAcceleration);
-
-      zAcceleration = (float) zRawAcc;
-      zAcceleration = zAcceleration / 1000;
-      zAcceleration = zAcceleration * 7.808;
-      debugPrintAcceleration_float("Z", zAcceleration);
-
-      float accSum = sqrtf((xAcceleration * xAcceleration) +
-              (yAcceleration * yAcceleration) +
-              (zAcceleration * zAcceleration));
-      debugPrintAcceleration_float("sum", accSum);
+        float accSum = sqrtf((xAcc * xAcc) +
+                (yAcc * yAcc) +
+                (zAcc * zAcc));
+        debugPrintAcceleration_float("sum", accSum);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_float(): NOT OK ****");
+      }
     }
 
 #endif
 
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
-      int32_t xAcceleration = 0;
-      int32_t yAcceleration = 0;
-      int32_t zAcceleration = 0;
-
-      xAcceleration = (int32_t) xRawAcc;
-      xAcceleration = (xAcceleration * 7808) / 1000; /* Multiply with sensitivity 7.808 in low power mode, 12 bit, and full scale +-16g */
-      debugPrintAcceleration_int("X", xAcceleration);
-
-      yAcceleration = (int32_t) yRawAcc;
-      yAcceleration = (yAcceleration * 7808) / 1000;
-      debugPrintAcceleration_int("Y", yAcceleration);
-
-      zAcceleration = (int32_t) zRawAcc;
-      zAcceleration = (zAcceleration * 7808) / 1000;
-      debugPrintAcceleration_int("Z", zAcceleration);
+      int16_t xAcc, yAcc, zAcc;
+      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      {
+        debugPrintAcceleration_int("X", xAcc);
+        debugPrintAcceleration_int("Y", yAcc);
+        debugPrintAcceleration_int("Z", zAcc);
+      }
+      else
+      {
+        debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
+      }
     }
 
 #endif // ITDS_EXAMPLE_ENABLE_INT
@@ -611,10 +520,11 @@ static void debugPrintln(char _out[])
 /**
  * @brief Prints the acceleration for the supplied axis to the debug interface.
  * @param axis Axis name
- * @param acc  Acceleration [g]
+ * @param acc  Acceleration [mg]
  */
 static void debugPrintAcceleration_float(char axis[], float acc)
 {
+  acc /= 1000.0f;
   float accAbs = fabs(acc);
   uint16_t full = (uint16_t) accAbs;
   uint16_t decimals = (uint16_t) (((uint32_t) (accAbs * 10000)) % 10000); /* 4 decimal places */
