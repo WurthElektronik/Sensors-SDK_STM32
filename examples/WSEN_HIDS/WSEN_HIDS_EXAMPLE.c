@@ -42,6 +42,8 @@
 #include "i2c.h"
 #include "usart.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_HIDS_2523020210001/WSEN_HIDS_2523020210001.h"
 
 
@@ -52,8 +54,11 @@
 #define HIDS_EXAMPLE_ENABLE_INT16
 #define HIDS_EXAMPLE_ENABLE_INT8
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t hids;
+
 /* Sensor initialization function */
-bool HIDS_init(void);
+static bool HIDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -99,7 +104,7 @@ void WE_hidsExampleLoop()
   HIDS_state_t tempStatus = HIDS_disable;
   HIDS_state_t oneShotStatus = HIDS_enable;
 
-  if (WE_FAIL == HIDS_enableOneShot(HIDS_enable)) /* trigger a single measurement - oneshot it is! */
+  if (WE_FAIL == HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
   {
     debugPrintln("**** HIDS_enOneShot(enable): NOT OK ****");
   }
@@ -109,17 +114,17 @@ void WE_hidsExampleLoop()
   while (waitForMeasurement == true)
   {
     /* Get status info for humidity, temperature and oneshot */
-    if (WE_FAIL == HIDS_isHumidityDataAvailable(&humStatus))
+    if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humStatus))
     {
       debugPrintln("**** HIDS_getHumStatus(): NOT OK ****");
     }
 
-    if (WE_FAIL == HIDS_isTemperatureDataAvailable(&tempStatus))
+    if (WE_FAIL == HIDS_isTemperatureDataAvailable(&hids, &tempStatus))
     {
       debugPrintln("**** HIDS_getTempStatus(): NOT OK ****");
     }
 
-    if (WE_FAIL == HIDS_isOneShotEnabled(&oneShotStatus))
+    if (WE_FAIL == HIDS_isOneShotEnabled(&hids, &oneShotStatus))
     {
       debugPrintln("**** HIDS_getOneShotState(): NOT OK ****");
     }
@@ -143,7 +148,7 @@ void WE_hidsExampleLoop()
   float humidity = 0.0f;
   float temperature = 0.0f;
 
-  if (HIDS_getHumidity_float(&humidity) == WE_SUCCESS)
+  if (HIDS_getHumidity_float(&hids, &humidity) == WE_SUCCESS)
   {
     float humidityAbs = fabs(humidity);
     uint16_t full = (uint16_t) humidityAbs;
@@ -161,7 +166,7 @@ void WE_hidsExampleLoop()
     debugPrintln("%");
   }
 
-  if (HIDS_getTemperature_float(&temperature) == WE_SUCCESS)
+  if (HIDS_getTemperature_float(&hids, &temperature) == WE_SUCCESS)
   {
     float temperatureAbs = temperature;
     uint16_t full = (uint16_t) temperatureAbs;
@@ -192,7 +197,7 @@ void WE_hidsExampleLoop()
   uint16_t humidity_uint16 = 0;
   int16_t temperature_int16 = 0;
 
-  if (HIDS_getHumidity_uint16(&humidity_uint16) == WE_SUCCESS)
+  if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
   {
     uint16_t full = humidity_uint16 / 100;
     uint16_t decimals = humidity_uint16  % 100; /* 2 decimal places */
@@ -209,7 +214,7 @@ void WE_hidsExampleLoop()
     debugPrintln("%");
   }
 
-  if (HIDS_getTemperature_int16(&temperature_int16) == WE_SUCCESS)
+  if (HIDS_getTemperature_int16(&hids, &temperature_int16) == WE_SUCCESS)
   {
     uint16_t full = ((uint16_t) abs(temperature_int16)) / 100;
     uint16_t decimals = (uint16_t) (abs(temperature_int16) % 100); /* 2 decimal places */
@@ -239,7 +244,7 @@ void WE_hidsExampleLoop()
   int8_t humidity_int8 = 0;
   int8_t temperature_int8 = 0;
 
-  if (HIDS_getHumidity_int8(&humidity_int8) == WE_SUCCESS)
+  if (HIDS_getHumidity_int8(&hids, &humidity_int8) == WE_SUCCESS)
   {
     char buffer[4]; /* 3 pre-decimal point positions (from 0% to max 100% RH) */
     sprintf(buffer, "%d", humidity_int8);
@@ -249,7 +254,7 @@ void WE_hidsExampleLoop()
     debugPrintln("%");
   }
 
-  if (HIDS_getTemperature_int8(&temperature_int8) == WE_SUCCESS)
+  if (HIDS_getTemperature_int8(&hids, &temperature_int8) == WE_SUCCESS)
   {
     char buffer[4]; /* 3 pre-decimal point positions (from -40 to +85 degrees Celsius) */
     sprintf(buffer, "%d", temperature_int8);
@@ -268,27 +273,25 @@ void WE_hidsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool HIDS_init(void)
+static bool HIDS_init(void)
 {
   /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  HIDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.handle = &hi2c1;
-  HIDS_initInterface(&interface);
+  HIDS_getDefaultInterface(&hids);
+  hids.interfaceType = WE_i2c;
+  hids.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != HIDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&hids))
   {
   }
-  debugPrintln("**** HIDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == HIDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
   {
     if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
     {
@@ -307,21 +310,21 @@ bool HIDS_init(void)
   }
 
   /* Enables block data update, prevents that an update happens before both value registers were read */
-  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(HIDS_enable))
+  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(&hids, HIDS_enable))
   {
     debugPrintln("**** HIDS_setBdu(true): NOT OK ****");
     return false;
   }
 
   /* Make sure the device is in ODR=oneshot mode '00' */
-  if (WE_SUCCESS !=  HIDS_setOutputDataRate(HIDS_oneShot))
+  if (WE_SUCCESS !=  HIDS_setOutputDataRate(&hids, HIDS_oneShot))
   {
     debugPrintln("**** HIDS_setOdr(oneShot): NOT OK ****");
     return false;
   }
 
   /* Make sure the device is in active mode '1' */
-  if (WE_SUCCESS !=  HIDS_setPowerMode(HIDS_activeMode))
+  if (WE_SUCCESS !=  HIDS_setPowerMode(&hids, HIDS_activeMode))
   {
     debugPrintln("**** HIDS_setPowerMode(active): NOT OK ****");
     return false;

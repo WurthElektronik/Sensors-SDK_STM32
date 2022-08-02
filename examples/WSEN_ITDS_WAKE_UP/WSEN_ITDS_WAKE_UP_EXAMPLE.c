@@ -42,13 +42,18 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
+
 /* Is set to true when a wake-up interrupt occurs */
-bool wakeUp = false;
+static bool wakeUp = false;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -95,7 +100,7 @@ void WE_itdsWakeUpExampleLoop()
     wakeUp = false;
 
     ITDS_wakeUpEvent_t wakeUpEvent;
-    if (ITDS_getWakeUpEventRegister(&wakeUpEvent) == WE_SUCCESS)
+    if (ITDS_getWakeUpEventRegister(&itds, &wakeUpEvent) == WE_SUCCESS)
     {
       /* Check if wake-up event has occurred (at least one axis exceeded the threshold) */
       if (wakeUpEvent.wakeUpState != 0)
@@ -123,28 +128,26 @@ void WE_itdsWakeUpExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -163,71 +166,71 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Turn on accelerometer (high performance, 12.5Hz) */
-  ITDS_setOperatingMode(ITDS_highPerformance);
-  ITDS_setOutputDataRate(ITDS_odr1);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+  ITDS_setOutputDataRate(&itds, ITDS_odr1);
 
 //  // Turn on accelerometer (high performance, 200Hz)
-//    ITDS_setOperatingMode(ITDS_highPerformance);
-//    ITDS_setOutputDataRate(ITDS_odr6);
+//    ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+//    ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* Low noise mode */
-  ITDS_enableLowNoise(ITDS_enable);
+  ITDS_enableLowNoise(&itds, ITDS_enable);
 
   /* 2g range */
-  ITDS_setFullScale(ITDS_twoG);
+  ITDS_setFullScale(&itds, ITDS_twoG);
 
   /* Set min. duration of wake-up event (1 bit = 1 * 1 / ODR) */
-  ITDS_setWakeUpDuration(1);
+  ITDS_setWakeUpDuration(&itds, 1);
 
   /* Set wake-up acceleration threshold (1 bit = 1 * full_scale / 64 i.e. 4 * 2 g / 64 = 0.125 g) */
-  ITDS_setWakeUpThreshold(4);
+  ITDS_setWakeUpThreshold(&itds, 4);
 
   /* If required, the following options can be used to specify a custom
    * offset for triggering the wake-up event (wake-up is triggered if the
    * difference between measured data and user offset exceeds the threshold). */
 
   /* Set weight of 15.6 mg per LSB */
-//  ITDS_setOffsetWeight(ITDS_enable);
+//  ITDS_setOffsetWeight(&itds, ITDS_enable);
   /* No offset for X and Y, Z offset of 1g (64 * 15.6 mg) */
-//  ITDS_setOffsetValueX(0);
-//  ITDS_setOffsetValueY(0);
-//  ITDS_setOffsetValueZ(64);
+//  ITDS_setOffsetValueX(&itds, 0);
+//  ITDS_setOffsetValueY(&itds, 0);
+//  ITDS_setOffsetValueZ(&itds, 64);
   /* Apply user offset to all data or to data used for wake-up only */
-//  ITDS_enableApplyOffset(ITDS_enable);
-//  ITDS_enableApplyWakeUpOffset(ITDS_enable);
+//  ITDS_enableApplyOffset(&itds, ITDS_enable);
+//  ITDS_enableApplyWakeUpOffset(&itds, ITDS_enable);
 
   /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(ITDS_activeHigh);
+  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
   /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(ITDS_pushPull);
+  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
   /* Latched mode disabled (interrupt signal is automatically reset) */
-  ITDS_enableLatchedInterrupt(ITDS_disable);
+  ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   /* Enable wake-up interrupt on INT_0 */
-  ITDS_enableWakeUpOnINT0(ITDS_enable);
+  ITDS_enableWakeUpOnINT0(&itds, ITDS_enable);
 
   return true;
 }

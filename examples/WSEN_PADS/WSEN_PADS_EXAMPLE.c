@@ -42,6 +42,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_PADS_2511020213301/WSEN_PADS_2511020213301.h"
 
 /* Comment/uncomment the following lines to disable/enable the examples for
@@ -50,8 +52,11 @@
 #define PADS_EXAMPLE_ENABLE_FLOAT
 #define PADS_EXAMPLE_ENABLE_INT
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t pads;
+
 /* Sensor initialization function */
-bool PADS_init(void);
+static bool PADS_init(void);
 
 /* Example modes for the PADS sensor */
 void PADS_singleConversionModeExample(void);
@@ -114,27 +119,25 @@ void WE_padsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool PADS_init(void)
+static bool PADS_init(void)
 {
   /* Initialize sensor interface (i2c with PADS address, burst mode deactivated) */
-  WE_sensorInterface_t interface;
-  PADS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.handle = &hi2c1;
-  PADS_initInterface(&interface);
+  PADS_getDefaultInterface(&pads);
+  pads.interfaceType = WE_i2c;
+  pads.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != PADS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&pads))
   {
   }
-  debugPrintln("**** PADS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == PADS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
   {
     if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
     {
@@ -153,11 +156,11 @@ bool PADS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  PADS_softReset(PADS_enable);
+  PADS_softReset(&pads, PADS_enable);
   PADS_state_t swReset;
   do
   {
-    PADS_getSoftResetState(&swReset);
+    PADS_getSoftResetState(&pads, &swReset);
   } while (swReset);
   debugPrintln("**** PADS reset complete ****");
 
@@ -165,31 +168,31 @@ bool PADS_init(void)
 }
 
 /**
-* @brief Setup the sensor in single conversion mode.
-* Read and print the measured values at a rate of 1 Hz.
-* @param  no parameter.
-* @retval none
-*/
+ * @brief Setup the sensor in single conversion mode.
+ * Read and print the measured values at a rate of 1 Hz.
+ * @param  no parameter.
+ * @retval none
+ */
 void PADS_singleConversionModeExample()
 {
   debugPrintln("Starting single conversion mode...");
 
   /* Automatic increment register address */
-  PADS_enableAutoIncrement(PADS_enable);
+  PADS_enableAutoIncrement(&pads, PADS_enable);
 
   /* Enable block data update */
-  PADS_enableBlockDataUpdate(PADS_enable);
+  PADS_enableBlockDataUpdate(&pads, PADS_enable);
 
   while (1)
   {
     /* Start a conversion (one shot) */
-    PADS_enableOneShot(PADS_enable);
+    PADS_enableOneShot(&pads, PADS_enable);
 
     /* Wait until the value is ready to read */
     PADS_state_t presStatus;
     do
     {
-      PADS_isPressureDataAvailable(&presStatus);
+      PADS_isPressureDataAvailable(&pads, &presStatus);
     } while (presStatus != PADS_enable);
 
     HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
@@ -197,7 +200,7 @@ void PADS_singleConversionModeExample()
 
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
     float pressureFloat = 0;
-    if (WE_SUCCESS == PADS_getPressure_float(&pressureFloat))
+    if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
     {
       debugPrintPressure_float(pressureFloat);
     }
@@ -207,7 +210,7 @@ void PADS_singleConversionModeExample()
     }
 
     float temperatureFloat = 0;
-    if (WE_SUCCESS == PADS_getTemperature_float(&temperatureFloat))
+    if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
     {
       debugPrintTemperature_float(temperatureFloat);
     }
@@ -219,7 +222,7 @@ void PADS_singleConversionModeExample()
 
 #ifdef PADS_EXAMPLE_ENABLE_INT
     int32_t pressureInt = 0;
-    if (WE_SUCCESS == PADS_getPressure_int(&pressureInt))
+    if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
     {
       debugPrintPressure_int(pressureInt);
     }
@@ -229,7 +232,7 @@ void PADS_singleConversionModeExample()
     }
 
     int16_t tempInt = 0;
-    if (WE_SUCCESS == PADS_getTemperature_int(&tempInt))
+    if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
     {
       debugPrintTemperature_int(tempInt);
     }
@@ -245,32 +248,32 @@ void PADS_singleConversionModeExample()
 }
 
 /**
-* @brief Setup the sensor in continuous mode.
-* Read values at rate of 50 Hz and print at a rate of 1 Hz.
-* @param  no parameter.
-* @retval none
-*/
+ * @brief Setup the sensor in continuous mode.
+ * Read values at rate of 50 Hz and print at a rate of 1 Hz.
+ * @param  no parameter.
+ * @retval none
+ */
 void PADS_continuousModeExample(void)
 {
   debugPrintln("Starting continuous mode...");
 
   /* Enable low-noise configuration */
-  PADS_setPowerMode(PADS_lowNoise);
+  PADS_setPowerMode(&pads, PADS_lowNoise);
 
   /* Automatic increment register address */
-  PADS_enableAutoIncrement(PADS_enable);
+  PADS_enableAutoIncrement(&pads, PADS_enable);
 
   /* Enable additional low pass filter */
-  PADS_enableLowPassFilter(PADS_enable);
+  PADS_enableLowPassFilter(&pads, PADS_enable);
 
   /* Set filter bandwidth of ODR/20 */
-  PADS_setLowPassFilterConfig(PADS_lpFilterBW2);
+  PADS_setLowPassFilterConfig(&pads, PADS_lpFilterBW2);
 
   /* Enable block data update */
-  PADS_enableBlockDataUpdate(PADS_enable);
+  PADS_enableBlockDataUpdate(&pads, PADS_enable);
 
   /* Enable continuous operation with an update rate of 50 Hz */
-  PADS_setOutputDataRate(PADS_outputDataRate50Hz);
+  PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
 
 
   uint16_t counter = 0;
@@ -288,7 +291,7 @@ void PADS_continuousModeExample(void)
 
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
     float pressureFloat = 0;
-    if (WE_SUCCESS == PADS_getPressure_float(&pressureFloat))
+    if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
     {
       if (printNow)
       {
@@ -301,7 +304,7 @@ void PADS_continuousModeExample(void)
     }
 
     float temperatureFloat = 0;
-    if (WE_SUCCESS == PADS_getTemperature_float(&temperatureFloat))
+    if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
     {
       if (printNow)
       {
@@ -316,7 +319,7 @@ void PADS_continuousModeExample(void)
 
 #ifdef PADS_EXAMPLE_ENABLE_INT
     int32_t pressureInt = 0;
-    if (WE_SUCCESS == PADS_getPressure_int(&pressureInt))
+    if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
     {
       if (printNow)
       {
@@ -329,7 +332,7 @@ void PADS_continuousModeExample(void)
     }
 
     int16_t tempInt = 0;
-    if (WE_SUCCESS == PADS_getTemperature_int(&tempInt))
+    if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
     {
       if (printNow)
       {

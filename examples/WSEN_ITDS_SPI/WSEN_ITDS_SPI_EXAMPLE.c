@@ -44,8 +44,11 @@
 
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
+
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -97,7 +100,7 @@ void WE_itdsSpiExampleLoop()
   ITDS_state_t dataReady = ITDS_disable;
   do
   {
-    ITDS_isAccelerationDataReady(&dataReady);
+    ITDS_isAccelerationDataReady(&itds, &dataReady);
   } while (dataReady == ITDS_disable);
 
   /* Retrieve and print acceleration data.
@@ -106,7 +109,7 @@ void WE_itdsSpiExampleLoop()
    * axes or to get the raw, unconverted values. */
 
   int16_t xAcc, yAcc, zAcc;
-  if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+  if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
   {
     debugPrintAcceleration_int("X", xAcc);
     debugPrintAcceleration_int("Y", yAcc);
@@ -124,17 +127,15 @@ void WE_itdsSpiExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (SPI, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_spi;
-  interface.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
-  interface.options.spi.chipSelectPin = SPI1_CS0_Pin;
-  interface.options.spi.burstMode = 1;
-  interface.handle = &hspi1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_spi;
+  itds.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
+  itds.options.spi.chipSelectPin = SPI1_CS0_Pin;
+  itds.options.spi.burstMode = 1;
+  itds.handle = &hspi1;
 
   /* Wait for boot */
   HAL_Delay(50);
@@ -145,7 +146,7 @@ bool ITDS_init(void)
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -164,40 +165,40 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
 
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
 
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
 
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
 
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   return true;
 }

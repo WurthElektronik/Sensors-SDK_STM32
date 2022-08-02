@@ -42,21 +42,26 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
+
 /* Is set to true, when the free-fall interrupt state has changed */
-bool freeFallSignalTriggered = false;
-bool freeFallSignalRevoked = false;
+static bool freeFallSignalTriggered = false;
+static bool freeFallSignalRevoked = false;
 
 /* Stores start and end time (ms) of current / most recent free-fall event */
-uint32_t freeFallStartTime = 0;
-uint32_t freeFallEndTime = 0;
+static uint32_t freeFallStartTime = 0;
+static uint32_t freeFallEndTime = 0;
 
 /* Last state of the free-fall event register */
-ITDS_state_t lastFreeFallEventOccurredState = ITDS_disable;
+static ITDS_state_t lastFreeFallEventOccurredState = ITDS_disable;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -123,7 +128,7 @@ void WE_itdsFreeFallExampleLoop()
   }
 
   ITDS_state_t freeFallEventOccurred;
-  ITDS_isFreeFallEvent(&freeFallEventOccurred);
+  ITDS_isFreeFallEvent(&itds, &freeFallEventOccurred);
   if (freeFallEventOccurred != lastFreeFallEventOccurredState)
   {
     if (freeFallEventOccurred == ITDS_enable)
@@ -135,7 +140,7 @@ void WE_itdsFreeFallExampleLoop()
 
   /* The following code can be used to manually reset the free-fall interrupt if latched mode is enabled. */
 //      ITDS_allInterruptEvents_t events;
-//      ITDS_getAllInterruptEvents(&events);
+//      ITDS_getAllInterruptEvents(&itds, &events);
 //      if (events.freeFallState != 0)
 //      {
 //        debugPrintln("Free-fall detected (register)!");
@@ -145,28 +150,26 @@ void WE_itdsFreeFallExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -185,55 +188,55 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Turn on accelerometer (high performance, 200Hz) */
-  ITDS_setOperatingMode(ITDS_highPerformance);
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* Low noise mode */
-  ITDS_enableLowNoise(ITDS_enable);
+  ITDS_enableLowNoise(&itds, ITDS_enable);
 
   /* 2g range */
-  ITDS_setFullScale(ITDS_twoG);
+  ITDS_setFullScale(&itds, ITDS_twoG);
 
   /* Set minimum fall duration (1 bit = 1 * 1 / ODR) */
   /* Corresponds to 6 / 200 = 30 ms */
-  ITDS_setFreeFallDuration(6);
+  ITDS_setFreeFallDuration(&itds, 6);
 
   /* Set free-fall threshold (value is encoded - see documentation of FREE_FALL_REG for details) */
   /* Corresponds to 10 * 31.25mg = 312.5mg */
-  ITDS_setFreeFallThreshold(3);
+  ITDS_setFreeFallThreshold(&itds, 3);
 
   /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(ITDS_activeHigh);
+  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
   /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(ITDS_pushPull);
+  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
   /* Latched mode disabled (interrupt signal is automatically reset) */
-  ITDS_enableLatchedInterrupt(ITDS_disable);
+  ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   /* Enable free-fall interrupt on INT_0 */
-  ITDS_enableFreeFallINT0(ITDS_enable);
+  ITDS_enableFreeFallINT0(&itds, ITDS_enable);
 
   return true;
 }

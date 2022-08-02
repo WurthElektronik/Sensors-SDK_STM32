@@ -43,6 +43,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 
@@ -56,16 +58,19 @@ typedef enum
 
 
 /* Use the following variable to switch among the available example modes. */
-ITDS_activity_inactivity_example_mode itdsExampleMode = sleepChangeInterruptMode;
+static ITDS_activity_inactivity_example_mode itdsExampleMode = sleepChangeInterruptMode;
+
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
 
 /* Boolean variables used to notify main loop that interrupts have been triggered */
-bool activityDetected = false;
-bool leftSleepMode = false;
-bool enteredSleepMode = false;
-bool sleepChangeEvent = false;
+static bool activityDetected = false;
+static bool leftSleepMode = false;
+static bool enteredSleepMode = false;
+static bool sleepChangeEvent = false;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -149,7 +154,7 @@ void WE_itdsActivityInactivityExampleLoop()
     sleepChangeEvent = false;
 
     ITDS_state_t sleepState;
-    if (ITDS_getSleepState(&sleepState) == WE_SUCCESS)
+    if (ITDS_getSleepState(&itds, &sleepState) == WE_SUCCESS)
     {
       if (sleepState == ITDS_enable)
       {
@@ -174,28 +179,26 @@ void WE_itdsActivityInactivityExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -214,97 +217,97 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
 
   /* Turn on accelerometer (high performance, 200Hz) */
-  ITDS_setOperatingMode(ITDS_highPerformance);
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* 2g range */
-  ITDS_setFullScale(ITDS_twoG);
+  ITDS_setFullScale(&itds, ITDS_twoG);
 
   /* Enable inactivity detection */
-  ITDS_enableInactivityDetection(ITDS_enable);
+  ITDS_enableInactivityDetection(&itds, ITDS_enable);
 
   /* Set minimum duration of wake-up event (1 bit = 1 / ODR) */
   /* Corresponds to 2 / 200 = 10 ms */
-  ITDS_setWakeUpDuration(2);
+  ITDS_setWakeUpDuration(&itds, 2);
 
   /* Set minimum inactivity time (1 bit = 1 * 512 / ODR) */
   /* Corresponds to 1 * 512 / 200 = 2.56 s */
-  ITDS_setSleepDuration(1);
+  ITDS_setSleepDuration(&itds, 1);
 
   /* Set wake-up acceleration threshold (1 bit = full_scale / 64 i.e. 2 * 2 g / 64 = 0.0625 g) */
-  ITDS_setWakeUpThreshold(2);
+  ITDS_setWakeUpThreshold(&itds, 2);
 
   /* If required, the following options can be used to specify a custom
    * offset for triggering the wake-up event (wake-up is triggered if the
    * difference between measured data and user offset exceeds the threshold). */
 
   /* Set weight of 15.6 mg per LSB */
-//  ITDS_setOffsetWeight(ITDS_enable);
+//  ITDS_setOffsetWeight(&itds, ITDS_enable);
   /* No offset for X and Y, Z offset of 1g (64 * 15.6 mg) */
-//  ITDS_setOffsetValueX(0);
-//  ITDS_setOffsetValueY(0);
-//  ITDS_setOffsetValueZ(64);
+//  ITDS_setOffsetValueX(&itds, 0);
+//  ITDS_setOffsetValueY(&itds, 0);
+//  ITDS_setOffsetValueZ(&itds, 64);
   /* Apply user offset to all data or to data used for wake-up only */
-//  ITDS_enableApplyOffset(ITDS_enable);
-//  ITDS_enableApplyWakeUpOffset(ITDS_enable);
+//  ITDS_enableApplyOffset(&itds, ITDS_enable);
+//  ITDS_enableApplyWakeUpOffset(&itds, ITDS_enable);
 
   /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(ITDS_activeHigh);
+  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
   /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(ITDS_pushPull);
+  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
   /* Latched mode disabled (interrupt signals are automatically reset) */
-  ITDS_enableLatchedInterrupt(ITDS_disable);
+  ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   /* Enable activity interrupt on INT_0 */
-  ITDS_enableWakeUpOnINT0(ITDS_enable);
+  ITDS_enableWakeUpOnINT0(&itds, ITDS_enable);
 
   switch (itdsExampleMode)
   {
   case sleepChangeInterruptMode:
     /* Enable sleep state transition interrupt on INT_1 (trigger signal when waking up or going to sleep) */
-    ITDS_enableSleepStatusChangeINT1(ITDS_enable);
+    ITDS_enableSleepStatusChangeINT1(&itds, ITDS_enable);
     break;
 
   case sleepStatusInterruptMode:
     /* Setting both of the following interrupts causes interrupt INT_1 to be
      * high as long as the sensor is in sleep mode */
-    ITDS_enableSleepStatusINT1(ITDS_enable);
-    ITDS_enableSleepStatusChangeINT1(ITDS_enable);
+    ITDS_enableSleepStatusINT1(&itds, ITDS_enable);
+    ITDS_enableSleepStatusChangeINT1(&itds, ITDS_enable);
     break;
 
   case motionDetectionMode:
     /* Setting both of the following interrupts causes interrupt INT_1 to be
      * high as long as the sensor is in sleep mode */
-    ITDS_enableSleepStatusINT1(ITDS_enable);
-    ITDS_enableSleepStatusChangeINT1(ITDS_enable);
+    ITDS_enableSleepStatusINT1(&itds, ITDS_enable);
+    ITDS_enableSleepStatusChangeINT1(&itds, ITDS_enable);
 
     /* Enable stationary/motion detection mode */
     /* In this mode, no ODR and power mode changes occur when changing between inactive and active mode. */
-    ITDS_enableStationaryDetection(ITDS_enable);
+    ITDS_enableStationaryDetection(&itds, ITDS_enable);
     break;
   }
 

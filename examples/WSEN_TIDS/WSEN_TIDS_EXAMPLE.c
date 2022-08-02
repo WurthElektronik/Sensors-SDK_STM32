@@ -42,6 +42,8 @@
 #include "i2c.h"
 #include "usart.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_TIDS_2521020222501/WSEN_TIDS_2521020222501.h"
 
 
@@ -51,13 +53,15 @@
 #define TIDS_EXAMPLE_ENABLE_FLOAT
 #define TIDS_EXAMPLE_ENABLE_INT
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t tids;
 
 /* Sensor initialization function */
-bool TIDS_init(void);
+static bool TIDS_init(void);
 
 /* Example modes for the TIDS sensor */
-void TIDS_singleConversionMode(void);
-void TIDS_continuousMode(void);
+static void TIDS_singleConversionMode(void);
+static void TIDS_continuousMode(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -114,27 +118,25 @@ void WE_tidsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool TIDS_init(void)
+static bool TIDS_init(void)
 {
   /* Initialize sensor interface (i2c with TIDS address, burst mode deactivated) */
-  WE_sensorInterface_t interface;
-  TIDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.handle = &hi2c1;
-  TIDS_initInterface(&interface);
+  TIDS_getDefaultInterface(&tids);
+  tids.interfaceType = WE_i2c;
+  tids.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != TIDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&tids))
   {
   }
-  debugPrintln("**** TIDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == TIDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == TIDS_getDeviceID(&tids, &deviceIdValue))
   {
     if (deviceIdValue == TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
     {
@@ -153,21 +155,21 @@ bool TIDS_init(void)
   }
 
   /* Perform software reset */
-  TIDS_softReset(TIDS_enable);
+  TIDS_softReset(&tids, TIDS_enable);
   HAL_Delay(5);
-  TIDS_softReset(TIDS_disable);
+  TIDS_softReset(&tids, TIDS_disable);
 
   /* Enable auto address increment */
-  TIDS_enableAutoIncrement(TIDS_enable);
+  TIDS_enableAutoIncrement(&tids, TIDS_enable);
 
   return true;
 }
 
 /**
-* @brief Setup the sensor in single conversion mode.
-* Read and print the measured values at a rate of 1 Hz.
-*/
-void TIDS_singleConversionMode()
+ * @brief Setup the sensor in single conversion mode.
+ * Read and print the measured values at a rate of 1 Hz.
+ */
+static void TIDS_singleConversionMode()
 {
   TIDS_state_t status = TIDS_disable;
 
@@ -176,18 +178,18 @@ void TIDS_singleConversionMode()
   while (1)
   {
     /* Start a conversion (one shot) */
-    TIDS_enableOneShot(TIDS_enable);
+    TIDS_enableOneShot(&tids, TIDS_enable);
 
     /* Wait until the busy bit is set to 0 */
     do
     {
-      TIDS_isBusy(&status);
+      TIDS_isBusy(&tids, &status);
     }
     while (status == TIDS_enable);
 
 #ifdef TIDS_EXAMPLE_ENABLE_FLOAT
     float temperatureFloat = 0;
-    if (TIDS_getTemperature(&temperatureFloat) == WE_SUCCESS)
+    if (TIDS_getTemperature(&tids, &temperatureFloat) == WE_SUCCESS)
     {
       debugPrintTemperatureFloat(temperatureFloat);
     }
@@ -199,7 +201,7 @@ void TIDS_singleConversionMode()
 
 #ifdef TIDS_EXAMPLE_ENABLE_INT
     int16_t temperatureInt;
-    if (TIDS_getRawTemperature(&temperatureInt) == WE_SUCCESS)
+    if (TIDS_getRawTemperature(&tids, &temperatureInt) == WE_SUCCESS)
     {
       debugPrintTemperatureInt(temperatureInt);
     }
@@ -211,30 +213,29 @@ void TIDS_singleConversionMode()
 
     /* Perform software reset - must be done when using ONE_SHOT bit
      * (i.e. single conversion mode) */
-    TIDS_softReset(TIDS_enable);
+    TIDS_softReset(&tids, TIDS_enable);
     HAL_Delay(5);
-    TIDS_softReset(TIDS_disable);
+    TIDS_softReset(&tids, TIDS_disable);
 	
     /* Wait 1s */
 	HAL_Delay(1000);
-	
   }
 }
 
 /**
-* @brief Setup the sensor in continuous mode.
-* Read and print the measured values at a rate of 1 Hz.
-*/
-void TIDS_continuousMode(void)
+ * @brief Setup the sensor in continuous mode.
+ * Read and print the measured values at a rate of 1 Hz.
+ */
+static void TIDS_continuousMode(void)
 {
   /* Set ODR to 25Hz */
-  TIDS_setOutputDataRate(TIDS_outputDataRate25Hz);
+  TIDS_setOutputDataRate(&tids, TIDS_outputDataRate25Hz);
 
   /* Enable block data update */
-  TIDS_enableBlockDataUpdate(TIDS_enable);
+  TIDS_enableBlockDataUpdate(&tids, TIDS_enable);
 
   /* Enable continuous mode */
-  TIDS_enableContinuousMode(TIDS_enable);
+  TIDS_enableContinuousMode(&tids, TIDS_enable);
 
   debugPrintln("Starting continuous mode...");
 
@@ -242,7 +243,7 @@ void TIDS_continuousMode(void)
   {
 #ifdef TIDS_EXAMPLE_ENABLE_FLOAT
     float temperatureFloat = 0;
-    if (TIDS_getTemperature(&temperatureFloat) == WE_SUCCESS)
+    if (TIDS_getTemperature(&tids, &temperatureFloat) == WE_SUCCESS)
     {
       debugPrintTemperatureFloat(temperatureFloat);
     }
@@ -254,7 +255,7 @@ void TIDS_continuousMode(void)
 
 #ifdef TIDS_EXAMPLE_ENABLE_INT
     int16_t temperatureInt = 0;
-    if (TIDS_getRawTemperature(&temperatureInt) == WE_SUCCESS)
+    if (TIDS_getRawTemperature(&tids, &temperatureInt) == WE_SUCCESS)
     {
       debugPrintTemperatureInt(temperatureInt);
     }

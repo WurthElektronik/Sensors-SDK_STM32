@@ -35,10 +35,9 @@
 #include "platform.h"
 
 /**
- * @brief Sensor interface configuration.
- * Can be set using TIDS_initInterface().
+ * @brief Default sensor interface configuration.
  */
-static WE_sensorInterface_t tidsSensorInterface = {
+static WE_sensorInterface_t tidsDefaultSensorInterface = {
     .sensorType = WE_TIDS,
     .interfaceType = WE_i2c,
     .options = {.i2c = {.address = TIDS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
@@ -50,110 +49,93 @@ static WE_sensorInterface_t tidsSensorInterface = {
 /**
  * @brief Read data from sensor.
  *
+ * @param[in] sensorInterface Pointer to sensor interface
  * @param[in] regAdr Address of register to read from
  * @param[in] numBytesToRead Number of bytes to be read
  * @param[out] data Target buffer
  * @return Error Code
  */
-static inline int8_t TIDS_ReadReg(uint8_t regAdr,
+static inline int8_t TIDS_ReadReg(WE_sensorInterface_t* sensorInterface,
+                                  uint8_t regAdr,
                                   uint16_t numBytesToRead,
                                   uint8_t *data)
 {
-  return WE_ReadReg(&tidsSensorInterface, regAdr, numBytesToRead, data);
+  return WE_ReadReg(sensorInterface, regAdr, numBytesToRead, data);
 }
 
 /**
  * @brief Write data to sensor.
  *
+ * @param[in] sensorInterface Pointer to sensor interface
  * @param[in] regAdr Address of register to write to
  * @param[in] numBytesToWrite Number of bytes to be written
  * @param[in] data Source buffer
  * @return Error Code
  */
-static inline int8_t TIDS_WriteReg(uint8_t regAdr,
+static inline int8_t TIDS_WriteReg(WE_sensorInterface_t* sensorInterface,
+                                   uint8_t regAdr,
                                    uint16_t numBytesToWrite,
                                    uint8_t *data)
 {
-  return WE_WriteReg(&tidsSensorInterface, regAdr, numBytesToWrite, data);
+  return WE_WriteReg(sensorInterface, regAdr, numBytesToWrite, data);
 }
 
 /**
- * @brief Initialize the interface of the sensor.
- *
- * Note that the sensor type can't be changed.
- *
- * @param[in] sensorInterface Sensor interface configuration
- * @return Error code
- */
-int8_t TIDS_initInterface(WE_sensorInterface_t* sensorInterface)
-{
-  tidsSensorInterface = *sensorInterface;
-  tidsSensorInterface.sensorType = WE_TIDS;
-  return WE_SUCCESS;
-}
-
-/**
- * @brief Returns the sensor interface configuration.
+ * @brief Returns the default sensor interface configuration.
  * @param[out] sensorInterface Sensor interface configuration (output parameter)
  * @return Error code
  */
-int8_t TIDS_getInterface(WE_sensorInterface_t* sensorInterface)
+int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
-  *sensorInterface = tidsSensorInterface;
+  *sensorInterface = tidsDefaultSensorInterface;
   return WE_SUCCESS;
 }
 
 /**
- * @brief Checks if the sensor interface is ready.
- * @return WE_SUCCESS if interface is ready, WE_FAIL if not.
+ * @brief Read the device ID
+ *
+ * Expected value is TIDS_DEVICE_ID_VALUE.
+ *
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] deviceID The returned device ID.
+ * @retval Error code
  */
-int8_t TIDS_isInterfaceReady()
+int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID)
 {
-  return WE_isSensorInterfaceReady(&tidsSensorInterface);
+  return TIDS_ReadReg(sensorInterface, TIDS_DEVICE_ID_REG, 1, deviceID);
 }
 
 /**
-* @brief Read the device ID
-*
-* Expected value is TIDS_DEVICE_ID_VALUE.
-*
-* @param[out] deviceID The returned device ID.
-* @retval Error code
-*/
-int8_t TIDS_getDeviceID(uint8_t *deviceID)
-{
-  return TIDS_ReadReg(TIDS_DEVICE_ID_REG, 1, deviceID);
-}
-
-/**
-* @brief Set software reset [enabled, disabled]
-* @param[in] swReset Software reset state
-* @retval Error code
-*/
-int8_t TIDS_softReset(TIDS_state_t swReset)
+ * @brief Set software reset [enabled, disabled]
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] swReset Software reset state
+ * @retval Error code
+ */
+int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swReset)
 {
   TIDS_softReset_t swRstReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg))
   {
     return WE_FAIL;
   }
 
   swRstReg.reset = swReset;
 
-  return TIDS_WriteReg(TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg);
 }
 
 /**
-* @brief Read the software reset state [enabled, disabled]
-* @param[out] swReset The returned software reset state.
-* @retval Error code
-*/
-int8_t TIDS_getSoftResetState(TIDS_state_t *swReset)
+ * @brief Read the software reset state [enabled, disabled]
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] swReset The returned software reset state.
+ * @retval Error code
+ */
+int8_t TIDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, TIDS_state_t *swReset)
 {
   TIDS_softReset_t swRstReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t *) &swRstReg))
   {
     return WE_FAIL;
   }
@@ -164,34 +146,36 @@ int8_t TIDS_getSoftResetState(TIDS_state_t *swReset)
 }
 
 /**
-* @brief Enable/disable continuous (free run) mode
-* @param[in] mode Continuous mode state
-* @retval Error code
-*/
-int8_t TIDS_enableContinuousMode(TIDS_state_t mode)
+ * @brief Enable/disable continuous (free run) mode
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] mode Continuous mode state
+ * @retval Error code
+ */
+int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_state_t mode)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
 
   ctrlReg.freeRunBit = mode;
 
-  return TIDS_WriteReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
 }
 
 /**
-* @brief Check if continuous (free run) mode is enabled
-* @param[out] mode The returned continuous mode enable state
-* @retval Error code
-*/
-int8_t TIDS_isContinuousModeEnabled(TIDS_state_t *mode)
+ * @brief Check if continuous (free run) mode is enabled
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] mode The returned continuous mode enable state
+ * @retval Error code
+ */
+int8_t TIDS_isContinuousModeEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *mode)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
@@ -202,34 +186,36 @@ int8_t TIDS_isContinuousModeEnabled(TIDS_state_t *mode)
 }
 
 /**
-* @brief Enable/disable block data update mode
-* @param[in] bdu Block data update state
-* @retval Error code
-*/
-int8_t TIDS_enableBlockDataUpdate(TIDS_state_t bdu)
+ * @brief Enable/disable block data update mode
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] bdu Block data update state
+ * @retval Error code
+ */
+int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_state_t bdu)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
 
   ctrlReg.blockDataUpdate = bdu;
 
-  return TIDS_WriteReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
 }
 
 /**
-* @brief Read the block data update state
-* @param[out] bdu The returned block data update state
-* @retval Error code
-*/
-int8_t TIDS_isBlockDataUpdateEnabled(TIDS_state_t *bdu)
+ * @brief Read the block data update state
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] bdu The returned block data update state
+ * @retval Error code
+ */
+int8_t TIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *bdu)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
@@ -240,34 +226,36 @@ int8_t TIDS_isBlockDataUpdateEnabled(TIDS_state_t *bdu)
 }
 
 /**
-* @brief Set the output data rate of the sensor
-* @param[in] odr Output data rate
-* @return Error code
-*/
-int8_t TIDS_setOutputDataRate(TIDS_outputDataRate_t odr)
+ * @brief Set the output data rate of the sensor
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] odr Output data rate
+ * @return Error code
+ */
+int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t odr)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
 
   ctrlReg.outputDataRate = odr;
 
-  return TIDS_WriteReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
 }
 
 /**
-* @brief Read the output data rate of the sensor
-* @param[out] odr The returned output data rate
-* @return Error code
-*/
-int8_t TIDS_getOutputDataRate(TIDS_outputDataRate_t* odr)
+ * @brief Read the output data rate of the sensor
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] odr The returned output data rate
+ * @return Error code
+ */
+int8_t TIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t* odr)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
@@ -278,35 +266,37 @@ int8_t TIDS_getOutputDataRate(TIDS_outputDataRate_t* odr)
 }
 
 /**
-* @brief Trigger capturing of a new value in one-shot mode.
-* Note: One shot mode can be used for measurement frequencies up to 1 Hz.
-* @param[in] oneShot One shot bit state
-* @return Error code
-*/
-int8_t TIDS_enableOneShot(TIDS_state_t oneShot)
+ * @brief Trigger capturing of a new value in one-shot mode.
+ * Note: One shot mode can be used for measurement frequencies up to 1 Hz.
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] oneShot One shot bit state
+ * @return Error code
+ */
+int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t oneShot)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
 
   ctrlReg.oneShotBit = oneShot;
 
-  return TIDS_WriteReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
 }
 
 /**
-* @brief Read the one shot bit state
-* @param[out] oneShot The returned one shot bit state
-* @retval Error code
-*/
-int8_t TIDS_isOneShotEnabled(TIDS_state_t *oneShot)
+ * @brief Read the one shot bit state
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] oneShot The returned one shot bit state
+ * @retval Error code
+ */
+int8_t TIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *oneShot)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
@@ -317,34 +307,36 @@ int8_t TIDS_isOneShotEnabled(TIDS_state_t *oneShot)
 }
 
 /**
-* @brief Enable/disable auto increment mode
-* @param[in] autoIncr Auto increment mode state
-* @retval Error code
-*/
-int8_t TIDS_enableAutoIncrement(TIDS_state_t autoIncr)
+ * @brief Enable/disable auto increment mode
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] autoIncr Auto increment mode state
+ * @retval Error code
+ */
+int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_state_t autoIncr)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
 
   ctrlReg.autoAddIncr = autoIncr;
 
-  return TIDS_WriteReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
+  return TIDS_WriteReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg);
 }
 
 /**
-* @brief Read the auto increment mode state
-* @param[out] autoIncr The returned auto increment mode state
-* @retval Error code
-*/
-int8_t TIDS_isAutoIncrementEnabled(TIDS_state_t *autoIncr)
+ * @brief Read the auto increment mode state
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] autoIncr The returned auto increment mode state
+ * @retval Error code
+ */
+int8_t TIDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *autoIncr)
 {
   TIDS_ctrl_t ctrlReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t *) &ctrlReg))
   {
     return WE_FAIL;
   }
@@ -355,55 +347,71 @@ int8_t TIDS_isAutoIncrementEnabled(TIDS_state_t *autoIncr)
 }
 
 /**
-* @brief Set upper temperature limit
-* @param[in] hLimit Upper limit
-* @retval Error code
-*/
-int8_t TIDS_setTempHighLimit(uint8_t hLimit)
+ * @brief Set upper temperature limit
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] hLimit Upper limit
+ * @retval Error code
+ */
+int8_t TIDS_setTempHighLimit(WE_sensorInterface_t* sensorInterface, uint8_t hLimit)
 {
-  return TIDS_WriteReg(TIDS_LIMIT_T_H_REG, 1, &hLimit);
+  return TIDS_WriteReg(sensorInterface, TIDS_LIMIT_T_H_REG, 1, &hLimit);
 }
 
 /**
-* @brief Get upper temperature limit
-* @param[out] hLimit The returned temperature high limit
-* @retval Error code
-*/
-int8_t TIDS_getTempHighLimit(uint8_t *hLimit)
+ * @brief Get upper temperature limit
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] hLimit The returned temperature high limit
+ * @retval Error code
+ */
+int8_t TIDS_getTempHighLimit(WE_sensorInterface_t* sensorInterface, uint8_t *hLimit)
 {
-  return TIDS_ReadReg(TIDS_LIMIT_T_H_REG, 1, hLimit);
+  return TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_H_REG, 1, hLimit);
 }
 
 /**
-* @brief Set lower temperature limit
-* @param[in] lLimit Low limit
-* @retval Error code
-*/
-int8_t TIDS_setTempLowLimit(uint8_t lLimit)
+ * @brief Set lower temperature limit
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[in] lLimit Low limit
+ * @retval Error code
+ */
+int8_t TIDS_setTempLowLimit(WE_sensorInterface_t* sensorInterface, uint8_t lLimit)
 {
-  return TIDS_WriteReg(TIDS_LIMIT_T_L_REG, 1, &lLimit);
+  return TIDS_WriteReg(sensorInterface, TIDS_LIMIT_T_L_REG, 1, &lLimit);
 }
 
 /**
-* @brief Get lower temperature limit
-* @param[out] lLimit The returned temperature low limit
-* @retval Error code
-*/
-int8_t TIDS_getTempLowLimit(uint8_t *lLimit)
+ * @brief Get lower temperature limit
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] lLimit The returned temperature low limit
+ * @retval Error code
+ */
+int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, uint8_t *lLimit)
 {
-  return TIDS_ReadReg(TIDS_LIMIT_T_L_REG, 1, lLimit);
+  return TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_L_REG, 1, lLimit);
 }
 
 /**
-* @brief Check if the sensor is busy
-* @param[out] busy The returned busy state
-* @retval Error code
-*/
-int8_t TIDS_isBusy(TIDS_state_t *busy)
+ * @brief Get overall sensor status
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] status The returned sensor status data
+ * @retval Error code
+ */
+int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t *status)
+{
+  return TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t *) status);
+}
+
+/**
+ * @brief Check if the sensor is busy
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] busy The returned busy state
+ * @retval Error code
+ */
+int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t *busy)
 {
   TIDS_status_t statusReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
   {
     return WE_FAIL;
   }
@@ -414,15 +422,16 @@ int8_t TIDS_isBusy(TIDS_state_t *busy)
 }
 
 /**
-* @brief Check if upper limit has been exceeded
-* @param[out] state The returned limit exceeded state
-* @retval Error code
-*/
-int8_t TIDS_isUpperLimitExceeded(TIDS_state_t *state)
+ * @brief Check if upper limit has been exceeded
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] state The returned limit exceeded state
+ * @retval Error code
+ */
+int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t *state)
 {
   TIDS_status_t statusReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
   {
     return WE_FAIL;
   }
@@ -433,15 +442,16 @@ int8_t TIDS_isUpperLimitExceeded(TIDS_state_t *state)
 }
 
 /**
-* @brief Check if lower limit has been exceeded
-* @param[out] state The returned limit exceeded state
-* @retval Error code
-*/
-int8_t TIDS_isLowerLimitExceeded(TIDS_state_t *state)
+ * @brief Check if lower limit has been exceeded
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] state The returned limit exceeded state
+ * @retval Error code
+ */
+int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t *state)
 {
   TIDS_status_t statusReg;
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
   {
     return WE_FAIL;
   }
@@ -452,20 +462,21 @@ int8_t TIDS_isLowerLimitExceeded(TIDS_state_t *state)
 }
 
 /**
-* @brief Read the raw measured temperature value
-* @param[out] rawTemp The returned temperature measurement
-* @retval Error code
-*/
-int8_t TIDS_getRawTemperature(int16_t *rawTemp)
+ * @brief Read the raw measured temperature value
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] rawTemp The returned temperature measurement
+ * @retval Error code
+ */
+int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *rawTemp)
 {
   uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == TIDS_ReadReg(TIDS_DATA_T_L_REG, 1, &tmp[0]))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_DATA_T_L_REG, 1, &tmp[0]))
   {
     return WE_FAIL;
   }
   
-  if (WE_FAIL == TIDS_ReadReg(TIDS_DATA_T_H_REG, 1, &tmp[1]))
+  if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_DATA_T_H_REG, 1, &tmp[1]))
   {
     return WE_FAIL;
   }
@@ -478,23 +489,22 @@ int8_t TIDS_getRawTemperature(int16_t *rawTemp)
 #ifdef WE_USE_FLOAT
 
 /**
-* @brief Read the measured temperature value in °C
-* @param[out] tempdegC The returned temperature measurement
-* @retval Error code
-*/
-int8_t TIDS_getTemperature(float *tempdegC)
+ * @brief Read the measured temperature value in °C
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] tempDegC The returned temperature measurement
+ * @retval Error code
+ */
+int8_t TIDS_getTemperature(WE_sensorInterface_t* sensorInterface, float *tempDegC)
 {
   int16_t rawTemp = 0;
-  if (WE_FAIL == TIDS_getRawTemperature(&rawTemp))
+  if (WE_FAIL == TIDS_getRawTemperature(sensorInterface, &rawTemp))
   {
     return WE_FAIL;
   }
 
-  *tempdegC = (float) rawTemp;
-  *tempdegC = *tempdegC / 100;
+  *tempDegC = (float) rawTemp;
+  *tempDegC = *tempDegC / 100;
   return WE_SUCCESS;
 }
 
 #endif /* WE_USE_FLOAT */
-
-/*         EOF         */

@@ -46,10 +46,10 @@
 #define TIDS_DEVICE_ID_VALUE        0xA0     /**< Device ID of TIDS 2521020222501 Sensor */
 
 
-/*         Available TIDS 2521020222501 I2C slave addresses         */
+/*         Available TIDS I2C slave addresses         */
 
-#define TIDS_ADDRESS_I2C_0          0x3F     /**< when SAO of TIDS is connected to ground */
-#define TIDS_ADDRESS_I2C_1          0x38     /**< when SAO of TIDS is connected to positive supply voltage */
+#define TIDS_ADDRESS_I2C_0          0x3F     /**< When SAO of TIDS is connected to ground */
+#define TIDS_ADDRESS_I2C_1          0x38     /**< When SAO of TIDS is connected to positive supply voltage */
 
 
 /*         Register address definitions         */
@@ -67,18 +67,18 @@
 /*         Register type definitions         */
 
 /**
-* @brief Control register
-* Address 0x04
-* Type  R/W
-* Default value: 0x00
-*
-*     AVG1  | AVG0  | Temperature output data-rate (Hz)
-*  ---------------- ----------------------------------------------------
-*      0    |  0    |      25
-*      0    |  1    |      50
-*      1    |  0    |      100
-*      1    |  1    |      200
-*/
+ * @brief Control register
+ * Address 0x04
+ * Type  R/W
+ * Default value: 0x00
+ *
+ *     AVG1  | AVG0  | Temperature output data-rate (Hz)
+ *  ---------------- ----------------------------------------------------
+ *      0    |  0    |      25
+ *      0    |  1    |      50
+ *      1    |  0    |      100
+ *      1    |  1    |      200
+ */
 typedef struct
 {
   uint8_t oneShotBit      : 1;  /**< Trigger a single measurement by setting this bit to 1; Bit is automatically reset to 0 */
@@ -91,11 +91,11 @@ typedef struct
 } TIDS_ctrl_t;
 
 /**
-* @brief Status register
-* Address 0x05
-* Type  R
-* Default value: Output; 0x00
-*/
+ * @brief Status register
+ * Address 0x05
+ * Type  R
+ * Default value: Output; 0x00
+ */
 typedef struct
 {
   uint8_t busy               : 1; /**< BUSY: Temperature conversion status (0: data conversion complete; 1: data conversion in progress) */
@@ -105,11 +105,11 @@ typedef struct
 } TIDS_status_t;
 
 /**
-* @brief Software reset register
-* Address 0x0C
-* Type  R/W
-* Default value: 0x00
-*/
+ * @brief Software reset register
+ * Address 0x0C
+ * Type  R/W
+ * Default value: 0x00
+ */
 typedef struct
 {
   uint8_t reserved01 : 1; /**< Must be set to 0 */
@@ -144,55 +144,53 @@ extern "C"
   /*         Function definitions         */
 
   /* Sensor/interface initialization */
-  int8_t TIDS_initInterface(WE_sensorInterface_t* sensorInterface);
-  int8_t TIDS_getInterface(WE_sensorInterface_t* sensorInterface);
-
-  int8_t TIDS_isInterfaceReady();
+  int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
 
   /* Device ID */
-  int8_t TIDS_getDeviceID(uint8_t *deviceID);
+  int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID);
 
   /* Software reset */
-  int8_t TIDS_softReset(TIDS_state_t swReset);
-  int8_t TIDS_getSoftResetState(TIDS_state_t *swReset);
+  int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swReset);
+  int8_t TIDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, TIDS_state_t *swReset);
 
   /* Free run mode */
-  int8_t TIDS_enableContinuousMode(TIDS_state_t mode);
-  int8_t TIDS_isContinuousModeEnabled(TIDS_state_t *mode);
+  int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_state_t mode);
+  int8_t TIDS_isContinuousModeEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *mode);
 
   /* Block data update */
-  int8_t TIDS_enableBlockDataUpdate(TIDS_state_t bdu);
-  int8_t TIDS_isBlockDataUpdateEnabled(TIDS_state_t *bdu);
+  int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_state_t bdu);
+  int8_t TIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *bdu);
 
   /* Output data rate */
-  int8_t TIDS_setOutputDataRate(TIDS_outputDataRate_t odr);
-  int8_t TIDS_getOutputDataRate(TIDS_outputDataRate_t* odr);
+  int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t odr);
+  int8_t TIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t* odr);
 
   /* One shot mode */
-  int8_t TIDS_enableOneShot(TIDS_state_t oneShot);
-  int8_t TIDS_isOneShotEnabled(TIDS_state_t *oneShot);
+  int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t oneShot);
+  int8_t TIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *oneShot);
 
   /* Address auto increment */
-  int8_t TIDS_enableAutoIncrement(TIDS_state_t autoIncr);
-  int8_t TIDS_isAutoIncrementEnabled(TIDS_state_t *autoIncr);
+  int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_state_t autoIncr);
+  int8_t TIDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t *autoIncr);
 
   /* Temperature limits */
-  int8_t TIDS_setTempHighLimit(uint8_t hLimit);
-  int8_t TIDS_getTempHighLimit(uint8_t *hLimit);
+  int8_t TIDS_setTempHighLimit(WE_sensorInterface_t* sensorInterface, uint8_t hLimit);
+  int8_t TIDS_getTempHighLimit(WE_sensorInterface_t* sensorInterface, uint8_t *hLimit);
 
-  int8_t TIDS_setTempLowLimit(uint8_t lLimit);
-  int8_t TIDS_getTempLowLimit(uint8_t *lLimit);
+  int8_t TIDS_setTempLowLimit(WE_sensorInterface_t* sensorInterface, uint8_t lLimit);
+  int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, uint8_t *lLimit);
 
   /* Status */
-  int8_t TIDS_isBusy(TIDS_state_t *busy);
-  int8_t TIDS_isUpperLimitExceeded(TIDS_state_t *state);
-  int8_t TIDS_isLowerLimitExceeded(TIDS_state_t *state);
+  int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t *status);
+  int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t *busy);
+  int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t *state);
+  int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t *state);
 
   /* Standard data out */
-  int8_t TIDS_getRawTemperature(int16_t *rawTemp);
+  int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *rawTemp);
 
 #ifdef WE_USE_FLOAT
-  int8_t TIDS_getTemperature(float *tempdegC);  // Temperature value in °C
+  int8_t TIDS_getTemperature(WE_sensorInterface_t* sensorInterface, float *tempDegC);
 #else
   #warning "WSEN_TIDS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
 #endif /* WE_USE_FLOAT */
@@ -202,5 +200,3 @@ extern "C"
 #endif
 
 #endif /* _WSEN_TIDS_H */
-
-/*         EOF         */

@@ -42,6 +42,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_HIDS_2523020210001/WSEN_HIDS_2523020210001.h"
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 #include "../SensorsSDK/WSEN_TIDS_2521020222501/WSEN_TIDS_2521020222501.h"
@@ -51,11 +53,16 @@
 #define MULTI_SENSOR_EXAMPLE_ITDS
 #define MULTI_SENSOR_EXAMPLE_TIDS
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t hids;
+static WE_sensorInterface_t itds;
+static WE_sensorInterface_t tids;
+
 /* Sensor initialization functions */
-bool initSensors(void);
-bool HIDS_init(void);
-bool ITDS_init(void);
-bool TIDS_init(void);
+static bool initSensors(void);
+static bool HIDS_init(void);
+static bool ITDS_init(void);
+static bool TIDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -100,7 +107,7 @@ void WE_multiSensorExampleInit()
 void WE_multiSensorExampleLoop()
 {
 #ifdef MULTI_SENSOR_EXAMPLE_HIDS
-  if (WE_FAIL == HIDS_enableOneShot(HIDS_enable)) /* trigger a single measurement - oneshot it is! */
+  if (WE_FAIL == HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
   {
     debugPrintln("**** HIDS_enOneShot(enable): NOT OK ****");
   }
@@ -111,13 +118,13 @@ void WE_multiSensorExampleLoop()
   while (waitForMeasurement == true)
   {
     HIDS_state_t humidityAvailable = HIDS_disable;
-    if (WE_FAIL == HIDS_isHumidityDataAvailable(&humidityAvailable))
+    if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humidityAvailable))
     {
       debugPrintln("**** HIDS_getHumStatus(): NOT OK ****");
     }
 
     HIDS_state_t oneShotStatus = HIDS_enable;
-    if (WE_FAIL == HIDS_isOneShotEnabled(&oneShotStatus))
+    if (WE_FAIL == HIDS_isOneShotEnabled(&hids, &oneShotStatus))
     {
       debugPrintln("**** HIDS_getOneShotState(): NOT OK ****");
     }
@@ -135,7 +142,7 @@ void WE_multiSensorExampleLoop()
   }
 
   uint16_t humidity_uint16 = 0;
-  if (HIDS_getHumidity_uint16(&humidity_uint16) == WE_SUCCESS)
+  if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
   {
     uint16_t full = humidity_uint16 / 100;
     uint16_t decimals = humidity_uint16  % 100; /* 2 decimal places */
@@ -163,10 +170,10 @@ void WE_multiSensorExampleLoop()
   do
   {
     /* Wait until the value is ready to read */
-    ITDS_isAccelerationDataReady(&dataReady);
+    ITDS_isAccelerationDataReady(&itds, &dataReady);
   } while (dataReady == ITDS_disable);
 
-  if (ITDS_getAccelerations_float(1, &xAcceleration, &yAcceleration, &zAcceleration) == WE_SUCCESS)
+  if (ITDS_getAccelerations_float(&itds, 1, &xAcceleration, &yAcceleration, &zAcceleration) == WE_SUCCESS)
   {
     debugPrintAcceleration("X", xAcceleration);
     debugPrintAcceleration("Y", yAcceleration);
@@ -182,18 +189,18 @@ void WE_multiSensorExampleLoop()
 
 #ifdef MULTI_SENSOR_EXAMPLE_TIDS
   /* Start a conversion (one shot) */
-  TIDS_enableOneShot(TIDS_enable);
+  TIDS_enableOneShot(&tids, TIDS_enable);
 
   /* Wait until the busy bit is set to 0 */
   TIDS_state_t tidsBusy = TIDS_disable;
   do
   {
-    TIDS_isBusy(&tidsBusy);
+    TIDS_isBusy(&tids, &tidsBusy);
   }
   while (tidsBusy == TIDS_enable);
 
   int16_t temperatureInt;
-  if (TIDS_getRawTemperature(&temperatureInt) == WE_SUCCESS)
+  if (TIDS_getRawTemperature(&tids, &temperatureInt) == WE_SUCCESS)
   {
     debugPrintTemperatureInt(temperatureInt);
   }
@@ -204,9 +211,9 @@ void WE_multiSensorExampleLoop()
 
   /* Perform software reset - must be done when using ONE_SHOT bit
    * (i.e. single conversion mode) */
-  TIDS_softReset(TIDS_enable);
+  TIDS_softReset(&tids, TIDS_enable);
   HAL_Delay(5);
-  TIDS_softReset(TIDS_disable);
+  TIDS_softReset(&tids, TIDS_disable);
 #endif
 
 
@@ -214,7 +221,7 @@ void WE_multiSensorExampleLoop()
   HAL_Delay(1000);
 }
 
-bool initSensors(void)
+static bool initSensors(void)
 {
 #ifdef MULTI_SENSOR_EXAMPLE_HIDS
   /* init HIDS */
@@ -247,7 +254,7 @@ bool initSensors(void)
     HAL_Delay(5);
     while(1);
   }
-#endif // MULTI_SENSOR_EXAMPLE_ITDS
+#endif // MULTI_SENSOR_EXAMPLE_TIDS
 
   return true;
 }
@@ -255,28 +262,26 @@ bool initSensors(void)
 /**
  * @brief Initializes the HIDS sensor for this example application.
  */
-bool HIDS_init(void)
+static bool HIDS_init(void)
 {
   /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  HIDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.handle = &hi2c1;
-  HIDS_initInterface(&interface);
+  HIDS_getDefaultInterface(&hids);
+  hids.interfaceType = WE_i2c;
+  hids.handle = &hi2c1;
 
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != HIDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&hids))
   {
   }
-  debugPrintln("**** HIDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == HIDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
   {
     if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
     {
@@ -295,19 +300,19 @@ bool HIDS_init(void)
   }
 
   /* Enables block data update (prevents an update from happening before both value registers were read) */
-  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(HIDS_enable))
+  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(&hids, HIDS_enable))
   {
     debugPrintln("**** HIDS_setBdu(true): NOT OK ****");
     return false;
   }
 
-  if (WE_SUCCESS !=  HIDS_setOutputDataRate(HIDS_oneShot)) /* Make sure the device is in ODR=oneshot mode '00'*/
+  if (WE_SUCCESS !=  HIDS_setOutputDataRate(&hids, HIDS_oneShot)) /* Make sure the device is in ODR=oneshot mode '00'*/
   {
     debugPrintln("**** HIDS_setOdr(oneShot): NOT OK ****");
     return false;
   }
 
-  if (WE_SUCCESS !=  HIDS_setPowerMode(HIDS_activeMode)) /* Make sure the device is in active mode*/
+  if (WE_SUCCESS !=  HIDS_setPowerMode(&hids, HIDS_activeMode)) /* Make sure the device is in active mode*/
   {
     debugPrintln("**** HIDS_setPowerMode(active): NOT OK ****");
     return false;
@@ -319,28 +324,26 @@ bool HIDS_init(void)
 /**
  * @brief Initializes the ITDS sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -359,35 +362,35 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   return true;
 }
@@ -395,27 +398,25 @@ bool ITDS_init(void)
 /**
  * @brief Initializes the TIDS sensor for this example application.
  */
-bool TIDS_init(void)
+static bool TIDS_init(void)
 {
   /* Initialize sensor interface (i2c with TIDS address, burst mode deactivated) */
-  WE_sensorInterface_t interface;
-  TIDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.handle = &hi2c1;
-  TIDS_initInterface(&interface);
+  TIDS_getDefaultInterface(&tids);
+  tids.interfaceType = WE_i2c;
+  tids.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != TIDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&tids))
   {
   }
-  debugPrintln("**** TIDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == TIDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == TIDS_getDeviceID(&tids, &deviceIdValue))
   {
     if (deviceIdValue == TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
     {
@@ -434,12 +435,12 @@ bool TIDS_init(void)
   }
 
   /* Perform software reset */
-  TIDS_softReset(TIDS_enable);
+  TIDS_softReset(&tids, TIDS_enable);
   HAL_Delay(5);
-  TIDS_softReset(TIDS_disable);
+  TIDS_softReset(&tids, TIDS_disable);
 
   /* Enable auto address increment */
-  TIDS_enableAutoIncrement(TIDS_enable);
+  TIDS_enableAutoIncrement(&tids, TIDS_enable);
 
   return true;
 }

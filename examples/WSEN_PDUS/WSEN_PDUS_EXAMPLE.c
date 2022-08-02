@@ -42,10 +42,15 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_PDUS_25131308XXX01/WSEN_PDUS_25131308XXX01.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t pdus;
+
 /* Sensor initialization function */
-bool PDUS_init(void);
+static bool PDUS_init(void);
 
 static void debugPrint(char _out[]);
 static void debugPrintln(char _out[]);
@@ -98,7 +103,7 @@ void WE_pdusExampleLoop()
 #ifdef WE_USE_FLOAT
   float presskPaP;
   float tempDegCP;
-  if (WE_SUCCESS == PDUS_getPressureAndTemperature_float(PDUS_pdus3, &presskPaP, &tempDegCP))
+  if (WE_SUCCESS == PDUS_getPressureAndTemperature_float(&pdus, PDUS_pdus3, &presskPaP, &tempDegCP))
   {
     debugPrintPressure_float(presskPaP);
     debugPrintTemperature_float(tempDegCP);
@@ -110,7 +115,7 @@ void WE_pdusExampleLoop()
 #else
   uint16_t pressureRaw;
   uint16_t temperatureRaw;
-  if (WE_SUCCESS == PDUS_getRawPressureAndTemperature(&pressureRaw, &temperatureRaw))
+  if (WE_SUCCESS == PDUS_getRawPressureAndTemperature(&pdus, &pressureRaw, &temperatureRaw))
   {
     char pressureStr[6];
     char temperatureStr[6];
@@ -134,22 +139,20 @@ void WE_pdusExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool PDUS_init(void)
+static bool PDUS_init(void)
 {
   /* Initialize sensor interface (i2c with PDUS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  PDUS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  PDUS_initInterface(&interface);
+  PDUS_getDefaultInterface(&pdus);
+  pdus.interfaceType = WE_i2c;
+  pdus.options.i2c.burstMode = 1;
+  pdus.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != PDUS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&pdus))
   {
   }
-  debugPrintln("**** PDUS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 

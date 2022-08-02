@@ -77,13 +77,13 @@ static HAL_StatusTypeDef SPIx_WriteBytes(SPI_HandleTypeDef *handle,
 #endif /* HAL_SPI_MODULE_ENABLED */
 
 /**
-* @brief Read data starting from the addressed register
-* @param[in] interface Sensor interface
-* @param[in] regAdr The register address to read from
-* @param[in] numBytesToRead Number of bytes to read
-* @param[out] data The read data will be stored here
-* @retval Error code
-*/
+ * @brief Read data starting from the addressed register
+ * @param[in] interface Sensor interface
+ * @param[in] regAdr The register address to read from
+ * @param[in] numBytesToRead Number of bytes to read
+ * @param[out] data The read data will be stored here
+ * @retval Error code
+ */
 inline int8_t WE_ReadReg(WE_sensorInterface_t *interface,
                          uint8_t regAdr,
                          uint16_t numBytesToRead,
@@ -164,13 +164,13 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t *interface,
 
 
 /**
-* @brief Write data starting from the addressed register
-* @param[in] interface Sensor interface
-* @param[in] regAdr Address of register to be written
-* @param[in] numBytesToWrite Number of bytes to write
-* @param[in] data Data to be written
-* @retval Error code
-*/
+ * @brief Write data starting from the addressed register
+ * @param[in] interface Sensor interface
+ * @param[in] regAdr Address of register to be written
+ * @param[in] numBytesToWrite Number of bytes to write
+ * @param[in] data Data to be written
+ * @retval Error code
+ */
 inline int8_t WE_WriteReg(WE_sensorInterface_t *interface,
                           uint8_t regAdr,
                           uint16_t numBytesToWrite,
@@ -277,16 +277,16 @@ int8_t WE_isSensorInterfaceReady(WE_sensorInterface_t* interface)
 #ifdef HAL_I2C_MODULE_ENABLED
 
 /**
-* @brief Reads bytes from I2C
-* @param[in] handle I2C handle
-* @param[in] addr I2C address
-* @param[in] reg Register address
-* @param[in] numBytesToRead Number of bytes to read
-* @param[in] slaveTransmitterMode Enables slave-transmitter mode (read-only, polling mode IO operation), slaveTransmitterMode = 1 is only required for WSEN-PDUS operation, other sensors use 0.
-* @param[in] timeout Timeout for read operation
-* @param[out] value Pointer to data buffer
-* @retval HAL status
-*/
+ * @brief Reads bytes from I2C
+ * @param[in] handle I2C handle
+ * @param[in] addr I2C address
+ * @param[in] reg Register address
+ * @param[in] numBytesToRead Number of bytes to read
+ * @param[in] slaveTransmitterMode Enables slave-transmitter mode (read-only, polling mode IO operation), slaveTransmitterMode = 1 is only required for WSEN-PDUS operation, other sensors use 0.
+ * @param[in] timeout Timeout for read operation
+ * @param[out] value Pointer to data buffer
+ * @retval HAL status
+ */
 static HAL_StatusTypeDef I2Cx_ReadBytes(I2C_HandleTypeDef *handle,
                                         uint8_t addr,
                                         uint16_t reg,
@@ -317,15 +317,15 @@ static HAL_StatusTypeDef I2Cx_ReadBytes(I2C_HandleTypeDef *handle,
 
 
 /**
-* @brief Writes bytes to I2C.
-* @param[in] handle I2C handle
-* @param[in] addr I2C address
-* @param[in] reg The target register address to write
-* @param[in] numBytesToWrite Number of bytes to write
-* @param[in] timeout Timeout for write operation
-* @param[in] value The target register value to be written
-* @retval HAL status
-*/
+ * @brief Writes bytes to I2C.
+ * @param[in] handle I2C handle
+ * @param[in] addr I2C address
+ * @param[in] reg The target register address to write
+ * @param[in] numBytesToWrite Number of bytes to write
+ * @param[in] timeout Timeout for write operation
+ * @param[in] value The target register value to be written
+ * @retval HAL status
+ */
 static HAL_StatusTypeDef I2Cx_WriteBytes(I2C_HandleTypeDef *handle,
                                          uint8_t addr,
                                          uint16_t reg,
@@ -347,16 +347,16 @@ static HAL_StatusTypeDef I2Cx_WriteBytes(I2C_HandleTypeDef *handle,
 
 #ifdef HAL_SPI_MODULE_ENABLED
 /**
-* @brief Reads bytes from SPI.
-* @param[in] handle SPI handle
-* @param[in] chipSelectPort Port of pin used for chip select
-* @param[in] chipSelectPin Pin used for chip select
-* @param[in] reg Register address
-* @param[in] numBytesToRead Number of bytes to read
-* @param[in] timeout Timeout for read operation
-* @param[out] value Pointer to data buffer
-* @retval HAL status
-*/
+ * @brief Reads bytes from SPI.
+ * @param[in] handle SPI handle
+ * @param[in] chipSelectPort Port of pin used for chip select
+ * @param[in] chipSelectPin Pin used for chip select
+ * @param[in] reg Register address
+ * @param[in] numBytesToRead Number of bytes to read
+ * @param[in] timeout Timeout for read operation
+ * @param[out] value Pointer to data buffer
+ * @retval HAL status
+ */
 static HAL_StatusTypeDef SPIx_ReadBytes(SPI_HandleTypeDef *handle,
                                         GPIO_TypeDef* chipSelectPort,
                                         uint16_t chipSelectPin,
@@ -387,16 +387,16 @@ static HAL_StatusTypeDef SPIx_ReadBytes(SPI_HandleTypeDef *handle,
 
 
 /**
-* @brief Writes bytes to SPI.
-* @param[in] handle SPI handle
-* @param[in] chipSelectPort Port of pin used for chip select
-* @param[in] chipSelectPin Pin used for chip select
-* @param[in] reg The target register address to write
-* @param[in] numBytesToWrite Number of bytes to write
-* @param[in] timeout Timeout for write operation
-* @param[in] value The target register value to be written
-* @retval HAL status
-*/
+ * @brief Writes bytes to SPI.
+ * @param[in] handle SPI handle
+ * @param[in] chipSelectPort Port of pin used for chip select
+ * @param[in] chipSelectPin Pin used for chip select
+ * @param[in] reg The target register address to write
+ * @param[in] numBytesToWrite Number of bytes to write
+ * @param[in] timeout Timeout for write operation
+ * @param[in] value The target register value to be written
+ * @retval HAL status
+ */
 static HAL_StatusTypeDef SPIx_WriteBytes(SPI_HandleTypeDef *handle,
                                          GPIO_TypeDef* chipSelectPort,
                                          uint16_t chipSelectPin,
@@ -425,5 +425,3 @@ static HAL_StatusTypeDef SPIx_WriteBytes(SPI_HandleTypeDef *handle,
 }
 
 #endif /* HAL_SPI_MODULE_ENABLED */
-
-/*         EOF         */

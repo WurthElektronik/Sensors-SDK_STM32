@@ -43,17 +43,22 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
+
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
 
 /* Is set to true if device orientation has changed. Is initialized to true,
  * so that orientation is printed on startup. */
-bool orientationChanged = true;
+static bool orientationChanged = true;
 
 /* Stores if sensor is in 4D mode (limitedTo4d = ITDS_enable = 1) or 6D mode (limitedTo4d = ITDS_disable = 0) */
-ITDS_state_t limitedTo4d;
+static ITDS_state_t limitedTo4d;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -86,7 +91,7 @@ void WE_itdsOrientationExampleInit()
   }
 
   /* Check if orientation detection is limited to 4D. */
-  ITDS_is4DDetectionEnabled(&limitedTo4d);
+  ITDS_is4DDetectionEnabled(&itds, &limitedTo4d);
 }
 
 /**
@@ -103,7 +108,7 @@ void WE_itdsOrientationExampleLoop()
 
     /* Get info on 6D orientation change event. */
     ITDS_6dEvent_t sixDEvent;
-    ITDS_get6dEventRegister(&sixDEvent);
+    ITDS_get6dEventRegister(&itds, &sixDEvent);
     debugPrint(limitedTo4d == ITDS_enable ? "4D" : "6D");
     debugPrint(" orientation changed");
     if (limitedTo4d == ITDS_enable)
@@ -135,28 +140,26 @@ void WE_itdsOrientationExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -175,47 +178,47 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Turn on accelerometer (high performance, 200Hz) */
-  ITDS_setOperatingMode(ITDS_highPerformance);
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* Low noise mode */
-  ITDS_enableLowNoise(ITDS_enable);
+  ITDS_enableLowNoise(&itds, ITDS_enable);
 
   /* 2g range */
-  ITDS_setFullScale(ITDS_twoG);
+  ITDS_setFullScale(&itds, ITDS_twoG);
 
   /* Do not use low-pass filter for 6D */
-  ITDS_enableLowPassOn6D(ITDS_disable);
+  ITDS_enableLowPassOn6D(&itds, ITDS_disable);
 
   /* Set threshold for orientation change detection to 60° */
-  ITDS_set6DThreshold(ITDS_sixtyDeg);
+  ITDS_set6DThreshold(&itds, ITDS_sixtyDeg);
 
   /* Limit orientation-detection to portrait/landscape computation (common in mobile devices) */
-//  ITDS_enable4DDetection(ITDS_enable);
+//  ITDS_enable4DDetection(&itds, ITDS_enable);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   /* Enable 6D orientation change interrupt on INT_0 */
-  ITDS_enable6DOnINT0(ITDS_enable);
+  ITDS_enable6DOnINT0(&itds, ITDS_enable);
 
   return true;
 }

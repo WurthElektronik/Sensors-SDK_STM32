@@ -42,6 +42,8 @@
 #include "i2c.h"
 #include "usart.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 
@@ -62,10 +64,13 @@ typedef enum
 } ITDS_example_mode;
 
 /* Use the following variable to switch among the available example modes. */
-ITDS_example_mode itdsExampleMode = highPerformanceExample;
+static ITDS_example_mode itdsExampleMode = highPerformanceExample;
+
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Example modes for the ITDS sensor */
 void ITDS_startHighPerformanceMode();
@@ -146,28 +151,26 @@ void WE_itdsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -186,20 +189,20 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
@@ -207,10 +210,10 @@ bool ITDS_init(void)
 }
 
 /**
-* @brief  High performance mode
-* @param  No parameter.
-* @retval None
-*/
+ * @brief  High performance mode
+ * @param  No parameter.
+ * @retval None
+ */
 void ITDS_startHighPerformanceMode()
 {
   debugPrintln("Starting high performance mode...");
@@ -218,24 +221,24 @@ void ITDS_startHighPerformanceMode()
   ITDS_state_t dataReady = ITDS_disable;
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   while (1)
   {
     /* Wait until the value is ready to read */
     do
     {
-      ITDS_isAccelerationDataReady(&dataReady);
+      ITDS_isAccelerationDataReady(&itds, &dataReady);
     } while (dataReady == ITDS_disable);
 
     /* Below, you'll find examples for reading acceleration values of all axes in [mg],
@@ -245,7 +248,7 @@ void ITDS_startHighPerformanceMode()
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
       float xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_float(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_float("X", xAcc);
         debugPrintAcceleration_float("Y", yAcc);
@@ -267,7 +270,7 @@ void ITDS_startHighPerformanceMode()
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
       int16_t xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_int("X", xAcc);
         debugPrintAcceleration_int("Y", yAcc);
@@ -287,10 +290,10 @@ void ITDS_startHighPerformanceMode()
 }
 
 /**
-* @brief  Normal mode
-* @param  No parameter.
-* @retval None
-*/
+ * @brief  Normal mode
+ * @param  No parameter.
+ * @retval None
+ */
 void ITDS_startNormalMode()
 {
   debugPrintln("Starting normal mode...");
@@ -298,25 +301,25 @@ void ITDS_startNormalMode()
   ITDS_state_t dataReady = ITDS_disable;
 
   /* Enable normal mode*/
-  ITDS_setOperatingMode(ITDS_normalOrLowPower);
-  ITDS_setPowerMode(ITDS_normalMode);
+  ITDS_setOperatingMode(&itds, ITDS_normalOrLowPower);
+  ITDS_setPowerMode(&itds, ITDS_normalMode);
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   while (1)
   {
     /* Wait until the value is ready to read */
     do
     {
-      ITDS_isAccelerationDataReady(&dataReady);
+      ITDS_isAccelerationDataReady(&itds, &dataReady);
     } while (dataReady == ITDS_disable);
 
     /* Below, you'll find examples for reading acceleration values of all axes in [mg],
@@ -326,7 +329,7 @@ void ITDS_startNormalMode()
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
       float xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_float(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_float("X", xAcc);
         debugPrintAcceleration_float("Y", yAcc);
@@ -348,7 +351,7 @@ void ITDS_startNormalMode()
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
       int16_t xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_int("X", xAcc);
         debugPrintAcceleration_int("Y", yAcc);
@@ -368,10 +371,10 @@ void ITDS_startNormalMode()
 }
 
 /**
-* @brief  Low power mode
-* @param  No parameter.
-* @retval None
-*/
+ * @brief  Low power mode
+ * @param  No parameter.
+ * @retval None
+ */
 void ITDS_startLowPowerMode()
 {
   debugPrintln("Starting low power mode...");
@@ -379,25 +382,25 @@ void ITDS_startLowPowerMode()
   ITDS_state_t dataReady = ITDS_disable;
 
   /* Enable low power mode */
-  ITDS_setOperatingMode(ITDS_normalOrLowPower);
-  ITDS_setPowerMode(ITDS_lowPower);
+  ITDS_setOperatingMode(&itds, ITDS_normalOrLowPower);
+  ITDS_setPowerMode(&itds, ITDS_lowPower);
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   while (1)
   {
     /* Wait until the value is ready to read */
     do
     {
-      ITDS_isAccelerationDataReady(&dataReady);
+      ITDS_isAccelerationDataReady(&itds, &dataReady);
     } while (dataReady == ITDS_disable);
 
     /* Below, you'll find examples for reading acceleration values of all axes in [mg],
@@ -407,7 +410,7 @@ void ITDS_startLowPowerMode()
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
     {
       float xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_float(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_float(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_float("X", xAcc);
         debugPrintAcceleration_float("Y", yAcc);
@@ -429,7 +432,7 @@ void ITDS_startLowPowerMode()
 #ifdef ITDS_EXAMPLE_ENABLE_INT
     {
       int16_t xAcc, yAcc, zAcc;
-      if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+      if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
       {
         debugPrintAcceleration_int("X", xAcc);
         debugPrintAcceleration_int("Y", yAcc);
@@ -453,17 +456,17 @@ void ITDS_startTemperatureMode()
   debugPrintln("Starting temperature mode...");
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   while (1)
   {
@@ -471,7 +474,7 @@ void ITDS_startTemperatureMode()
 #ifdef ITDS_EXAMPLE_ENABLE_FLOAT
 
     float tempDegC = 0.0f;
-    if (ITDS_getTemperature12bit(&tempDegC) == WE_SUCCESS)
+    if (ITDS_getTemperature12bit(&itds, &tempDegC) == WE_SUCCESS)
     {
       debugPrintTemperature_float(tempDegC);
     }
@@ -485,7 +488,7 @@ void ITDS_startTemperatureMode()
 #ifdef ITDS_EXAMPLE_ENABLE_INT
 
     int16_t temperature = 0.0f;
-    if (ITDS_getRawTemperature12bit(&temperature) == WE_SUCCESS)
+    if (ITDS_getRawTemperature12bit(&itds, &temperature) == WE_SUCCESS)
     {
       // Convert temperature to hundredths of degrees Celsius
       temperature = (int16_t) ((int32_t) temperature * 100) / 16 + 2500;

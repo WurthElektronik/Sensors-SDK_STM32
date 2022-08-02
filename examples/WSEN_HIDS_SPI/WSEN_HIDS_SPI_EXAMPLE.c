@@ -45,9 +45,11 @@
 
 #include "../SensorsSDK/WSEN_HIDS_2523020210001/WSEN_HIDS_2523020210001.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t hids;
 
 /* Sensor initialization function */
-bool HIDS_init(void);
+static bool HIDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -92,7 +94,7 @@ void WE_hidsSpiExampleInit()
  */
 void WE_hidsSpiExampleLoop()
 {
-  if (WE_FAIL == HIDS_enableOneShot(HIDS_enable)) /* trigger a single measurement - oneshot it is! */
+  if (WE_FAIL == HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
   {
     debugPrintln("**** HIDS_enableOneShot(enable): NOT OK ****");
   }
@@ -103,13 +105,13 @@ void WE_hidsSpiExampleLoop()
   while (waitForMeasurement == true)
   {
     HIDS_state_t humStatus = HIDS_disable;
-    if (WE_FAIL == HIDS_isHumidityDataAvailable(&humStatus))
+    if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humStatus))
     {
       debugPrintln("**** HIDS_isHumidityDataAvailable(): NOT OK ****");
     }
 
     HIDS_state_t oneShotStatus = HIDS_enable;
-    if (WE_FAIL == HIDS_isOneShotEnabled(&oneShotStatus))
+    if (WE_FAIL == HIDS_isOneShotEnabled(&hids, &oneShotStatus))
     {
       debugPrintln("**** HIDS_isOneShotEnabled(): NOT OK ****");
     }
@@ -127,7 +129,7 @@ void WE_hidsSpiExampleLoop()
   }
 
   uint16_t humidity_uint16 = 0;
-  if (HIDS_getHumidity_uint16(&humidity_uint16) == WE_SUCCESS)
+  if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
   {
     uint16_t full = humidity_uint16 / 100;
     uint16_t decimals = humidity_uint16  % 100; /* 2 decimal places */
@@ -151,17 +153,15 @@ void WE_hidsSpiExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool HIDS_init(void)
+static bool HIDS_init(void)
 {
   /* Initialize sensor interface (SPI, burst mode deactivated) */
-  WE_sensorInterface_t interface;
-  HIDS_getInterface(&interface);
-  interface.interfaceType = WE_spi;
-  interface.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
-  interface.options.spi.chipSelectPin = SPI1_CS0_Pin;
-  interface.options.spi.burstMode = 0;
-  interface.handle = &hspi1;
-  HIDS_initInterface(&interface);
+  HIDS_getDefaultInterface(&hids);
+  hids.interfaceType = WE_spi;
+  hids.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
+  hids.options.spi.chipSelectPin = SPI1_CS0_Pin;
+  hids.options.spi.burstMode = 0;
+  hids.handle = &hspi1;
 
   /* Wait for boot */
   HAL_Delay(50);
@@ -172,7 +172,7 @@ bool HIDS_init(void)
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == HIDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
   {
     if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
     {
@@ -191,21 +191,21 @@ bool HIDS_init(void)
   }
 
   /* Enables block data update, prevents that an update happens before both value registers were read */
-  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(HIDS_enable))
+  if (WE_SUCCESS != HIDS_enableBlockDataUpdate(&hids, HIDS_enable))
   {
     debugPrintln("**** HIDS_setBdu(true): NOT OK ****");
     return false;
   }
 
   /* Make sure the device is in ODR=oneshot mode '00' */
-  if (WE_SUCCESS !=  HIDS_setOutputDataRate(HIDS_oneShot))
+  if (WE_SUCCESS !=  HIDS_setOutputDataRate(&hids, HIDS_oneShot))
   {
     debugPrintln("**** HIDS_setOdr(oneShot): NOT OK ****");
     return false;
   }
 
   /* Make sure the device is in active mode '1' */
-  if (WE_SUCCESS !=  HIDS_setPowerMode(HIDS_activeMode))
+  if (WE_SUCCESS !=  HIDS_setPowerMode(&hids, HIDS_activeMode))
   {
     debugPrintln("**** HIDS_setPowerMode(active): NOT OK ****");
     return false;

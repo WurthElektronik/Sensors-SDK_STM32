@@ -52,5 +52,3 @@ extern int8_t WE_isSensorInterfaceReady(WE_sensorInterface_t* interface);
 
 
 #endif /* PLATFORM_H_INCLUDED */
-
-/*         EOF         */

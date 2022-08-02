@@ -78,24 +78,24 @@
 /*         Register type definitions         */
 
 /**
-* @brief Humidity and temperature average configuration
-*
-* Address 0x10
-* Type  R/W
-* Default value: 0x1B
-*
-*   AVG 2:0   |  (AVGT) | (AVGH) |
-* ----------------------------------
-*       000   |  2      |  4     |
-*       001   |  4      |  8     |
-*       010   |  8      |  16    |
-*       011   |  16     |  32    |
-*       100   |  32     |  64    |
-*       101   |  64     |  128   |
-*       110   |  128    |  256   |
-*       111   |  256    |  512   |
-* ----------------------------------
-*/
+ * @brief Humidity and temperature average configuration
+ *
+ * Address 0x10
+ * Type  R/W
+ * Default value: 0x1B
+ *
+ *   AVG 2:0   |  (AVGT) | (AVGH) |
+ * ----------------------------------
+ *       000   |  2      |  4     |
+ *       001   |  4      |  8     |
+ *       010   |  8      |  16    |
+ *       011   |  16     |  32    |
+ *       100   |  32     |  64    |
+ *       101   |  64     |  128   |
+ *       110   |  128    |  256   |
+ *       111   |  256    |  512   |
+ * ----------------------------------
+ */
 typedef struct
 {
   uint8_t avgHum : 3;    /**< AVG_H: Select the number of averaged humidity samples (4 - 512) */
@@ -104,19 +104,19 @@ typedef struct
 } HIDS_averageConfig_t;
 
 /**
-* @brief Control Register 1
-*
-* Address 0x20
-* Type  R/W
-* Default value: 0x00
-*
-*      ODR1  | ODR0   | Humidity/temperature output data rate (Hz)
-*   ---------------------------------------------------------------------
-*       0    |  0     |              One-shot mode
-*       0    |  1     |                 1
-*       1    |  0     |                 7
-*       1    |  1     |                 12.5
-*/
+ * @brief Control Register 1
+ *
+ * Address 0x20
+ * Type  R/W
+ * Default value: 0x00
+ *
+ *      ODR1  | ODR0   | Humidity/temperature output data rate (Hz)
+ *   ---------------------------------------------------------------------
+ *       0    |  0     |              One-shot mode
+ *       0    |  1     |                 1
+ *       1    |  0     |                 7
+ *       1    |  1     |                 12.5
+ */
 typedef struct
 {
   uint8_t odr : 2;              /**< ODR: Output data rate selection */
@@ -126,12 +126,12 @@ typedef struct
 } HIDS_ctrl1_t;
 
 /**
-* @brief Control Register 2
-*
-* Address 0x21
-* Type  R/W
-* Default value: 0x00
-*/
+ * @brief Control Register 2
+ *
+ * Address 0x21
+ * Type  R/W
+ * Default value: 0x00
+ */
 typedef struct
 {
   uint8_t oneShotBit : 1;         /**< One-shot enable (0: conversion done; 1: start new conversion) */
@@ -141,12 +141,12 @@ typedef struct
 } HIDS_ctrl2_t;
 
 /**
-* @brief Control Register 3
-*
-* Address 0x22
-* Type  R/W
-* Default value: 0x00
-*/
+ * @brief Control Register 3
+ *
+ * Address 0x22
+ * Type  R/W
+ * Default value: 0x00
+ */
 typedef struct
 {
   uint8_t notUsed01 : 2;          /**< This bit must be set to 0 for proper operation of the device */
@@ -157,12 +157,12 @@ typedef struct
 } HIDS_ctrl3_t;
 
 /**
-* @brief Status register
-*
-* Address 0x27
-* Type  R
-* Default value: 0x00
-*/
+ * @brief Status register
+ *
+ * Address 0x27
+ * Type  R
+ * Default value: 0x00
+ */
 typedef struct
 {
   uint8_t humDataAvailable : 1;   /**< H_DA: Pressure data available (0: new humidity sample not yet available; 1: new humidity sample is available) */
@@ -259,80 +259,75 @@ extern "C"
 {
 #endif
 
-  int8_t HIDS_initInterface(WE_sensorInterface_t* sensorInterface);
-  int8_t HIDS_getInterface(WE_sensorInterface_t* sensorInterface);
+  int8_t HIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
 
-  int8_t HIDS_isInterfaceReady();
+  int8_t HIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID);
 
-  int8_t HIDS_getDeviceID(uint8_t *deviceID);
+  uint8_t HIDS_setHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_humidityAverageConfig_t avgHum);
+  uint8_t HIDS_getHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_humidityAverageConfig_t *avgHum);
+  uint8_t HIDS_setTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_temperatureAverageConfig_t avgTemp);
+  uint8_t HIDS_getTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_temperatureAverageConfig_t *avgTemp);
 
-  uint8_t HIDS_setHumidityAverageConfig(HIDS_humidityAverageConfig_t avgHum);
-  uint8_t HIDS_getHumidityAverageConfig(HIDS_humidityAverageConfig_t *avgHum);
-  uint8_t HIDS_setTemperatureAverageConfig(HIDS_temperatureAverageConfig_t avgTemp);
-  uint8_t HIDS_getTemperatureAverageConfig(HIDS_temperatureAverageConfig_t *avgTemp);
+  int8_t HIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_outputDataRate_t odr);
+  int8_t HIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_outputDataRate_t *odr);
 
-  int8_t HIDS_setOutputDataRate(HIDS_outputDataRate_t odr);
-  int8_t HIDS_getOutputDataRate(HIDS_outputDataRate_t *odr);
+  int8_t HIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, HIDS_state_t bdu);
+  int8_t HIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *bdu);
 
-  int8_t HIDS_enableBlockDataUpdate(HIDS_state_t bdu);
-  int8_t HIDS_isBlockDataUpdateEnabled(HIDS_state_t *bdu);
+  int8_t HIDS_setPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t pd);
+  int8_t HIDS_getPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t *pd);
 
-  int8_t HIDS_setPowerMode(HIDS_powerMode_t pd);
-  int8_t HIDS_getPowerMode(HIDS_powerMode_t *pd);
+  int8_t HIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, HIDS_state_t oneShot);
+  int8_t HIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *oneShot);
 
-  int8_t HIDS_enableOneShot(HIDS_state_t oneShot);
-  int8_t HIDS_isOneShotEnabled(HIDS_state_t *oneShot);
+  int8_t HIDS_enableHeater(WE_sensorInterface_t* sensorInterface, HIDS_state_t heater);
+  int8_t HIDS_isHeaterEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *heater);
 
-  int8_t HIDS_enableHeater(HIDS_state_t heater);
-  int8_t HIDS_isHeaterEnabled(HIDS_state_t *heater);
+  int8_t HIDS_reboot(WE_sensorInterface_t* sensorInterface, HIDS_state_t reboot);
+  int8_t HIDS_isRebooting(WE_sensorInterface_t* sensorInterface, HIDS_state_t *rebooting);
 
-  int8_t HIDS_reboot(HIDS_state_t reboot);
-  int8_t HIDS_isRebooting(HIDS_state_t *rebooting);
+  int8_t HIDS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, HIDS_state_t drdy);
+  int8_t HIDS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *drdy);
 
-  int8_t HIDS_enableDataReadyInterrupt(HIDS_state_t drdy);
-  int8_t HIDS_isDataReadyInterruptEnabled(HIDS_state_t *drdy);
+  int8_t HIDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_interruptPinConfig_t pinType);
+  int8_t HIDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_interruptPinConfig_t *pinType);
 
-  int8_t HIDS_setInterruptPinType(HIDS_interruptPinConfig_t pinType);
-  int8_t HIDS_getInterruptPinType(HIDS_interruptPinConfig_t *pinType);
+  int8_t HIDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_interruptActiveLevel_t level);
+  int8_t HIDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_interruptActiveLevel_t *level);
 
-  int8_t HIDS_setInterruptActiveLevel(HIDS_interruptActiveLevel_t level);
-  int8_t HIDS_getInterruptActiveLevel(HIDS_interruptActiveLevel_t *level);
+  int8_t HIDS_isHumidityDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t *state);
+  int8_t HIDS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t *state);
 
-  int8_t HIDS_isHumidityDataAvailable(HIDS_state_t *state);
-  int8_t HIDS_isTemperatureDataAvailable(HIDS_state_t *state);
-
-  int8_t HIDS_getRawHumidity(int16_t *rawHumidity);
-  int8_t HIDS_getRawTemperature(int16_t *rawTemp);
-  int8_t HIDS_getRawValues(int16_t *rawHumidity, int16_t *rawTemp);
+  int8_t HIDS_getRawHumidity(WE_sensorInterface_t* sensorInterface, int16_t *rawHumidity);
+  int8_t HIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *rawTemp);
+  int8_t HIDS_getRawValues(WE_sensorInterface_t* sensorInterface, int16_t *rawHumidity, int16_t *rawTemp);
 
 #ifdef WE_USE_FLOAT
-  int8_t HIDS_getHumidity_float(float *humidity);       /* 0,0 ... 100,0 % RH */
-  int8_t HIDS_getTemperature_float(float *tempDegC);    /* -40,0 ... +85,0 °C */
+  int8_t HIDS_getHumidity_float(WE_sensorInterface_t* sensorInterface, float *humidity);
+  int8_t HIDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float *tempDegC);
 
-  int8_t HIDS_convertHumidity_float(int16_t rawHumidity, float *humidity);
-  int8_t HIDS_convertTemperature_float(int16_t rawTemp, float *tempDegC);
+  int8_t HIDS_convertHumidity_float(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, float *humidity);
+  int8_t HIDS_convertTemperature_float(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, float *tempDegC);
 #else
   #warning "WSEN_HIDS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
 #endif /* WE_USE_FLOAT */
 
-  int8_t HIDS_getHumidity_int8(int8_t *humidity);       /* 0 ... 100 % RH */
-  int8_t HIDS_getTemperature_int8(int8_t *tempDegC);    /* -40 ... +85 °C */
+  int8_t HIDS_getHumidity_int8(WE_sensorInterface_t* sensorInterface, int8_t *humidity);
+  int8_t HIDS_getTemperature_int8(WE_sensorInterface_t* sensorInterface, int8_t *tempDegC);
 
-  int8_t HIDS_convertHumidity_int8(int16_t rawHumidity, int8_t *humidity);
-  int8_t HIDS_convertTemperature_int8(int16_t rawTemp, int8_t *tempDegC);
+  int8_t HIDS_convertHumidity_int8(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, int8_t *humidity);
+  int8_t HIDS_convertTemperature_int8(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int8_t *tempDegC);
 
-  int8_t HIDS_getHumidity_uint16(uint16_t *humidity);
-  int8_t HIDS_getTemperature_int16(int16_t *temperature);
+  int8_t HIDS_getHumidity_uint16(WE_sensorInterface_t* sensorInterface, uint16_t *humidity);
+  int8_t HIDS_getTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t *temperature);
 
-  int8_t HIDS_convertHumidity_uint16(int16_t rawHumidity, uint16_t *humidity);
-  int8_t HIDS_convertTemperature_int16(int16_t rawTemp, int16_t *temperature);
+  int8_t HIDS_convertHumidity_uint16(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, uint16_t *humidity);
+  int8_t HIDS_convertTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int16_t *temperature);
 
-  int8_t HIDS_readCalibrationData(void);
+  int8_t HIDS_readCalibrationData(WE_sensorInterface_t* sensorInterface);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* _WSEN_HIDS_H */
-
-/*         EOF         */

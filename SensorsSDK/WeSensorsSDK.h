@@ -40,7 +40,7 @@
 /**
  * @brief SDK minor version number.
  */
-#define WE_SENSOR_SDK_MINOR_VERSION  1
+#define WE_SENSOR_SDK_MINOR_VERSION  2
 
 /**
  * @brief Return code for successful operations.
@@ -167,8 +167,6 @@ typedef struct
 
 /**
  * @brief Sensor interface configuration structure.
- *
- * See ####_initInterface() function of the used sensor.
  */
 typedef struct
 {
@@ -193,4 +191,4 @@ typedef struct
   void *handle;
 } WE_sensorInterface_t;
 
-#endif // WE_SENSORS_SDK_H_INCLUDED
+#endif /* WE_SENSORS_SDK_H_INCLUDED */

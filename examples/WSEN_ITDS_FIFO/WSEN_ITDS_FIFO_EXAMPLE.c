@@ -43,6 +43,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 
@@ -50,14 +52,17 @@
 #define FIFO_THRESH 12
 
 /* Use the following variable to switch among the available example modes. */
-ITDS_FifoMode_t itdsFifoExampleMode = ITDS_fifoEnabled;
+static ITDS_FifoMode_t itdsFifoExampleMode = ITDS_fifoEnabled;
+
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
 
 /* Is set to true when an interrupt has been triggered */
-bool interrupt0Triggered = false;
-bool interrupt1Triggered = false;
+static bool interrupt0Triggered = false;
+static bool interrupt1Triggered = false;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Functions containing main loops for the available example modes. */
 void ITDS_startFifoMode();
@@ -134,28 +139,26 @@ void WE_itdsFifoExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -174,58 +177,58 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
 
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
 
   /* Enable address auto increment */
-  ITDS_enableAutoIncrement(ITDS_enable);
+  ITDS_enableAutoIncrement(&itds, ITDS_enable);
 
   /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(ITDS_outputDataRate_2);
+  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
 
   /* Full scale +-16g */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   /* Set FIFO mode depending on private variable defined at the beginning of this file. */
-  ITDS_setFifoMode(itdsFifoExampleMode);
+  ITDS_setFifoMode(&itds, itdsFifoExampleMode);
 
   /* Set FIFO fill threshold */
-  ITDS_setFifoThreshold(FIFO_THRESH);
+  ITDS_setFifoThreshold(&itds, FIFO_THRESH);
 
   /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(ITDS_activeHigh);
+  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
   /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(ITDS_pushPull);
+  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
   /* Latched mode disabled (interrupt signal is automatically reset) */
-  ITDS_enableLatchedInterrupt(ITDS_disable);
+  ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   return true;
 }
@@ -240,8 +243,8 @@ void ITDS_startFifoMode()
   debugPrintln("Starting FIFO mode...");
 
   /* Interrupts for FIFO buffer full and overrun events on INT1 */
-  ITDS_enableFifoOverrunIntINT1(ITDS_enable);
-  ITDS_enableFifoFullINT1(ITDS_enable);
+  ITDS_enableFifoOverrunIntINT1(&itds, ITDS_enable);
+  ITDS_enableFifoFullINT1(&itds, ITDS_enable);
 
   int16_t xRawAcc[32];
   int16_t yRawAcc[32];
@@ -262,7 +265,7 @@ void ITDS_startFifoMode()
       interrupt1Triggered = false;
 
       /* Read contents of complete FIFO buffer (32 samples) */
-      if (WE_SUCCESS == ITDS_getRawAccelerations(32, xRawAcc, yRawAcc, zRawAcc))
+      if (WE_SUCCESS == ITDS_getRawAccelerations(&itds, 32, xRawAcc, yRawAcc, zRawAcc))
       {
         xAccAvg = 0;
         yAccAvg = 0;
@@ -284,8 +287,8 @@ void ITDS_startFifoMode()
         zAccAvg = ITDS_convertAccelerationFs16g_int(zAccAvg);
 
         /* Restart data collection by first setting bypass mode and then re-enabling FIFO mode */
-        ITDS_setFifoMode(ITDS_bypassMode);
-        ITDS_setFifoMode(ITDS_fifoEnabled);
+        ITDS_setFifoMode(&itds, ITDS_bypassMode);
+        ITDS_setFifoMode(&itds, ITDS_fifoEnabled);
 
         debugPrint(".");
       }
@@ -320,11 +323,11 @@ void ITDS_startContinuousMode()
   debugPrintln("Starting continuous mode...");
 
   /* Interrupt when FIFO buffer is filled up to threshold on INT0 */
-  ITDS_enableFifoThresholdINT0(ITDS_enable);
+  ITDS_enableFifoThresholdINT0(&itds, ITDS_enable);
 
   /* Interrupts for FIFO buffer full and overrun events on INT1 */
-  ITDS_enableFifoOverrunIntINT1(ITDS_enable);
-  ITDS_enableFifoFullINT1(ITDS_enable);
+  ITDS_enableFifoOverrunIntINT1(&itds, ITDS_enable);
+  ITDS_enableFifoFullINT1(&itds, ITDS_enable);
 
   int16_t xRawAcc[FIFO_THRESH];
   int16_t yRawAcc[FIFO_THRESH];
@@ -341,7 +344,7 @@ void ITDS_startContinuousMode()
       interrupt0Triggered = false;
 
       /* Retrieve FIFO_THRESH samples from sensor */
-      if (WE_SUCCESS == ITDS_getRawAccelerations(FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc))
+      if (WE_SUCCESS == ITDS_getRawAccelerations(&itds, FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc))
       {
         xAccAvg = 0;
         yAccAvg = 0;
@@ -377,7 +380,7 @@ void ITDS_startContinuousMode()
       interrupt1Triggered = false;
 
       ITDS_fifoSamples_t fifoSamplesStatus;
-      ITDS_getFifoSamplesRegister(&fifoSamplesStatus);
+      ITDS_getFifoSamplesRegister(&itds, &fifoSamplesStatus);
 
       char buffer[4];
       sprintf(buffer, "%d", fifoSamplesStatus.fifoFillLevel);
@@ -396,8 +399,8 @@ void ITDS_startContinuousMode()
       debugPrintln(" samples)");
 
       /* Restart data collection by first setting bypass mode and then re-enabling continuous FIFO mode */
-      ITDS_setFifoMode(ITDS_bypassMode);
-      ITDS_setFifoMode(ITDS_continuousMode);
+      ITDS_setFifoMode(&itds, ITDS_bypassMode);
+      ITDS_setFifoMode(&itds, ITDS_continuousMode);
     }
 
     /* Print last acceleration values (averaged) every second. */
@@ -426,20 +429,20 @@ void ITDS_startContinuousToFifoMode()
   debugPrintln("Starting continuous-to-FIFO mode...");
 
   /* Route both the threshold interrupt and the overrun interrupt to INT1 */
-  ITDS_enableFifoThresholdINT1(ITDS_enable);
-  ITDS_enableFifoOverrunIntINT1(ITDS_enable);
+  ITDS_enableFifoThresholdINT1(&itds, ITDS_enable);
+  ITDS_enableFifoOverrunIntINT1(&itds, ITDS_enable);
 
   /* Latched mode enabled (interrupt signal is kept high) */
   /* This is required for continuous to FIFO mode! */
-  ITDS_enableLatchedInterrupt(ITDS_enable);
+  ITDS_enableLatchedInterrupt(&itds, ITDS_enable);
 
   /* Configure sensor for 6D orientation change event detection - see example
    * WSEN_ITDS_ORIENTATION for details on the used parameters. */
-  ITDS_enableLowNoise(ITDS_enable);
-  ITDS_enableLowPassOn6D(ITDS_disable);
-  ITDS_set6DThreshold(ITDS_sixtyDeg);
+  ITDS_enableLowNoise(&itds, ITDS_enable);
+  ITDS_enableLowPassOn6D(&itds, ITDS_disable);
+  ITDS_set6DThreshold(&itds, ITDS_sixtyDeg);
   /* Interrupt for 6D orientation change on INT0 */
-  ITDS_enable6DOnINT0(ITDS_enable);
+  ITDS_enable6DOnINT0(&itds, ITDS_enable);
 
   int16_t xRawAcc[32];
   int16_t yRawAcc[32];
@@ -468,7 +471,7 @@ void ITDS_startContinuousToFifoMode()
        * filled up to threshold or in case of an overrun */
 
       ITDS_fifoSamples_t fifoSamplesStatus;
-      ITDS_getFifoSamplesRegister(&fifoSamplesStatus);
+      ITDS_getFifoSamplesRegister(&itds, &fifoSamplesStatus);
 
       if (fifoSamplesStatus.fifoOverrunState)
       {
@@ -486,10 +489,10 @@ void ITDS_startContinuousToFifoMode()
           /* Get info on current interrupt events. This causes the 6D orientation change interrupt signal
            * to be revoked (latched mode). */
           ITDS_allInterruptEvents_t interruptEvents;
-          ITDS_getAllInterruptEvents(&interruptEvents);
+          ITDS_getAllInterruptEvents(&itds, &interruptEvents);
 
           /* Read contents of complete FIFO buffer, compute and print average accelerations. */
-          if (WE_SUCCESS == ITDS_getRawAccelerations(32, xRawAcc, yRawAcc, zRawAcc))
+          if (WE_SUCCESS == ITDS_getRawAccelerations(&itds, 32, xRawAcc, yRawAcc, zRawAcc))
           {
             xAccAvg = 0;
             yAccAvg = 0;
@@ -520,8 +523,8 @@ void ITDS_startContinuousToFifoMode()
           }
 
           /* Restart data collection by first setting bypass mode and then re-enabling continuous to FIFO mode */
-          ITDS_setFifoMode(ITDS_bypassMode);
-          ITDS_setFifoMode(ITDS_continuousToFifo);
+          ITDS_setFifoMode(&itds, ITDS_bypassMode);
+          ITDS_setFifoMode(&itds, ITDS_continuousToFifo);
         }
       }
       else if (fifoSamplesStatus.fifoFillLevel >= FIFO_THRESH)
@@ -534,7 +537,7 @@ void ITDS_startContinuousToFifoMode()
         debugPrint(".");
 
         /* Must read acceleration values so that there is no overrun while in continuous mode */
-        ITDS_getRawAccelerations(FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc);
+        ITDS_getRawAccelerations(&itds, FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc);
       }
     }
   }
@@ -550,15 +553,15 @@ void ITDS_startBypassToContinuousMode()
   debugPrintln("Starting bypass-to-continuous mode...");
 
   /* Interrupt when FIFO buffer is filled up to threshold on INT1 */
-  ITDS_enableFifoThresholdINT1(ITDS_enable);
+  ITDS_enableFifoThresholdINT1(&itds, ITDS_enable);
 
   /* Set wake-up interrupt parameters - see example
    * WSEN_ITDS_WAKE_UP for details on the used parameters. */
-  ITDS_setWakeUpDuration(1);
-  ITDS_setWakeUpThreshold(1);
-  ITDS_enableLowNoise(ITDS_enable);
+  ITDS_setWakeUpDuration(&itds, 1);
+  ITDS_setWakeUpThreshold(&itds, 1);
+  ITDS_enableLowNoise(&itds, ITDS_enable);
   /* Interrupt for wake-up event on INT0 */
-  ITDS_enableWakeUpOnINT0(ITDS_enable);
+  ITDS_enableWakeUpOnINT0(&itds, ITDS_enable);
 
   int16_t xRawAcc[32];
   int16_t yRawAcc[32];
@@ -590,7 +593,7 @@ void ITDS_startBypassToContinuousMode()
       interrupt1Triggered = false;
 
       /* Retrieve FIFO_THRESH samples from sensor */
-      if (WE_SUCCESS == ITDS_getRawAccelerations(FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc))
+      if (WE_SUCCESS == ITDS_getRawAccelerations(&itds, FIFO_THRESH, xRawAcc, yRawAcc, zRawAcc))
       {
         xAccAvg = 0;
         yAccAvg = 0;
@@ -623,8 +626,8 @@ void ITDS_startBypassToContinuousMode()
       if (HAL_GetTick() >= timeToSleep)
       {
         /* Return to bypass-to-continuous mode */
-        ITDS_setFifoMode(ITDS_bypassMode);
-        ITDS_setFifoMode(ITDS_bypassToContinuous);
+        ITDS_setFifoMode(&itds, ITDS_bypassMode);
+        ITDS_setFifoMode(&itds, ITDS_bypassToContinuous);
       }
     }
   }

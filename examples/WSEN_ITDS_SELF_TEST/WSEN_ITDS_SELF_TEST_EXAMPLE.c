@@ -42,6 +42,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 /* Number of samples to use for self-test. The recommended number is 5. */
@@ -51,11 +53,14 @@
 #define ITDS_SELF_TEST_MIN_POS      70.0f
 #define ITDS_SELF_TEST_MAX_POS    1500.0f
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
+
 /* Sensor initialization function */
-bool ITDS_init(void);
-bool ITDS_selfTest(void);
-bool ITDS_discardOldData(void);
-bool ITDS_checkSelfTestValue(float value, float valueSelfTest);
+static bool ITDS_init(void);
+static bool ITDS_selfTest(void);
+static bool ITDS_discardOldData(void);
+static bool ITDS_checkSelfTestValue(float value, float valueSelfTest);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -113,28 +118,26 @@ void WE_itdsSelfTestExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -159,7 +162,7 @@ bool ITDS_init(void)
  * @brief Runs the ITDS self-test.
  * @retval True if the test was successful, false if not.
  */
-bool ITDS_selfTest(void)
+static bool ITDS_selfTest(void)
 {
   /* Last read raw acceleration values */
   int16_t rawAccX;
@@ -177,24 +180,24 @@ bool ITDS_selfTest(void)
   float avgZSelfTest = 0;
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
 
   /* Enable block data update */
-  ITDS_enableBlockDataUpdate(ITDS_enable);
+  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
 
   /* Full scale +-4g */
-  ITDS_setFullScale(ITDS_fourG);
+  ITDS_setFullScale(&itds, ITDS_fourG);
 
   /* Enable high performance mode */
-  ITDS_setOperatingMode(ITDS_highPerformance);
+  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
 
   /* Sampling rate of 50 Hz */
-  ITDS_setOutputDataRate(ITDS_odr4);
+  ITDS_setOutputDataRate(&itds, ITDS_odr4);
 
   /* Wait 100 ms for stable sensor output */
   HAL_Delay(100);
@@ -206,12 +209,12 @@ bool ITDS_selfTest(void)
   for (uint8_t i = 0; i < ITDS_SELF_TEST_SAMPLE_COUNT; )
   {
     ITDS_state_t dataReady;
-    ITDS_isAccelerationDataReady(&dataReady);
+    ITDS_isAccelerationDataReady(&itds, &dataReady);
 
     if (dataReady == ITDS_enable)
     {
       /* Read accelerometer data */
-      if (WE_FAIL == ITDS_getRawAccelerations(1, &rawAccX, &rawAccY, &rawAccZ))
+      if (WE_FAIL == ITDS_getRawAccelerations(&itds, 1, &rawAccX, &rawAccY, &rawAccZ))
       {
         return false;
       }
@@ -232,7 +235,7 @@ bool ITDS_selfTest(void)
 
 
   /* Enable self-test mode (positive) */
-  ITDS_setSelfTestMode(ITDS_positiveAxis);
+  ITDS_setSelfTestMode(&itds, ITDS_positiveAxis);
 
   /* Wait 100 ms for stable sensor output */
   HAL_Delay(100);
@@ -244,12 +247,12 @@ bool ITDS_selfTest(void)
   for (uint8_t i = 0; i < ITDS_SELF_TEST_SAMPLE_COUNT; )
   {
     ITDS_state_t dataReady;
-    ITDS_isAccelerationDataReady(&dataReady);
+    ITDS_isAccelerationDataReady(&itds, &dataReady);
 
     if (dataReady == ITDS_enable)
     {
       /* Read accelerometer data */
-      if (WE_FAIL == ITDS_getRawAccelerations(1, &rawAccX, &rawAccY, &rawAccZ))
+      if (WE_FAIL == ITDS_getRawAccelerations(&itds, 1, &rawAccX, &rawAccY, &rawAccZ))
       {
         return false;
       }
@@ -290,8 +293,8 @@ bool ITDS_selfTest(void)
   debugPrintln("********************************");
 
   /* Disable self-test mode */
-  ITDS_setOutputDataRate(ITDS_odr0);
-  ITDS_setSelfTestMode(ITDS_off);
+  ITDS_setOutputDataRate(&itds, ITDS_odr0);
+  ITDS_setSelfTestMode(&itds, ITDS_off);
 
   return (xPass && yPass && zPass);
 }
@@ -299,15 +302,15 @@ bool ITDS_selfTest(void)
 /**
  * @brief Discards the current sample (if any).
  */
-bool ITDS_discardOldData(void)
+static bool ITDS_discardOldData(void)
 {
   ITDS_state_t dataReady;
-  ITDS_isAccelerationDataReady(&dataReady);
+  ITDS_isAccelerationDataReady(&itds, &dataReady);
 
   if (dataReady == ITDS_enable)
   {
     int16_t xRawAcc, yRawAcc, zRawAcc;
-    if (WE_FAIL == ITDS_getRawAccelerations(1, &xRawAcc, &yRawAcc, &zRawAcc))
+    if (WE_FAIL == ITDS_getRawAccelerations(&itds, 1, &xRawAcc, &yRawAcc, &zRawAcc))
     {
       return false;
     }
@@ -321,7 +324,7 @@ bool ITDS_discardOldData(void)
  * @param valueSelfTest Acceleration value captured with self-test mode enabled.
  * @retval True if the difference of the supplied values is in the valid range.
  */
-bool ITDS_checkSelfTestValue(float value, float valueSelfTest)
+static bool ITDS_checkSelfTestValue(float value, float valueSelfTest)
 {
   float diff = fabs(valueSelfTest - value);
   return (diff >= ITDS_SELF_TEST_MIN_POS && diff <= ITDS_SELF_TEST_MAX_POS);

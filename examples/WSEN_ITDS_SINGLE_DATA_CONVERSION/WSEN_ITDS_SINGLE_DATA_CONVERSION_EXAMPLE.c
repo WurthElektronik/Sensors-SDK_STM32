@@ -43,19 +43,24 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include <platform.h>
+
 #include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
+/* Sensor interface configuration */
+static WE_sensorInterface_t itds;
+
 /* Is set to true when a data ready interrupt has been triggered */
-bool dataReady = false;
+static bool dataReady = false;
 
 /* Interval at which data conversion will be triggered */
-uint32_t measurementIntervalMs = 1000;
+static uint32_t measurementIntervalMs = 1000;
 
 /* Next conversion will be requested at this time */
-uint32_t nextMeasurementTime = 0;
+static uint32_t nextMeasurementTime = 0;
 
 /* Sensor initialization function */
-bool ITDS_init(void);
+static bool ITDS_init(void);
 
 /* Debug output functions */
 static void debugPrint(char _out[]);
@@ -105,7 +110,7 @@ void WE_itdsSingleDataConversionExampleLoop()
     /* Alternative to using interrupt for requesting single data conversion:
      * Trigger single data conversion by writing register.
      * See call to ITDS_setSingleDataConversionTrigger() in init function. */
-//      ITDS_startSingleDataConversion(ITDS_enable);
+//      ITDS_startSingleDataConversion(&itds, ITDS_enable);
 
     nextMeasurementTime = currentTime + measurementIntervalMs;
   }
@@ -124,7 +129,7 @@ void WE_itdsSingleDataConversionExampleLoop()
      * axes or to get the raw, unconverted values. */
 
     int16_t xAcc, yAcc, zAcc;
-    if (ITDS_getAccelerations_int(1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+    if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
     {
       debugPrintAcceleration_int("X", xAcc);
       debugPrintAcceleration_int("Y", yAcc);
@@ -142,28 +147,26 @@ void WE_itdsSingleDataConversionExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-bool ITDS_init(void)
+static bool ITDS_init(void)
 {
   /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  WE_sensorInterface_t interface;
-  ITDS_getInterface(&interface);
-  interface.interfaceType = WE_i2c;
-  interface.options.i2c.burstMode = 1;
-  interface.handle = &hi2c1;
-  ITDS_initInterface(&interface);
+  ITDS_getDefaultInterface(&itds);
+  itds.interfaceType = WE_i2c;
+  itds.options.i2c.burstMode = 1;
+  itds.handle = &hi2c1;
 
   /* Wait for boot */
   HAL_Delay(50);
-  while (WE_SUCCESS != ITDS_isInterfaceReady())
+  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
   {
   }
-  debugPrintln("**** ITDS_isInterfaceReady(): OK ****");
+  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
   HAL_Delay(5);
 
   /* First communication test */
   uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&deviceIdValue))
+  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
   {
     if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
     {
@@ -182,52 +185,52 @@ bool ITDS_init(void)
   }
 
   /* Perform soft reset of the sensor */
-  ITDS_softReset(ITDS_enable);
+  ITDS_softReset(&itds, ITDS_enable);
   ITDS_state_t swReset;
   do
   {
-    ITDS_getSoftResetState(&swReset);
+    ITDS_getSoftResetState(&itds, &swReset);
   } while (swReset);
   debugPrintln("**** ITDS reset complete ****");
 
   /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(ITDS_enable);
+  ITDS_reboot(&itds, ITDS_enable);
   ITDS_state_t boot;
   do
   {
-    ITDS_isRebooting(&boot);
+    ITDS_isRebooting(&itds, &boot);
   } while (boot);
   debugPrintln("**** ITDS reboot complete ****");
 
   /* Operation mode "single conversion" (on-demand) */
-  ITDS_setOperatingMode(ITDS_singleConversion);
+  ITDS_setOperatingMode(&itds, ITDS_singleConversion);
 
   /* Low power mode is required for single conversion mode */
-  ITDS_setPowerMode(ITDS_lowPower);
+  ITDS_setPowerMode(&itds, ITDS_lowPower);
 
   /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(ITDS_odr6);
+  ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
   /* 16g range */
-  ITDS_setFullScale(ITDS_sixteenG);
+  ITDS_setFullScale(&itds, ITDS_sixteenG);
 
   /* Use sensor interrupt INT_1 for triggering single data conversion */
-  ITDS_setSingleDataConversionTrigger(ITDS_externalTrigger);
+  ITDS_setSingleDataConversionTrigger(&itds, ITDS_externalTrigger);
 
   /* Alternative to interrupt: Trigger by writing to register (using ITDS_startSingleDataConversion()) */
-//  ITDS_setSingleDataConversionTrigger(ITDS_registerTrigger);
+//  ITDS_setSingleDataConversionTrigger(&itds, ITDS_registerTrigger);
 
   /* Enable data ready interrupt */
-  ITDS_enableDataReadyINT0(ITDS_enable);
+  ITDS_enableDataReadyINT0(&itds, ITDS_enable);
 
   /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(ITDS_pushPull);
+  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
   /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(ITDS_activeHigh);
+  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
   /* Enable interrupts */
-  ITDS_enableInterrupts(ITDS_enable);
+  ITDS_enableInterrupts(&itds, ITDS_enable);
 
   return true;
 }
