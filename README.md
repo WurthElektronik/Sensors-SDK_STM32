@@ -28,6 +28,17 @@ There are example projects for the STM32G031xx and STM32L432xx MCUs. The example
 | --- | --- |
 | WSEN_HIDS | Basic usage of the HIDS humidity sensor connected via I2C. |
 | WSEN_HIDS_SPI | Basic usage of the HIDS humidity sensor connected via SPI. |
+| WSEN_ISDS | Basic usage of the ISDS 6-axis accelerometer/gyroscope connected via I2C. |
+| WSEN_ISDS_ACTIVITY_INACTIVITY | Activity/inactivity detection example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the inactivity state interrupt. |
+| WSEN_ISDS_FIFO | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the FIFO buffer (FIFO mode, continuous-to-FIFO mode, bypass-to-continuous mode and continuous mode) |
+| WSEN_ISDS_FIFO_ADVANCED | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating advanced usage of the FIFO buffer (timestamps, temperature, high data only, patterns, DEN triggers) |
+| WSEN_ISDS_FREE_FALL | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the sensor's free-fall detection functionality. |
+| WSEN_ISDS_ORIENTATION | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating the sensor's 6D and 4D (e.g. portrait/landscape) orientation detection functionality. |
+| WSEN_ISDS_SELF_TEST | Example for the ISDS 6-axis accelerometer/gyroscope showing how to execute the sensor's self test procedure. |
+| WSEN_ISDS_SPI | Basic usage of the ISDS 6-axis accelerometer/gyroscope connected via SPI. |
+| WSEN_ISDS_TAP | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the sensor's tap functionality (single and double tap). |
+| WSEN_ISDS_TILT | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating the sensor's relative tilt detection functionality. |
+| WSEN_ISDS_WAKE_UP | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the wake-up interrupt. |
 | WSEN_ITDS | Basic usage of the ITDS accelerometer connected via I2C. |
 | WSEN_ITDS_ACTIVITY_INACTIVITY | Activity/inactivity detection example for the ITDS accelerometer demonstrating usage of the sleep change and sleep status interrupt as well as stationary (motion) detection. |
 | WSEN_ITDS_FIFO | Example for the ITDS accelerometer demonstrating usage of the FIFO buffer (FIFO mode, continuous-to-FIFO mode, bypass-to-continuous mode and continuous mode) |

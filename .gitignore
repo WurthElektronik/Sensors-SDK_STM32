@@ -3,3 +3,5 @@ Debug
 Release
 .settings
 *.launch
+/doc/html
+/doc/latex
