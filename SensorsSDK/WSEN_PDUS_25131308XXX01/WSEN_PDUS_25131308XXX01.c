@@ -198,7 +198,7 @@ int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
   }
   
   /* Apply temperature offset to raw temperature and convert to °C (0-70°C) */
-  *tempDegC = (((float) (rawTemp - T_MIN_VAL_PDUS) * 4.272) / 1000);
+  *tempDegC = (((float) (rawTemp - T_MIN_VAL_PDUS) * 4.272f) / 1000);
   
   /* Perform conversion regarding sensor sub-type */
   return PDUS_convertPressureToFloat(type, rawPres, presskPa);
