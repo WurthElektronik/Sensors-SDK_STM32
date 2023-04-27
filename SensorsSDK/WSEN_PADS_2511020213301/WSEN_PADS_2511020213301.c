@@ -2142,7 +2142,7 @@ float PADS_convertPressure_float(int32_t rawPres)
  */
 float PADS_convertDifferentialPressure_float(int32_t rawPres)
 {
-  return ((float) rawPres) * 0.00625;
+  return ((float) rawPres) * 0.00625f;
 }
 
 #endif /* WE_USE_FLOAT */
