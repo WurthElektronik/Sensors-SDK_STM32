@@ -2239,7 +2239,7 @@ int8_t  ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float *t
   int16_t rawTemp = 0;
   if (WE_SUCCESS == ITDS_getRawTemperature12bit(sensorInterface, &rawTemp))
   {
-    *tempDegC = (((float) rawTemp) / 16.0) + 25.0;
+    *tempDegC = (((float) rawTemp) / 16.0f) + 25.0f;
   }
   else
   {

@@ -1507,7 +1507,7 @@ int8_t ISDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ISDS_inte
     return WE_FAIL;
   }
 
-  *pinType = (ISDS_state_t) ctrl3.intPinConf;
+  *pinType = (ISDS_interruptPinConfig_t) ctrl3.intPinConf;
 
   return WE_SUCCESS;
 }
@@ -1547,7 +1547,7 @@ int8_t ISDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ISDS_
     return WE_FAIL;
   }
 
-  *level = (ISDS_state_t) ctrl3.intActiveLevel;
+  *level = (ISDS_interruptActiveLevel_t) ctrl3.intActiveLevel;
 
   return WE_SUCCESS;
 }
@@ -5749,6 +5749,7 @@ float ISDS_convertAcceleration_float(int16_t acc, ISDS_accFullScale_t fullScale)
   case ISDS_accFullScaleEightG:
     return ISDS_convertAccelerationFs8g_float(acc);
 
+  case ISDS_accFullScaleInvalid:
   default:
     return 0;
   }
@@ -5917,6 +5918,7 @@ int16_t ISDS_convertAcceleration_int(int16_t acc, ISDS_accFullScale_t fullScale)
   case ISDS_accFullScaleEightG:
     return ISDS_convertAccelerationFs8g_int(acc);
 
+  case ISDS_accFullScaleInvalid:
   default:
     return 0;
   }
