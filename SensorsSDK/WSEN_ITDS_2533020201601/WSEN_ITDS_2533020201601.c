@@ -49,7 +49,8 @@ static WE_sensorInterface_t itdsDefaultSensorInterface = {
 
 /**
  * @brief Stores the current value of the full scale parameter.
-
+ * default for full scale (e.g. after soft reset of sensor): '00' = 2G
+ *
  * The value is updated when calling ITDS_setFullScale() or 
  * ITDS_getFullScale().
  * 
@@ -1646,6 +1647,10 @@ int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *s
 
 /**
  * @brief Read the raw X-axis acceleration sensor output
+ *
+ * This function expects that BDU (block data update) and Auto Increment are enabled, e.g. by using:
+ * ITDS_enableAutoIncrement(), ITDS_enableBlockDataUpdate() functions provided by this SDK.
+ *
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] xRawAcc The returned raw X-axis acceleration
  * @retval Error code
@@ -1672,6 +1677,10 @@ int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t *
 
 /**
  * @brief Read the raw Y-axis acceleration sensor output
+ *
+ * This function expects that BDU (block data update) and Auto Increment are enabled, e.g. by using:
+ * ITDS_enableAutoIncrement(), ITDS_enableBlockDataUpdate() functions provided by this SDK.
+ *
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] yRawAcc The returned raw Y-axis acceleration
  * @retval Error code
@@ -1698,6 +1707,10 @@ int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t *
 
 /**
  * @brief Read the raw Z-axis acceleration sensor output
+ *
+ * This function expects that BDU (block data update) and Auto Increment are enabled, e.g. by using:
+ * ITDS_enableAutoIncrement(), ITDS_enableBlockDataUpdate() functions provided by this SDK.
+ *
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] zRawAcc The returned raw Z-axis acceleration
  * @retval Error code
@@ -1722,6 +1735,9 @@ int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t *
 
 /**
  * @brief Returns one or more acceleration samples (raw) for all axes.
+ *
+ * This function expects that BDU (block data update) and Auto Increment are enabled, e.g. by using:
+ * ITDS_enableAutoIncrement(), ITDS_enableBlockDataUpdate() functions provided by this SDK.
  *
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[in] numSamples Number of samples to be read (1-32)
@@ -1749,7 +1765,7 @@ int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface,
     return WE_FAIL;
   }
 
-  uint16_t sample;
+  int16_t sample;
   uint8_t *bufferPtr = buffer;
   for (uint8_t i = 0; i < numSamples; i++)
   {
@@ -1774,6 +1790,8 @@ int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface,
 
   return WE_SUCCESS;
 }
+
+
 
 #ifdef WE_USE_FLOAT
 
@@ -1938,6 +1956,13 @@ float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale)
 /**
  * @brief Converts the supplied raw acceleration sampled using
  * ITDS_twoG to [mg]
+ * this operation uses a common factor that already
+ * includes  the shift by 2 (for 14 bit mode) or the shift by 4 (for 12 bit,
+ * i.e. "low power mode 1") with their respective sensitivity values.
+ * The applied conversion factor for Full_Scale 2G is valid for
+ * "low power mode 1" (CTRL_1.LP_Mode = '01') as well as for
+ * "not low power mode 1" (CTRL_1.LP_Mode != '01') power modes.
+ *
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
@@ -1949,6 +1974,13 @@ float ITDS_convertAccelerationFs2g_float(int16_t acc)
 /**
  * @brief Converts the supplied raw acceleration sampled using
  * ITDS_fourG to [mg]
+ * this operation uses a common factor that already
+ * includes  the shift by 2 (for 14 bit mode) or the shift by 4 (for 12 bit,
+ * i.e. "low power mode 1") with their respective sensitivity values.
+ * The applied conversion factor for Full_Scale 4G is valid for
+ * "low power mode 1" (CTRL_1.LP_Mode = '01') as well as for
+ * "not low power mode 1" (CTRL_1.LP_Mode != '01') power modes.
+ *
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
@@ -1960,6 +1992,13 @@ float ITDS_convertAccelerationFs4g_float(int16_t acc)
 /**
  * @brief Converts the supplied raw acceleration sampled using
  * ITDS_eightG to [mg]
+ * this operation uses a common factor that already
+ * includes  the shift by 2 (for 14 bit mode) or the shift by 4 (for 12 bit,
+ * i.e. "low power mode 1") with their respective sensitivity values.
+ * The applied conversion factor for Full_Scale 8G is valid for
+ * "low power mode 1" (CTRL_1.LP_Mode = '01') as well as for
+ * "not low power mode 1" (CTRL_1.LP_Mode != '01') power modes.
+ *
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
@@ -1971,6 +2010,13 @@ float ITDS_convertAccelerationFs8g_float(int16_t acc)
 /**
  * @brief Converts the supplied raw acceleration sampled using
  * ITDS_sixteenG to [mg]
+ * this operation uses a common factor that already
+ * includes  the shift by 2 (for 14 bit mode) or the shift by 4 (for 12 bit,
+ * i.e. "low power mode 1") with their respective sensitivity values.
+ * The applied conversion factor for Full_Scale 16G is valid for
+ * "low power mode 1" (CTRL_1.LP_Mode = '01') as well as for
+ * "not low power mode 1" (CTRL_1.LP_Mode != '01') power modes.
+ *
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */

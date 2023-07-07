@@ -1135,6 +1135,7 @@ extern "C"
   int8_t ISDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t *dataReady);
   int8_t ISDS_isGyroscopeDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t *dataReady);
   int8_t ISDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t *dataReady);
+  int8_t ISDS_isDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t *temp_state, ISDS_state_t *acc_state, ISDS_state_t *gyro_state);
 
   /* ISDS_FIFO_STATUS_#_REG */
   int8_t ISDS_getFifoStatus(WE_sensorInterface_t* sensorInterface, ISDS_fifoStatus2_t *status, uint16_t *fillLevel, uint16_t *fifoPattern);

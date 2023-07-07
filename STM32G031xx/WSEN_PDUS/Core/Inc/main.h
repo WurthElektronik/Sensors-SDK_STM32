@@ -62,6 +62,7 @@ void Error_Handler(void);
 #define NRST_GPIO_Port GPIOF
 #define LD3_Pin GPIO_PIN_6
 #define LD3_GPIO_Port GPIOC
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -71,5 +72,3 @@ void Error_Handler(void);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

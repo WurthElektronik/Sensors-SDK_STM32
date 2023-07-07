@@ -40,7 +40,7 @@
 /**
  * @brief SDK minor version number.
  */
-#define WE_SENSOR_SDK_MINOR_VERSION  4
+#define WE_SENSOR_SDK_MINOR_VERSION  5
 
 /**
  * @brief Return code for successful operations.
@@ -73,7 +73,8 @@ typedef enum
 typedef enum
 {
   WE_i2c,
-  WE_spi
+  WE_spi,
+  WE_i2c_fifo
 } WE_sensorInterfaceType_t;
 
 

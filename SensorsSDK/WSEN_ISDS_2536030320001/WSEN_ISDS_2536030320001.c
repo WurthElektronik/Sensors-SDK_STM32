@@ -3439,6 +3439,39 @@ int8_t ISDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ISDS_s
   return WE_SUCCESS;
 }
 
+/**
+ * @brief Check if new temperature, gyroscope and acceleration samples are available
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] temp_state The returned data-ready state for the temperature
+ * @param[out] acc_state The returned data-ready state for the acceleration
+ * @param[out] gyro_state The returned data-ready state for the gyroscope
+ * @retval Error code
+ */
+int8_t ISDS_isDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t *temp_state, ISDS_state_t *acc_state, ISDS_state_t *gyro_state)
+{
+  ISDS_status_t statusRegister;
+
+  if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t *) &statusRegister))
+  {
+    return WE_FAIL;
+  }
+
+  if(temp_state != NULL)
+  {
+	  *temp_state = (ISDS_state_t) statusRegister.tempDataReady;
+  }
+  if(acc_state != NULL)
+  {
+	  *acc_state = (ISDS_state_t) statusRegister.accDataReady;
+  }
+  if(gyro_state != NULL)
+  {
+	  *gyro_state = (ISDS_state_t) statusRegister.gyroDataReady;
+  }
+
+  return WE_SUCCESS;
+}
+
 
 /* ISDS_FIFO_STATUS_1_REG */
 /* ISDS_FIFO_STATUS_2_REG */

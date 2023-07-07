@@ -18,7 +18,7 @@ The example projects contained in this repository have been created using [STM32
 
 # Example structure
 
-Each example in the "examples" directory consists of a header and a source file. The example code is separated from the STM32CubeIDE projects and contains only an initialization function that needs to be called after HAL initialization and a "loop" function that needs to be called in the application's main loop (infinite). In the case of "WSEN_HIDS" for example, the functions are called WE_hidsExampleInit() and WE_hidsExampleLoop().
+Each example in the "examples" directory consists of a header and a source file. The example code is separated from the STM32CubeIDE projects and contains only an initialization function that needs to be called after HAL initialization and a "loop" function that needs to be called in the application's main loop (infinite). In the case of "WSEN_HIDS_2525020210002" for example, the functions are called WE_hidsExampleInit() and WE_hidsExampleLoop().
 
 There are example projects for the STM32G031xx and STM32L432xx MCUs. The examples have been created using STM32CubeIDE and contain the hardware configuration file (.ioc) required for the example as well as the generated code. In the generated main.c, the header of the example is included and the corresponding initialization and loop functions are called.
 
@@ -26,8 +26,9 @@ There are example projects for the STM32G031xx and STM32L432xx MCUs. The example
 
 | Example name | Description |
 | --- | --- |
-| WSEN_HIDS | Basic usage of the HIDS humidity sensor connected via I2C. |
-| WSEN_HIDS_SPI | Basic usage of the HIDS humidity sensor connected via SPI. |
+| WSEN_HIDS_2525020210001 | Basic usage of the HIDS humidity sensor with the article number 2525020210001 connected via I2C. This product is discontinued. |
+| WSEN_HIDS_2525020210001_SPI | Basic usage of the HIDS humidity sensor connected via SPI. This product is discontinued. |
+| WSEN_HIDS_2525020210002 | Basic usage of the HIDS humidity sensor with the article number 2525020210002 connected via I2C. |
 | WSEN_ISDS | Basic usage of the ISDS 6-axis accelerometer/gyroscope connected via I2C. |
 | WSEN_ISDS_ACTIVITY_INACTIVITY | Activity/inactivity detection example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the inactivity state interrupt. |
 | WSEN_ISDS_FIFO | Example for the ISDS 6-axis accelerometer/gyroscope demonstrating usage of the FIFO buffer (FIFO mode, continuous-to-FIFO mode, bypass-to-continuous mode and continuous mode) |

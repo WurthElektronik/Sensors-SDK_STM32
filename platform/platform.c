@@ -93,6 +93,28 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t *interface,
 
   switch (interface->interfaceType)
   {
+  case WE_i2c_fifo:
+#ifdef HAL_I2C_MODULE_ENABLED
+	if (interface->options.i2c.burstMode != 0 || numBytesToRead == 1)
+	{
+	  if (numBytesToRead > 1 && interface->options.i2c.useRegAddrMsbForMultiBytesRead)
+	  {
+		/* Register address most significant bit is used to enable multi bytes read */
+		regAdr |= 1 << 7;
+	  }
+	  status = I2Cx_ReadBytes((I2C_HandleTypeDef*) interface->handle,
+							  interface->options.i2c.address << 1, /* stm32 needs shifted value */
+							  (uint16_t) regAdr,
+							  numBytesToRead,
+							  interface->options.i2c.slaveTransmitterMode,
+							  interface->options.readTimeout,
+							  data);
+	}
+#else
+    status = HAL_ERROR;
+#endif /* HAL_I2C_MODULE_ENABLED */
+    break;
+
   case WE_i2c:
 #ifdef HAL_I2C_MODULE_ENABLED
     if (interface->options.i2c.burstMode != 0 || numBytesToRead == 1)
@@ -157,6 +179,11 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t *interface,
     status = HAL_ERROR;
 #endif /* HAL_SPI_MODULE_ENABLED */
     break;
+
+
+  default:
+	  status = HAL_ERROR;
+	  break;
   }
 
   return status == HAL_OK ? WE_SUCCESS : WE_FAIL;
@@ -180,6 +207,20 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t *interface,
 
   switch (interface->interfaceType)
   {
+
+
+  case WE_i2c_fifo:
+#ifdef HAL_I2C_MODULE_ENABLED
+	  status = HAL_I2C_Master_Transmit(interface->handle,
+			                          interface->options.i2c.address << 1,
+									  data,
+									  numBytesToWrite,
+									  interface->options.writeTimeout);
+#else
+    status = HAL_ERROR;
+#endif /* HAL_I2C_MODULE_ENABLED */
+	  break;
+
   case WE_i2c:
 #ifdef HAL_I2C_MODULE_ENABLED
     if (interface->options.i2c.burstMode != 0 || numBytesToWrite == 1)
@@ -237,6 +278,10 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t *interface,
     status = HAL_ERROR;
 #endif /* HAL_SPI_MODULE_ENABLED */
     break;
+
+  default:
+	  status = HAL_ERROR;
+	  break;
   }
 
   return status == HAL_OK ? WE_SUCCESS : WE_FAIL;
@@ -343,6 +388,15 @@ static HAL_StatusTypeDef I2Cx_WriteBytes(I2C_HandleTypeDef *handle,
 }
 
 #endif /* HAL_I2C_MODULE_ENABLED */
+
+/**
+ * @brief Provides delay
+ * @param[in] Delay in milliseconds
+ */
+void WE_Delay(uint32_t Delay)
+{
+	HAL_Delay(Delay);
+}
 
 
 #ifdef HAL_SPI_MODULE_ENABLED

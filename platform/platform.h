@@ -50,5 +50,8 @@ extern int8_t WE_WriteReg(WE_sensorInterface_t* interface,
 
 extern int8_t WE_isSensorInterfaceReady(WE_sensorInterface_t* interface);
 
+/* Delay in milliseconds */
+extern void WE_Delay(uint32_t Delay);
+
 
 #endif /* PLATFORM_H_INCLUDED */

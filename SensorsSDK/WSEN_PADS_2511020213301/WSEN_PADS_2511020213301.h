@@ -523,6 +523,7 @@ extern "C"
 
   int8_t PADS_isPressureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t *state);
   int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t *state);
+  int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t *temp_state, PADS_state_t *press_state);
 
   int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t *rawPres);
   int8_t PADS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *rawTemp);

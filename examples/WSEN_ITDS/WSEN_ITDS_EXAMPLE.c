@@ -145,6 +145,12 @@ void WE_itdsExampleLoop()
   case temperatureExample:
     ITDS_startTemperatureMode();
     break;
+
+  default:
+	  debugPrintln("**** WE_itdsExampleLoop() no example selected. STOP ****");
+	  HAL_Delay(5);
+	  while(1);
+	  break;
   }
 }
 

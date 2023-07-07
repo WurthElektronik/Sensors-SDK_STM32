@@ -573,30 +573,30 @@ typedef enum
 
 typedef enum
 {
-  ITDS_odr0,    /**< Power down */
+  ITDS_odr0 = 0,    /**< Power down */
                 /**< High performance   Normal mode   Low power mode */
-  ITDS_odr1,    /**< 12.5 Hz              12.5 Hz        1.6 Hz      */
-  ITDS_odr2,    /**< 12.5 Hz              12.5 Hz        12.5 Hz     */
-  ITDS_odr3,    /**< 25 Hz                25 Hz          25 Hz       */
-  ITDS_odr4,    /**< 50 Hz                50 Hz          50 Hz       */
-  ITDS_odr5,    /**< 100 Hz               100 Hz         100 Hz      */
-  ITDS_odr6,    /**< 200 Hz               200 Hz         200 Hz      */
-  ITDS_odr7,    /**< 400 Hz               200 Hz         200 Hz      */
-  ITDS_odr8,    /**< 800 Hz               800 Hz         200 Hz      */
-  ITDS_odr9     /**< 1600Hz               1600Hz         200 Hz      */
+  ITDS_odr1 = 1,    /**< 12.5 Hz              12.5 Hz        1.6 Hz      */
+  ITDS_odr2 = 2,    /**< 12.5 Hz              12.5 Hz        12.5 Hz     */
+  ITDS_odr3 = 3,    /**< 25 Hz                25 Hz          25 Hz       */
+  ITDS_odr4 = 4,    /**< 50 Hz                50 Hz          50 Hz       */
+  ITDS_odr5 = 5,    /**< 100 Hz               100 Hz         100 Hz      */
+  ITDS_odr6 = 6,    /**< 200 Hz               200 Hz         200 Hz      */
+  ITDS_odr7 = 7,    /**< 400 Hz               200 Hz         200 Hz      */
+  ITDS_odr8 = 8,    /**< 800 Hz               800 Hz         200 Hz      */
+  ITDS_odr9 = 9     /**< 1600Hz               1600Hz         200 Hz      */
 } ITDS_outputDataRate_t;
 
 typedef enum
 {
-  ITDS_normalOrLowPower,
-  ITDS_highPerformance,
-  ITDS_singleConversion
+  ITDS_normalOrLowPower = 0,
+  ITDS_highPerformance = 1,
+  ITDS_singleConversion = 2
 } ITDS_operatingMode_t;
 
 typedef enum
 {
-  ITDS_lowPower,
-  ITDS_normalMode
+  ITDS_lowPower = 0,
+  ITDS_normalMode = 1
 } ITDS_powerMode_t;
 
 typedef enum

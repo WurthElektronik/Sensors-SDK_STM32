@@ -1721,6 +1721,34 @@ int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PA
 }
 
 /**
+ * @brief Check if new temperature  and pressure data is available
+ * @param[in] sensorInterface Pointer to sensor interface
+ * @param[out] temp_state The returned temperature data availability state
+ * @param[out] press_state The returned pressure data availability state
+ * @retval Error code
+ */
+int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t *temp_state, PADS_state_t *press_state)
+{
+  PADS_status_t statusReg;
+
+  if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t *) &statusReg))
+  {
+    return WE_FAIL;
+  }
+
+  if(temp_state != NULL)
+  {
+	  *temp_state = (PADS_state_t) statusReg.tempDataAvailable;
+  }
+  if(press_state != NULL)
+  {
+	  *press_state = (PADS_state_t) statusReg.presDataAvailable;
+  }
+
+  return WE_SUCCESS;
+}
+
+/**
  * @brief Read the raw measured pressure value
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] rawPres The returned raw pressure

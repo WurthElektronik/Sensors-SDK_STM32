@@ -5,3 +5,4 @@ Release
 *.launch
 /doc/html
 /doc/latex
+.metadata/
