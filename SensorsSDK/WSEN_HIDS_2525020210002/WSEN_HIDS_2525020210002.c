@@ -114,7 +114,8 @@ static int8_t HIDS_CheckCRC(const uint8_t* data, uint16_t count, uint8_t checksu
  */
 static inline int8_t HIDS_WriteData(WE_sensorInterface_t* sensorInterface,uint8_t *data, uint16_t numBytesToWrite)
 {
-	return WE_WriteReg(sensorInterface, 0xFF, numBytesToWrite, data);
+	/* 0xFF can be used here because it will not be used in the WE_WriteReg with WE_i2c_fifo and useRegAddrMsbForMultiBytesRead = 1; */
+	return WE_WriteReg(sensorInterface, 0xFF, numBytesToWrite, data); 
 }
 
 /**
@@ -137,13 +138,16 @@ int8_t HIDS_Set_Measurement_Type(WE_sensorInterface_t* sensorInterface, hids_mea
 {
 	int8_t status = WE_FAIL;
 	uint8_t  temp = meausurementCmd;
-	status = HIDS_WriteData(sensorInterface,&temp,1 );
+	status = HIDS_WriteData(sensorInterface, &temp, 1);
+	
+	/* mandatory wait for measurement to be performed, see user manual of 2525020210002 */
 	WE_Delay(10);
 	if (status != WE_SUCCESS)
 	{
-	/* error! */
-	return WE_FAIL;
+		/* error! */
+		return WE_FAIL;
 	}
+	
 	return WE_SUCCESS;
 }
 
@@ -168,7 +172,7 @@ int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measu
 	uint16_t t_ticks = 0;
 	uint16_t rh_ticks = 0;
 
-	status = HIDS_ReadData(sensorInterface,dataBytes,6);
+	status = HIDS_ReadData(sensorInterface, dataBytes, 6);
 	if (status != WE_SUCCESS)
 	{
 		/* error! */
@@ -186,10 +190,12 @@ int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measu
 		/* error! */
 		return WE_FAIL;
 	}
-	t_ticks = ((uint16_t)dataBytes[0] << 8 ) | ((uint32_t)dataBytes[1]);
-	rh_ticks = ((uint16_t)dataBytes[3] << 8 ) | ((uint32_t)dataBytes[4]);
-	*temperatureRaw = (int32_t)(((21875 * t_ticks) >> 13) - 45000);
-	*humidityRaw = (int32_t)(((15625 * rh_ticks) >> 13) - 6000);
+	
+	t_ticks = ((uint16_t)dataBytes[0] << 8 ) | ((uint16_t)dataBytes[1]);
+	rh_ticks = ((uint16_t)dataBytes[3] << 8 ) | ((uint16_t)dataBytes[4]);
+	
+	*temperatureRaw = (int32_t)(((21875 * t_ticks) >> 13) - 45000); /* >> 13 == / 8192; temperatureRaw to be divided by 1000 for reaching rh percent */
+	*humidityRaw = (int32_t)(((15625 * rh_ticks) >> 13) - 6000); /* humidityRaw to be divided by 1000 for reaching rh percent */
 	return WE_SUCCESS;
 }
 

@@ -78,8 +78,8 @@ void WE_pdusExampleInit()
   debugPrintln("Notes:");
   debugPrintln("* You need to use the correct sensor sub-type when converting pressure data (the default is PDUS_pdus3).");
   debugPrintln("* External 1k pull-up resistors should be used for SDA/SCL.");
-  debugPrint("* The PDUS sensor uses 5V Vcc and logic levels. ");
-  debugPrintln("Level conversion to 3.3V is required to talk with a STM32 (or any other 3.3V MCU).");
+  debugPrint("* Some of the PDUS sensor uses 5V Vcc and logic levels. ");
+  debugPrintln("For those articles a level conversion to 3.3V is required to talk with a STM32 (or any other 3.3V MCU).");
 
   /* init PDUS */
   if (false == PDUS_init())
@@ -103,6 +103,8 @@ void WE_pdusExampleLoop()
 #ifdef WE_USE_FLOAT
   float presskPaP;
   float tempDegCP;
+
+  /* Please select PDUS_SensorType_t here accordingly to convert raw values to pressure values */
   if (WE_SUCCESS == PDUS_getPressureAndTemperature_float(&pdus, PDUS_pdus3, &presskPaP, &tempDegCP))
   {
     debugPrintPressure_float(presskPaP);

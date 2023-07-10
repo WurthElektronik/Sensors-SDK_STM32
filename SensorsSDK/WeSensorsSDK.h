@@ -40,7 +40,7 @@
 /**
  * @brief SDK minor version number.
  */
-#define WE_SENSOR_SDK_MINOR_VERSION  5
+#define WE_SENSOR_SDK_MINOR_VERSION  6
 
 /**
  * @brief Return code for successful operations.

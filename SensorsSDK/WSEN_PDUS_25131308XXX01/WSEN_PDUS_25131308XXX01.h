@@ -48,22 +48,27 @@
 #define PDUS_ADDRESS_I2C    (uint8_t) 0x78
 
 /*         Misc. defines         */
+#define P_MIN_VAL_PDUS      (uint16_t) 3277     /**< Minimum raw value for pressure, calibrated range */
+#define P_MAX_VAL_PDUS 	    (uint16_t) 29491	/**< Maximum raw value for pressure, calibrated range */
+#define T_MIN_VAL_PDUS      (uint16_t) 8192     /**< Minimum raw value for temperature in degrees Celsius = 0°C, calibrated range */
+#define T_MAX_VAL_PDUS      (uint16_t) 24576    /**< Maximum raw value for temperature in degrees Celsius = 70°C, calibrated range */
 
-#define P_MIN_VAL_PDUS      (uint16_t) 3277     /**< Minimum raw value for pressure */
-#define T_MIN_VAL_PDUS      (uint16_t) 8192     /**< Minimum raw value for temperature in degrees Celsius */
 
 /*         Functional type definitions         */
 
 /**
  * @brief PDUS sensor model
+ * Please refer to the PDUS user manual's chapter "Look-up-Table" for detailed paramters.
  */
 typedef enum
 {
-  PDUS_pdus0,           /**< order code 2513130810001, range = -0.1 to +0.1 kPa */
-  PDUS_pdus1,           /**< order code 2513130810101, range = -1 to +1 kPa */
-  PDUS_pdus2,           /**< order code 2513130810201, range = -10 to +10 kPa */
-  PDUS_pdus3,           /**< order code 2513130810301, range =  0 to 100 kPa */
-  PDUS_pdus4,           /**< order code 2513130810401, range = -100 to +1000 kPa */
+  PDUS_pdus0 = 0,           /**< order code 2513130810001, range = -0.1 to +0.1 kPa */
+  PDUS_pdus1 = 1,           /**< order code 2513130810101 (5V VCC) + 2513130810102 (3.3V VCC), range = -1 to +1 kPa */
+  PDUS_pdus2 = 2,           /**< order code 2513130810201, range = -10 to +10 kPa */
+  PDUS_pdus3 = 3,           /**< order code 2513130810301, range =  0 to 100 kPa */
+  PDUS_pdus4 = 4,           /**< order code 2513130810401 (5V VCC) + 2513130810401(3.3V VCC), range = -100 to +1000 kPa */
+  PDUS_pdus5 = 5,           /**< order code 2513130815401, range = 0 to +1500 kPa */
+  PDUS_invalid = 0xFFFF,    /**<  */
 } PDUS_SensorType_t;
 
 #ifdef __cplusplus
