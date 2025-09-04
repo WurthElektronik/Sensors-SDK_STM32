@@ -25,21 +25,19 @@
 
 /**
  * @file
- * @brief WSEN_hids_Evaluation example.
+ * @brief WSEN_HIDS_2525020210002 example.
  *
- * Demonstrates basic usage of the HIDS humidity sensor connected via I2C.
+ * Demonstrates basic usage of the HIDS2 humidity sensor connected via I2C.
  */
 #include "WSEN_HIDS_2525020210002_EXAMPLE.h"
-#include <math.h>
+#include "../SensorsSDK/WSEN_HIDS_2525020210002/WSEN_HIDS_2525020210002.h"
+#include "gpio.h"
+#include "i2c.h"
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gpio.h"
-#include "i2c.h"
-#include "usart.h"
-#include <platform.h>
-#include "../SensorsSDK/WSEN_HIDS_2525020210002/WSEN_HIDS_2525020210002.h"
 
 /* Functions containing main loops for the available example */
 void WE_hidsEvaluationCSVRaw();
@@ -51,8 +49,6 @@ static WE_sensorInterface_t hids;
 static bool HIDS_init(void);
 
 /* Debug output functions */
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
 uint8_t readCurrentChannel = 0xFF;
 
 /**
@@ -61,44 +57,41 @@ uint8_t readCurrentChannel = 0xFF;
  */
 void WE_hidsExampleInit()
 {
-	//MULTIPLEXER_Init(&hids);
-	if (false == HIDS_init())
-	{
-	debugPrintln("**** HIDS_init() error. STOP ****");
-	HAL_Delay(5);
-	while(1);
-	}
-	HAL_Delay(5);
+    if (false == HIDS_init())
+    {
+        debugPrintln("**** HIDS_init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
+    HAL_Delay(5);
 }
 
 /**
  * @brief Example main loop code.
  * Call this function in main loop (infinite loop).
  */
-void WE_hidsExampleLoop()
-{
-	WE_hidsEvaluationCSVRaw();
-}
+void WE_hidsExampleLoop() { WE_hidsEvaluationCSVRaw(); }
 
 /**
  * @brief Prints the humidity and temperature raw values in CSV format
  */
 void WE_hidsEvaluationCSVRaw()
 {
-	int32_t temperatureRaw = 0;
-	int32_t humidityRaw = 0;
-	hids_measureCmd_t measureCmd = HIDS_MEASURE_HPM;
-	if(WE_SUCCESS == HIDS_Sensor_Measure_Raw(&hids,measureCmd,&temperatureRaw, &humidityRaw))
-	{
-		char bufferHumidity[11];
-		sprintf(bufferHumidity, "%li", humidityRaw);
-		debugPrint(bufferHumidity);
-		debugPrint(",");
-		char bufferTemperature[11];
-		sprintf(bufferTemperature, "%li", temperatureRaw);
-		debugPrint(bufferTemperature);
-		debugPrintln("");
-	}
+    int32_t temperatureRaw = 0;
+    int32_t humidityRaw = 0;
+    hids_measureCmd_t measureCmd = HIDS_MEASURE_HPM;
+    if (WE_SUCCESS == HIDS_Sensor_Measure_Raw(&hids, measureCmd, &temperatureRaw, &humidityRaw))
+    {
+        char bufferHumidity[11];
+        sprintf(bufferHumidity, "%li", humidityRaw);
+        debugPrint(bufferHumidity);
+        debugPrint(",");
+        char bufferTemperature[11];
+        sprintf(bufferTemperature, "%li", temperatureRaw);
+        debugPrint(bufferTemperature);
+        debugPrintln("");
+    }
 }
 
 /**
@@ -106,33 +99,20 @@ void WE_hidsEvaluationCSVRaw()
  */
 static bool HIDS_init(void)
 {
-	/* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
-	HIDS_Get_Default_Interface(&hids);
-	hids.interfaceType = WE_i2c_fifo;
-	hids.handle = &hi2c1;
-	  /* Wait for boot */
-	  HAL_Delay(50);
-	  if(WE_SUCCESS != HIDS_Sensor_Init(&hids))
-	   {
-		  debugPrintln("**** HIDS_MULTIPLEXER_Init error. STOP ****");
-		  HAL_Delay(5);
-		  while(1);
-	   }
+    /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
+    HIDS_Get_Default_Interface(&hids);
+    hids.interfaceType = WE_i2c;
+    hids.handle = &hi2c1;
+    /* Wait for boot */
+    HAL_Delay(50);
+    if (WE_SUCCESS != HIDS_Sensor_Init(&hids))
+    {
+        debugPrintln("**** HIDS_Sensor_Init error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
 
-	debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
-	return true;
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+    return true;
 }
-
-/* Debug output functions */
-static void debugPrint(char _out[])
-{
-	HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-	HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-	char newline[2] = "\r\n";
-	HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
-}
-

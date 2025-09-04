@@ -29,20 +29,15 @@
  *
  * Demonstrates basic usage of the ITDS accelerometer connected via SPI.
  */
-
 #include "WSEN_ITDS_SPI_EXAMPLE.h"
-
+#include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
+#include "gpio.h"
+#include "spi.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "spi.h"
-#include "usart.h"
-#include "gpio.h"
-
-#include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t itds;
@@ -50,9 +45,6 @@ static WE_sensorInterface_t itds;
 /* Sensor initialization function */
 static bool ITDS_init(void);
 
-/* Debug output functions */
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
 static void debugPrintAcceleration_int(char axis[], int32_t accMg);
 
 /**
@@ -61,29 +53,30 @@ static void debugPrintAcceleration_int(char axis[], int32_t accMg);
  */
 void WE_itdsSpiExampleInit()
 {
-  char bufferMajor[4];
-  char bufferMinor[4];
-  sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
-  sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
-  debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
-  debugPrint(bufferMajor);
-  debugPrint(".");
-  debugPrintln(bufferMinor);
-  debugPrintln("This is the example program showing basic usage of the ITDS sensor connected via SPI.");
-  debugPrintln("Note that for this example to work, the following pin configuration is required:");
-  debugPrintln("* PA0 is used as chip select output (connected to CS input of sensor)");
+    char bufferMajor[4];
+    char bufferMinor[4];
+    sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
+    sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
+    debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
+    debugPrint(bufferMajor);
+    debugPrint(".");
+    debugPrintln(bufferMinor);
+    debugPrintln("This is the example program showing basic usage of the ITDS sensor connected via SPI.");
+    debugPrintln("Note that for this example to work, the following pin configuration is required:");
+    debugPrintln("* PA0 is used as chip select output (connected to CS input of sensor)");
 
-  /* init ITDS */
-  if (false == ITDS_init())
-  {
-    debugPrintln("**** ITDS_Init() error. STOP ****");
+    /* init ITDS */
+    if (false == ITDS_init())
+    {
+        debugPrintln("**** ITDS_Init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
+
+    /* LED on */
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
     HAL_Delay(5);
-    while(1);
-  }
-
-  /* LED on */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  HAL_Delay(5);
 }
 
 /**
@@ -92,36 +85,36 @@ void WE_itdsSpiExampleInit()
  */
 void WE_itdsSpiExampleLoop()
 {
-  /* This example puts the sensor in high performance mode and polls data every second.
+    /* This example puts the sensor in high performance mode and polls data every second.
    * See the WSEN_ITDS i2c example for basic usage of the sensor and the various WSEN_ITDS_*
    * examples for specific usage scenarios. */
 
-  /* Wait until the value is ready to read */
-  ITDS_state_t dataReady = ITDS_disable;
-  do
-  {
-    ITDS_isAccelerationDataReady(&itds, &dataReady);
-  } while (dataReady == ITDS_disable);
+    /* Wait until the value is ready to read */
+    ITDS_state_t dataReady = ITDS_disable;
+    do
+    {
+        ITDS_isAccelerationDataReady(&itds, &dataReady);
+    } while (dataReady == ITDS_disable);
 
-  /* Retrieve and print acceleration data.
+    /* Retrieve and print acceleration data.
    * Here, the acceleration values of all axes in [mg] are read in one go.
    * Note that as an alternative, there are also functions to get the values for single
    * axes or to get the raw, unconverted values. */
 
-  int16_t xAcc, yAcc, zAcc;
-  if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
-  {
-    debugPrintAcceleration_int("X", xAcc);
-    debugPrintAcceleration_int("Y", yAcc);
-    debugPrintAcceleration_int("Z", zAcc);
-  }
-  else
-  {
-    debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
-  }
+    int16_t xAcc, yAcc, zAcc;
+    if (ITDS_getAccelerations_int(&itds, 1, &xAcc, &yAcc, &zAcc) == WE_SUCCESS)
+    {
+        debugPrintAcceleration_int("X", xAcc);
+        debugPrintAcceleration_int("Y", yAcc);
+        debugPrintAcceleration_int("Z", zAcc);
+    }
+    else
+    {
+        debugPrintln("**** ITDS_getAccelerations_int(): NOT OK ****");
+    }
 
-  /* Wait 1s */
-  HAL_Delay(1000);
+    /* Wait 1s */
+    HAL_Delay(1000);
 }
 
 /**
@@ -129,90 +122,78 @@ void WE_itdsSpiExampleLoop()
  */
 static bool ITDS_init(void)
 {
-  /* Initialize sensor interface (SPI, burst mode activated) */
-  ITDS_getDefaultInterface(&itds);
-  itds.interfaceType = WE_spi;
-  itds.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
-  itds.options.spi.chipSelectPin = SPI1_CS0_Pin;
-  itds.options.spi.burstMode = 1;
-  itds.handle = &hspi1;
+    /* Initialize sensor interface (SPI, burst mode activated) */
+    ITDS_getDefaultInterface(&itds);
+    itds.interfaceType = WE_spi;
+    itds.options.spi.chipSelectPort = SPI1_CS0_GPIO_Port;
+    itds.options.spi.chipSelectPin = SPI1_CS0_Pin;
+    itds.options.spi.burstMode = 1;
+    itds.handle = &hspi1;
 
-  /* Wait for boot */
-  HAL_Delay(50);
+    /* Wait for boot */
+    HAL_Delay(50);
 
-  /* SPI chip select output must be initially high (because it is active low) */
-  HAL_GPIO_WritePin(SPI1_CS0_GPIO_Port, SPI1_CS0_Pin, GPIO_PIN_SET);
-  HAL_Delay(5);
+    /* SPI chip select output must be initially high (because it is active low) */
+    HAL_GPIO_WritePin(SPI1_CS0_GPIO_Port, SPI1_CS0_Pin, GPIO_PIN_SET);
+    HAL_Delay(5);
 
-  /* First communication test */
-  uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-  {
-    if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    /* First communication test */
+    uint8_t deviceIdValue = 0;
+    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
     {
-      debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
+        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+        {
+            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
+        }
+        else
+        {
+            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
+            return false;
+        }
     }
     else
     {
-      debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-      return false;
+        debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
     }
-  }
-  else
-  {
-    debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
-    return false;
-  }
 
-  /* Perform soft reset of the sensor */
-  ITDS_softReset(&itds, ITDS_enable);
-  ITDS_state_t swReset;
-  do
-  {
-    ITDS_getSoftResetState(&itds, &swReset);
-  } while (swReset);
-  debugPrintln("**** ITDS reset complete ****");
+    /* Perform soft reset of the sensor */
+    ITDS_softReset(&itds, ITDS_enable);
+    ITDS_state_t swReset;
+    do
+    {
+        ITDS_getSoftResetState(&itds, &swReset);
+    } while (swReset);
+    debugPrintln("**** ITDS reset complete ****");
 
-  /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(&itds, ITDS_enable);
-  ITDS_state_t boot;
-  do
-  {
-    ITDS_isRebooting(&itds, &boot);
-  } while (boot);
-  debugPrintln("**** ITDS reboot complete ****");
+    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    ITDS_reboot(&itds, ITDS_enable);
+    ITDS_state_t boot;
+    do
+    {
+        ITDS_isRebooting(&itds, &boot);
+    } while (boot);
+    debugPrintln("**** ITDS reboot complete ****");
 
-  /* Enable high performance mode */
-  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+    /* Enable high performance mode */
+    ITDS_setOperatingMode(&itds, ITDS_highPerformance);
 
-  /* Sampling rate of 200 Hz */
-  ITDS_setOutputDataRate(&itds, ITDS_odr6);
+    /* Sampling rate of 200 Hz */
+    ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
-  /* Enable block data update */
-  ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
+    /* Enable block data update */
+    ITDS_enableBlockDataUpdate(&itds, ITDS_enable);
 
-  /* Enable address auto increment */
-  ITDS_enableAutoIncrement(&itds, ITDS_enable);
+    /* Enable address auto increment */
+    ITDS_enableAutoIncrement(&itds, ITDS_enable);
 
-  /* Filter bandwidth = ODR/2 */
-  ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
+    /* Filter bandwidth = ODR/2 */
+    ITDS_setFilteringCutoff(&itds, ITDS_outputDataRate_2);
 
-  /* Full scale +-16g */
-  ITDS_setFullScale(&itds, ITDS_sixteenG);
+    /* Full scale +-16g */
+    ITDS_setFullScale(&itds, ITDS_sixteenG);
 
-  return true;
-}
-
-static void debugPrint(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-  char newline[2] = "\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
+    return true;
 }
 
 /**
@@ -222,23 +203,23 @@ static void debugPrintln(char _out[])
  */
 static void debugPrintAcceleration_int(char axis[], int32_t accMg)
 {
-  uint16_t full = ((uint16_t) labs(accMg)) / 1000;
-  uint16_t decimals = (uint16_t) (labs(accMg) % 1000); /* 3 decimal places */
+    uint16_t full = ((uint16_t)labs(accMg)) / 1000;
+    uint16_t decimals = (uint16_t)(labs(accMg) % 1000); /* 3 decimal places */
 
-  char bufferFull[4]; /* max 3 pre-decimal point positions */
-  char bufferDecimals[4]; /* 3 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%03u", decimals);
+    char bufferFull[4];     /* max 3 pre-decimal point positions */
+    char bufferDecimals[4]; /* 3 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%03u", decimals);
 
-  debugPrint("ITDS acceleration (int) ");
-  debugPrint(axis);
-  debugPrint(" = ");
-  if (accMg < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" g");
+    debugPrint("ITDS acceleration (int) ");
+    debugPrint(axis);
+    debugPrint(" = ");
+    if (accMg < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" g");
 }

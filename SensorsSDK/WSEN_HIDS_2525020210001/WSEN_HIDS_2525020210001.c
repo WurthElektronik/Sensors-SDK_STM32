@@ -25,50 +25,46 @@
 
 /**
  * @file
- * @brief Driver file for the WSEN-HIDS sensor.
+ * @brief Driver file for the WSEN-HIDS-2525020210001 sensor.
  */
 
 #include "WSEN_HIDS_2525020210001.h"
 
 #include <stdio.h>
 
-#include "platform.h"
+#include <platform.h>
 
 /**
  * @brief Default sensor interface configuration.
  */
-static const WE_sensorInterface_t hidsDefaultSensorInterface = {
-    .sensorType = WE_HIDS,
-    .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = HIDS_ADDRESS_I2C_0, .burstMode = 1, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 1, .reserved = 0},
-                .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
-                .readTimeout = 1000,
-                .writeTimeout = 1000},
-    .handle = 0};
+static const WE_sensorInterface_t hidsDefaultSensorInterface = {.sensorType = WE_HIDS,
+                                                                .interfaceType = WE_i2c,
+                                                                .options = {.i2c = {.address = HIDS_ADDRESS_I2C_0, .burstMode = 1, .protocol = WE_i2cProtocol_RegisterBased, .useRegAddrMsbForMultiBytesRead = 1, .reserved = 0}, .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000},
+                                                                .handle = 0};
 
 /**
  * @brief HIDS calibration data.
  */
 typedef struct
 {
-  /* Is set to true when the sensor's calibration data has been read */
-  uint8_t calibrationPresent;
+    /* Is set to true when the sensor's calibration data has been read */
+    uint8_t calibrationPresent;
 
-  /* Humidity linear interpolation point H0 */
-  uint8_t H0_rh;      /* H0 RH calibration data*/
-  int16_t H0_T0_out;  /* H0_T0 calibration data */
+    /* Humidity linear interpolation point H0 */
+    uint8_t H0_rh;     /* H0 RH calibration data*/
+    int16_t H0_T0_out; /* H0_T0 calibration data */
 
-  /* Humidity linear interpolation point H1 */
-  uint8_t H1_rh;      /* H1 RH calibration data */
-  int16_t H1_T0_out;  /* H1_T0 calibration data */
+    /* Humidity linear interpolation point H1 */
+    uint8_t H1_rh;     /* H1 RH calibration data */
+    int16_t H1_T0_out; /* H1_T0 calibration data */
 
-  /* Temperature linear interpolation point T0 */
-  uint16_t T0_degC;
-  int16_t T0_out;
+    /* Temperature linear interpolation point T0 */
+    uint16_t T0_degC;
+    int16_t T0_out;
 
-  /* Temperature linear interpolation point T1 */
-  uint16_t T1_degC;
-  int16_t T1_out;
+    /* Temperature linear interpolation point T1 */
+    uint16_t T1_degC;
+    int16_t T1_out;
 } HIDS_calibrationData_t;
 
 /**
@@ -88,7 +84,6 @@ static int8_t HIDS_get_T0_OUT(WE_sensorInterface_t* sensorInterface);
 static int8_t HIDS_get_T0_degC(WE_sensorInterface_t* sensorInterface);
 static int8_t HIDS_get_T1_degC(WE_sensorInterface_t* sensorInterface);
 
-
 /**
  * @brief Read data from sensor.
  *
@@ -98,13 +93,7 @@ static int8_t HIDS_get_T1_degC(WE_sensorInterface_t* sensorInterface);
  * @param[out] data Target buffer
  * @return Error Code
  */
-static inline int8_t HIDS_ReadReg(WE_sensorInterface_t* sensorInterface,
-                                  uint8_t regAdr,
-                                  uint16_t numBytesToRead,
-                                  uint8_t *data)
-{
-  return WE_ReadReg(sensorInterface, regAdr, numBytesToRead, data);
-}
+static inline int8_t HIDS_ReadReg(WE_sensorInterface_t* sensorInterface, uint8_t regAdr, uint16_t numBytesToRead, uint8_t* data) { return WE_ReadReg(sensorInterface, regAdr, numBytesToRead, data); }
 
 /**
  * @brief Write data to sensor.
@@ -115,13 +104,7 @@ static inline int8_t HIDS_ReadReg(WE_sensorInterface_t* sensorInterface,
  * @param[in] data Source buffer
  * @return Error Code
  */
-static inline int8_t HIDS_WriteReg(WE_sensorInterface_t* sensorInterface,
-                                   uint8_t regAdr,
-                                   uint16_t numBytesToWrite,
-                                   uint8_t *data)
-{
-  return WE_WriteReg(sensorInterface, regAdr, numBytesToWrite, data);
-}
+static inline int8_t HIDS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_t regAdr, uint16_t numBytesToWrite, uint8_t* data) { return WE_WriteReg(sensorInterface, regAdr, numBytesToWrite, data); }
 
 /**
  * @brief Returns the default sensor interface configuration.
@@ -130,8 +113,8 @@ static inline int8_t HIDS_WriteReg(WE_sensorInterface_t* sensorInterface,
  */
 int8_t HIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
-  *sensorInterface = hidsDefaultSensorInterface;
-  return WE_SUCCESS;
+    *sensorInterface = hidsDefaultSensorInterface;
+    return WE_SUCCESS;
 }
 
 /**
@@ -143,10 +126,7 @@ int8_t HIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] deviceID The returned device ID.
  * @return Error code
  */
-int8_t HIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID)
-{
-  return HIDS_ReadReg(sensorInterface, HIDS_DEVICE_ID_REG, 1, deviceID);
-}
+int8_t HIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID) { return HIDS_ReadReg(sensorInterface, HIDS_DEVICE_ID_REG, 1, deviceID); }
 
 /**
  * @brief Set the humidity average configuration
@@ -156,16 +136,16 @@ int8_t HIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID
  */
 uint8_t HIDS_setHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_humidityAverageConfig_t avgHum)
 {
-  HIDS_averageConfig_t averageReg;
+    HIDS_averageConfig_t averageReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg))
+    {
+        return WE_FAIL;
+    }
 
-  averageReg.avgHum = avgHum;
+    averageReg.avgHum = avgHum;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg);
+    return HIDS_WriteReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg);
 }
 
 /**
@@ -174,18 +154,18 @@ uint8_t HIDS_setHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HID
  * @param[out] avgHum The returned humidity average configuration
  * @return Error code
  */
-uint8_t HIDS_getHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_humidityAverageConfig_t *avgHum)
+uint8_t HIDS_getHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_humidityAverageConfig_t* avgHum)
 {
-  HIDS_averageConfig_t averageReg;
+    HIDS_averageConfig_t averageReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg))
+    {
+        return WE_FAIL;
+    }
 
-  *avgHum = (HIDS_humidityAverageConfig_t) averageReg.avgHum;
+    *avgHum = (HIDS_humidityAverageConfig_t)averageReg.avgHum;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -196,16 +176,16 @@ uint8_t HIDS_getHumidityAverageConfig(WE_sensorInterface_t* sensorInterface, HID
  */
 uint8_t HIDS_setTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_temperatureAverageConfig_t avgTemp)
 {
-  HIDS_averageConfig_t averageReg;
+    HIDS_averageConfig_t averageReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg))
+    {
+        return WE_FAIL;
+    }
 
-  averageReg.avgTemp = avgTemp;
+    averageReg.avgTemp = avgTemp;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg);
+    return HIDS_WriteReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg);
 }
 
 /**
@@ -214,18 +194,18 @@ uint8_t HIDS_setTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, 
  * @param[out] avgTemp The returned temperature average configuration
  * @return Error code
  */
-uint8_t HIDS_getTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_temperatureAverageConfig_t *avgTemp)
+uint8_t HIDS_getTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, HIDS_temperatureAverageConfig_t* avgTemp)
 {
-  HIDS_averageConfig_t averageReg;
+    HIDS_averageConfig_t averageReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t *) &averageReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_AVERAGE_REG, 1, (uint8_t*)&averageReg))
+    {
+        return WE_FAIL;
+    }
 
-  *avgTemp = (HIDS_temperatureAverageConfig_t) averageReg.avgTemp;
+    *avgTemp = (HIDS_temperatureAverageConfig_t)averageReg.avgTemp;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -236,16 +216,16 @@ uint8_t HIDS_getTemperatureAverageConfig(WE_sensorInterface_t* sensorInterface, 
  */
 int8_t HIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_outputDataRate_t odr)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg1.odr = odr;
+    ctrlReg1.odr = odr;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1);
 }
 
 /**
@@ -254,18 +234,18 @@ int8_t HIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_output
  * @param[out] odr The returned output data rate
  * @return Error code
  */
-int8_t HIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_outputDataRate_t *odr)
+int8_t HIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_outputDataRate_t* odr)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  *odr = (HIDS_outputDataRate_t) ctrlReg1.odr;
+    *odr = (HIDS_outputDataRate_t)ctrlReg1.odr;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -276,16 +256,16 @@ int8_t HIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, HIDS_output
  */
 int8_t HIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, HIDS_state_t bdu)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg1.bdu = bdu;
+    ctrlReg1.bdu = bdu;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1);
 }
 
 /**
@@ -294,18 +274,18 @@ int8_t HIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, HIDS_st
  * @param[out] bdu The returned block data update state
  * @return Error code
  */
-int8_t HIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *bdu)
+int8_t HIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t* bdu)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  *bdu = (HIDS_state_t) ctrlReg1.bdu;
+    *bdu = (HIDS_state_t)ctrlReg1.bdu;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -316,16 +296,16 @@ int8_t HIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, HIDS
  */
 int8_t HIDS_setPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t pd)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg1.powerControlMode = pd;
+    ctrlReg1.powerControlMode = pd;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1);
 }
 
 /**
@@ -334,18 +314,18 @@ int8_t HIDS_setPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t
  * @param[out] pd The returned power control mode
  * @return Error code
  */
-int8_t HIDS_getPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t *pd)
+int8_t HIDS_getPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t* pd)
 {
-  HIDS_ctrl1_t ctrlReg1;
+    HIDS_ctrl1_t ctrlReg1;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t *) &ctrlReg1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_1, 1, (uint8_t*)&ctrlReg1))
+    {
+        return WE_FAIL;
+    }
 
-  *pd = (HIDS_powerMode_t) ctrlReg1.powerControlMode;
+    *pd = (HIDS_powerMode_t)ctrlReg1.powerControlMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -359,16 +339,16 @@ int8_t HIDS_getPowerMode(WE_sensorInterface_t* sensorInterface, HIDS_powerMode_t
  */
 int8_t HIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, HIDS_state_t oneShot)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg2.oneShotBit = oneShot;
+    ctrlReg2.oneShotBit = oneShot;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2);
 }
 
 /**
@@ -377,18 +357,18 @@ int8_t HIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, HIDS_state_t on
  * @param[out] oneShot The returned one shot bit state
  * @return Error code
  */
-int8_t HIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *oneShot)
+int8_t HIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t* oneShot)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  *oneShot = (HIDS_state_t) ctrlReg2.oneShotBit;
+    *oneShot = (HIDS_state_t)ctrlReg2.oneShotBit;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -399,16 +379,16 @@ int8_t HIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t
  */
 int8_t HIDS_enableHeater(WE_sensorInterface_t* sensorInterface, HIDS_state_t heater)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg2.heater = heater;
+    ctrlReg2.heater = heater;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2);
 }
 
 /**
@@ -417,18 +397,18 @@ int8_t HIDS_enableHeater(WE_sensorInterface_t* sensorInterface, HIDS_state_t hea
  * @param[out] heater The returned heater state
  * @return Error code
  */
-int8_t HIDS_isHeaterEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *heater)
+int8_t HIDS_isHeaterEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t* heater)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  *heater = (HIDS_state_t) ctrlReg2.heater;
+    *heater = (HIDS_state_t)ctrlReg2.heater;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -439,16 +419,16 @@ int8_t HIDS_isHeaterEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t 
  */
 int8_t HIDS_reboot(WE_sensorInterface_t* sensorInterface, HIDS_state_t reboot)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg2.rebootMemory = reboot;
+    ctrlReg2.rebootMemory = reboot;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2);
 }
 
 /**
@@ -457,18 +437,18 @@ int8_t HIDS_reboot(WE_sensorInterface_t* sensorInterface, HIDS_state_t reboot)
  * @param[out] rebooting The returned reboot state
  * @return Error code
  */
-int8_t HIDS_isRebooting(WE_sensorInterface_t* sensorInterface, HIDS_state_t *rebooting)
+int8_t HIDS_isRebooting(WE_sensorInterface_t* sensorInterface, HIDS_state_t* rebooting)
 {
-  HIDS_ctrl2_t ctrlReg2;
+    HIDS_ctrl2_t ctrlReg2;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t *) &ctrlReg2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_2, 1, (uint8_t*)&ctrlReg2))
+    {
+        return WE_FAIL;
+    }
 
-  *rebooting = (HIDS_state_t) ctrlReg2.rebootMemory;
+    *rebooting = (HIDS_state_t)ctrlReg2.rebootMemory;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -479,16 +459,16 @@ int8_t HIDS_isRebooting(WE_sensorInterface_t* sensorInterface, HIDS_state_t *reb
  */
 int8_t HIDS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, HIDS_state_t drdy)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg3.enDataReady = drdy;
+    ctrlReg3.enDataReady = drdy;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3);
 }
 
 /**
@@ -497,18 +477,18 @@ int8_t HIDS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, HIDS
  * @param[out] drdy The returned data ready enable state
  * @return Error code
  */
-int8_t HIDS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t *drdy)
+int8_t HIDS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, HIDS_state_t* drdy)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  *drdy = (HIDS_state_t) ctrlReg3.enDataReady;
+    *drdy = (HIDS_state_t)ctrlReg3.enDataReady;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -519,16 +499,16 @@ int8_t HIDS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, H
  */
 int8_t HIDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_interruptPinConfig_t pinType)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg3.interruptPinConfig = pinType;
+    ctrlReg3.interruptPinConfig = pinType;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3);
 }
 
 /**
@@ -537,18 +517,18 @@ int8_t HIDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_inte
  * @param[out] pinConfig The returned interrupt pin type (push-pull / open drain)
  * @return Error code
  */
-int8_t HIDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_interruptPinConfig_t *pinType)
+int8_t HIDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_interruptPinConfig_t* pinType)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  *pinType = (HIDS_interruptPinConfig_t) ctrlReg3.interruptPinConfig;
+    *pinType = (HIDS_interruptPinConfig_t)ctrlReg3.interruptPinConfig;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -559,16 +539,16 @@ int8_t HIDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, HIDS_inte
  */
 int8_t HIDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_interruptActiveLevel_t level)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrlReg3.drdyOutputLevel = level;
+    ctrlReg3.drdyOutputLevel = level;
 
-  return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3);
+    return HIDS_WriteReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3);
 }
 
 /**
@@ -577,18 +557,18 @@ int8_t HIDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_
  * @param[out] level The returned output interrupt pin level
  * @return Error code
  */
-int8_t HIDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_interruptActiveLevel_t *level)
+int8_t HIDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_interruptActiveLevel_t* level)
 {
-  HIDS_ctrl3_t ctrlReg3;
+    HIDS_ctrl3_t ctrlReg3;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t *) &ctrlReg3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_CTRL_REG_3, 1, (uint8_t*)&ctrlReg3))
+    {
+        return WE_FAIL;
+    }
 
-  *level = (HIDS_interruptActiveLevel_t) ctrlReg3.drdyOutputLevel;
+    *level = (HIDS_interruptActiveLevel_t)ctrlReg3.drdyOutputLevel;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -598,18 +578,18 @@ int8_t HIDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, HIDS_
  * @param[out] state Is set to true if a new sample is available
  * @return Error code
  */
-int8_t HIDS_isHumidityDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t *state)
+int8_t HIDS_isHumidityDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t* state)
 {
-  HIDS_status_t statusReg;
+    HIDS_status_t statusReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    {
+        return WE_FAIL;
+    }
 
-  *state = (HIDS_state_t) statusReg.humDataAvailable;
+    *state = (HIDS_state_t)statusReg.humDataAvailable;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -618,18 +598,18 @@ int8_t HIDS_isHumidityDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_
  * @param[out] state Is set to true if a new sample is available
  * @return Error code
  */
-int8_t HIDS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t *state)
+int8_t HIDS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t* state)
 {
-  HIDS_status_t statusReg;
+    HIDS_status_t statusReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    {
+        return WE_FAIL;
+    }
 
-  *state = (HIDS_state_t) statusReg.tempDataAvailable;
+    *state = (HIDS_state_t)statusReg.tempDataAvailable;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -639,25 +619,25 @@ int8_t HIDS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, HI
  * @param[out] hum_state Is set to true if a new humidity sample is available
  * @return Error code
  */
-int8_t HIDS_isDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t *temp_state, HIDS_state_t *hum_state)
+int8_t HIDS_isDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t* temp_state, HIDS_state_t* hum_state)
 {
-  HIDS_status_t statusReg;
+    HIDS_status_t statusReg;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t *) &statusReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    {
+        return WE_FAIL;
+    }
 
-  if(temp_state != NULL)
-  {
-	  *temp_state = (HIDS_state_t) statusReg.tempDataAvailable;
-  }
-  if(hum_state != NULL)
-  {
-  	  *hum_state = (HIDS_state_t) statusReg.humDataAvailable;
-  }
+    if (temp_state != NULL)
+    {
+        *temp_state = (HIDS_state_t)statusReg.tempDataAvailable;
+    }
+    if (hum_state != NULL)
+    {
+        *hum_state = (HIDS_state_t)statusReg.humDataAvailable;
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -666,20 +646,20 @@ int8_t HIDS_isDataAvailable(WE_sensorInterface_t* sensorInterface, HIDS_state_t 
  * @param[out] rawHumidity The returned raw humidity
  * @return Error code
  */
-int8_t HIDS_getRawHumidity(WE_sensorInterface_t* sensorInterface, int16_t *rawHumidity)
+int8_t HIDS_getRawHumidity(WE_sensorInterface_t* sensorInterface, int16_t* rawHumidity)
 {
-  uint8_t buffer[2];
+    uint8_t buffer[2];
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H_OUT_L_REG, 2, buffer))
-  {
-    *rawHumidity = 0;
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H_OUT_L_REG, 2, buffer))
+    {
+        *rawHumidity = 0;
+        return WE_FAIL;
+    }
 
-  *rawHumidity = (int16_t) (buffer[1] << 8);
-  *rawHumidity |= (int16_t) buffer[0];
+    *rawHumidity = (int16_t)(buffer[1] << 8);
+    *rawHumidity |= (int16_t)buffer[0];
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -688,20 +668,20 @@ int8_t HIDS_getRawHumidity(WE_sensorInterface_t* sensorInterface, int16_t *rawHu
  * @param[out] rawTemp The returned raw temperature
  * @return Error code
  */
-int8_t HIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *rawTemp)
+int8_t HIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp)
 {
-  uint8_t buffer[2];
+    uint8_t buffer[2];
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T_OUT_L_REG, 2, buffer))
-  {
-    *rawTemp = 0;
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T_OUT_L_REG, 2, buffer))
+    {
+        *rawTemp = 0;
+        return WE_FAIL;
+    }
 
-  *rawTemp = (int16_t) (buffer[1] << 8);
-  *rawTemp |= (int16_t) buffer[0];
+    *rawTemp = (int16_t)(buffer[1] << 8);
+    *rawTemp |= (int16_t)buffer[0];
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -711,24 +691,24 @@ int8_t HIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t *ra
  * @param[out] rawTemp The returned raw temperature
  * @return Error code
  */
-int8_t HIDS_getRawValues(WE_sensorInterface_t* sensorInterface, int16_t *rawHumidity, int16_t *rawTemp)
+int8_t HIDS_getRawValues(WE_sensorInterface_t* sensorInterface, int16_t* rawHumidity, int16_t* rawTemp)
 {
-  uint8_t buffer[4];
+    uint8_t buffer[4];
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H_OUT_L_REG, 4, buffer))
-  {
-    *rawHumidity = 0;
-    *rawTemp = 0;
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H_OUT_L_REG, 4, buffer))
+    {
+        *rawHumidity = 0;
+        *rawTemp = 0;
+        return WE_FAIL;
+    }
 
-  *rawHumidity = (int16_t) (buffer[1] << 8);
-  *rawHumidity |= (int16_t) buffer[0];
+    *rawHumidity = (int16_t)(buffer[1] << 8);
+    *rawHumidity |= (int16_t)buffer[0];
 
-  *rawTemp = (int16_t) (buffer[3] << 8);
-  *rawTemp |= (int16_t) buffer[2];
+    *rawTemp = (int16_t)(buffer[3] << 8);
+    *rawTemp |= (int16_t)buffer[2];
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 #ifdef WE_USE_FLOAT
@@ -742,15 +722,15 @@ int8_t HIDS_getRawValues(WE_sensorInterface_t* sensorInterface, int16_t *rawHumi
  * @param[out] humidity The returned humidity in %
  * @return Error code
  */
-int8_t HIDS_getHumidity_float(WE_sensorInterface_t* sensorInterface, float *humidity)
+int8_t HIDS_getHumidity_float(WE_sensorInterface_t* sensorInterface, float* humidity)
 {
-  int16_t rawHumidity;
-  if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertHumidity_float(sensorInterface, rawHumidity, humidity);
+    int16_t rawHumidity;
+    if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
+    {
+        *humidity = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertHumidity_float(sensorInterface, rawHumidity, humidity);
 }
 
 /**
@@ -762,15 +742,15 @@ int8_t HIDS_getHumidity_float(WE_sensorInterface_t* sensorInterface, float *humi
  * @param[out] tempDegC The returned temperature in °C
  * @return Error code
  */
-int8_t HIDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float *tempDegC)
+int8_t HIDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC)
 {
-  int16_t tempRaw;
-  if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
-  {
-    *tempDegC = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertTemperature_float(sensorInterface, tempRaw, tempDegC);
+    int16_t tempRaw;
+    if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
+    {
+        *tempDegC = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertTemperature_float(sensorInterface, tempRaw, tempDegC);
 }
 
 /**
@@ -783,30 +763,29 @@ int8_t HIDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float *t
  * @param[out] humidity The returned humidity in %
  * @return Error code
  */
-int8_t HIDS_convertHumidity_float(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, float *humidity)
+int8_t HIDS_convertHumidity_float(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, float* humidity)
 {
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      *humidity = 0;
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            *humidity = 0;
+            return WE_FAIL;
+        }
     }
-  }
 
-  *humidity = ((((float) hidsCalibrationData.H1_rh - (float) hidsCalibrationData.H0_rh) * ((float) rawHumidity - (float) hidsCalibrationData.H0_T0_out))) /
-      ((float) hidsCalibrationData.H1_T0_out - (float) hidsCalibrationData.H0_T0_out) + (float) hidsCalibrationData.H0_rh;
+    *humidity = ((((float)hidsCalibrationData.H1_rh - (float)hidsCalibrationData.H0_rh) * ((float)rawHumidity - (float)hidsCalibrationData.H0_T0_out))) / ((float)hidsCalibrationData.H1_T0_out - (float)hidsCalibrationData.H0_T0_out) + (float)hidsCalibrationData.H0_rh;
 
-  if (*humidity > 100)
-  {
-    *humidity = 100;
-  }
-  else if (*humidity < 0)
-  {
-    *humidity = 0;
-  }
+    if (*humidity > 100)
+    {
+        *humidity = 100;
+    }
+    else if (*humidity < 0)
+    {
+        *humidity = 0;
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -819,30 +798,27 @@ int8_t HIDS_convertHumidity_float(WE_sensorInterface_t* sensorInterface, int16_t
  * @param[out] tempDegC The returned temperature in °C
  * @return Error code
  */
-int8_t HIDS_convertTemperature_float(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, float *tempDegC)
+int8_t HIDS_convertTemperature_float(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, float* tempDegC)
 {
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      *tempDegC = 0;
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            *tempDegC = 0;
+            return WE_FAIL;
+        }
     }
-  }
 
-  // Decode temperature
-  // Calculate temperature in degrees Celsius
-  // Provide signed Celsius measurement unit
+    // Decode temperature
+    // Calculate temperature in degrees Celsius
+    // Provide signed Celsius measurement unit
 
-  *tempDegC = (float) (((int16_t) rawTemp - (int16_t) hidsCalibrationData.T0_out) * (float) ((int16_t) hidsCalibrationData.T1_degC - (int16_t) hidsCalibrationData.T0_degC)) /
-      (float) ((int16_t) hidsCalibrationData.T1_out - (int16_t) hidsCalibrationData.T0_out) + (float) ((int16_t) hidsCalibrationData.T0_degC);
+    *tempDegC = (float)(((int16_t)rawTemp - (int16_t)hidsCalibrationData.T0_out) * (float)((int16_t)hidsCalibrationData.T1_degC - (int16_t)hidsCalibrationData.T0_degC)) / (float)((int16_t)hidsCalibrationData.T1_out - (int16_t)hidsCalibrationData.T0_out) + (float)((int16_t)hidsCalibrationData.T0_degC);
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 #endif /* WE_USE_FLOAT */
-
-
 
 /**
  * @brief Read the humidity
@@ -850,15 +826,15 @@ int8_t HIDS_convertTemperature_float(WE_sensorInterface_t* sensorInterface, int1
  * @param[out] humidity The returned humidity in 0...100 % RH
  * @return Error code
  */
-int8_t HIDS_getHumidity_int8(WE_sensorInterface_t* sensorInterface, int8_t *humidity)
+int8_t HIDS_getHumidity_int8(WE_sensorInterface_t* sensorInterface, int8_t* humidity)
 {
-  int16_t rawHumidity;
-  if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertHumidity_int8(sensorInterface, rawHumidity, humidity);
+    int16_t rawHumidity;
+    if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
+    {
+        *humidity = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertHumidity_int8(sensorInterface, rawHumidity, humidity);
 }
 
 /**
@@ -867,15 +843,15 @@ int8_t HIDS_getHumidity_int8(WE_sensorInterface_t* sensorInterface, int8_t *humi
  * @param[out] tempDegC The returned temperature in -40...+85 °C
  * @return Error code
  */
-int8_t HIDS_getTemperature_int8(WE_sensorInterface_t* sensorInterface, int8_t *tempDegC)
+int8_t HIDS_getTemperature_int8(WE_sensorInterface_t* sensorInterface, int8_t* tempDegC)
 {
-  int16_t tempRaw;
-  if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
-  {
-    *tempDegC = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertTemperature_int8(sensorInterface, tempRaw, tempDegC);
+    int16_t tempRaw;
+    if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
+    {
+        *tempDegC = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertTemperature_int8(sensorInterface, tempRaw, tempDegC);
 }
 
 /**
@@ -885,33 +861,32 @@ int8_t HIDS_getTemperature_int8(WE_sensorInterface_t* sensorInterface, int8_t *t
  * @param[out] humidity The returned humidity in 0...100 % RH
  * @return Error code
  */
-int8_t HIDS_convertHumidity_int8(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, int8_t *humidity)
+int8_t HIDS_convertHumidity_int8(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, int8_t* humidity)
 {
-  int32_t relHum;
+    int32_t relHum;
 
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            return WE_FAIL;
+        }
     }
-  }
 
-  relHum = (((int32_t) hidsCalibrationData.H1_rh - (int32_t) hidsCalibrationData.H0_rh) * ((int32_t) rawHumidity - (int32_t) hidsCalibrationData.H0_T0_out)) /
-      ((int32_t) hidsCalibrationData.H1_T0_out - (int32_t) hidsCalibrationData.H0_T0_out) + (int32_t) hidsCalibrationData.H0_rh;
+    relHum = (((int32_t)hidsCalibrationData.H1_rh - (int32_t)hidsCalibrationData.H0_rh) * ((int32_t)rawHumidity - (int32_t)hidsCalibrationData.H0_T0_out)) / ((int32_t)hidsCalibrationData.H1_T0_out - (int32_t)hidsCalibrationData.H0_T0_out) + (int32_t)hidsCalibrationData.H0_rh;
 
-  if (relHum > 100)
-  {
-    relHum = 100;
-  }
-  else if (relHum < 0)
-  {
-    relHum = 0;
-  }
+    if (relHum > 100)
+    {
+        relHum = 100;
+    }
+    else if (relHum < 0)
+    {
+        relHum = 0;
+    }
 
-  *humidity = (int8_t) relHum; // provide signed % measurement unit
+    *humidity = (int8_t)relHum; // provide signed % measurement unit
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -921,35 +896,34 @@ int8_t HIDS_convertHumidity_int8(WE_sensorInterface_t* sensorInterface, int16_t 
  * @param[out] tempDegC The returned temperature in -40...+85 °C
  * @return Error code
  */
-int8_t HIDS_convertTemperature_int8(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int8_t *tempDegC)
+int8_t HIDS_convertTemperature_int8(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int8_t* tempDegC)
 {
-  int32_t tTemp;
+    int32_t tTemp;
 
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      *tempDegC = 0;
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            *tempDegC = 0;
+            return WE_FAIL;
+        }
     }
-  }
 
-  // Calculate temperature in full degrees
-  tTemp = (((int32_t) rawTemp - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) /
-      ((int32_t) hidsCalibrationData.T1_out - (int32_t) hidsCalibrationData.T0_out) + (int32_t) hidsCalibrationData.T0_degC;
+    // Calculate temperature in full degrees
+    tTemp = (((int32_t)rawTemp - (int32_t)hidsCalibrationData.T0_out) * ((int32_t)hidsCalibrationData.T1_degC - (int32_t)hidsCalibrationData.T0_degC)) / ((int32_t)hidsCalibrationData.T1_out - (int32_t)hidsCalibrationData.T0_out) + (int32_t)hidsCalibrationData.T0_degC;
 
-  if (tTemp > 85)
-  {
-    tTemp = 85;
-  }
-  else if (tTemp < -40)
-  {
-    tTemp = -40;
-  }
+    if (tTemp > 85)
+    {
+        tTemp = 85;
+    }
+    else if (tTemp < -40)
+    {
+        tTemp = -40;
+    }
 
-  *tempDegC = (int8_t) tTemp;
+    *tempDegC = (int8_t)tTemp;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -958,15 +932,15 @@ int8_t HIDS_convertTemperature_int8(WE_sensorInterface_t* sensorInterface, int16
  * @param[out] humidity The returned humidity in 0.01%
  * @return Error code
  */
-int8_t HIDS_getHumidity_uint16(WE_sensorInterface_t* sensorInterface, uint16_t *humidity)
+int8_t HIDS_getHumidity_uint16(WE_sensorInterface_t* sensorInterface, uint16_t* humidity)
 {
-  int16_t rawHumidity;
-  if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
-  {
-    *humidity = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertHumidity_uint16(sensorInterface, rawHumidity, humidity);
+    int16_t rawHumidity;
+    if (WE_FAIL == HIDS_getRawHumidity(sensorInterface, &rawHumidity))
+    {
+        *humidity = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertHumidity_uint16(sensorInterface, rawHumidity, humidity);
 }
 
 /**
@@ -975,15 +949,15 @@ int8_t HIDS_getHumidity_uint16(WE_sensorInterface_t* sensorInterface, uint16_t *
  * @param[out] temperature The returned temperature in 0.01°C
  * @return Error code
  */
-int8_t HIDS_getTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t *temperature)
+int8_t HIDS_getTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t* temperature)
 {
-  int16_t tempRaw;
-  if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
-  {
-    *temperature = 0;
-    return WE_FAIL;
-  }
-  return HIDS_convertTemperature_int16(sensorInterface, tempRaw, temperature);
+    int16_t tempRaw;
+    if (WE_FAIL == HIDS_getRawTemperature(sensorInterface, &tempRaw))
+    {
+        *temperature = 0;
+        return WE_FAIL;
+    }
+    return HIDS_convertTemperature_int16(sensorInterface, tempRaw, temperature);
 }
 
 /**
@@ -993,39 +967,38 @@ int8_t HIDS_getTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t 
  * @param[out] humidity The returned humidity in 0.01%
  * @return Error code
  */
-int8_t HIDS_convertHumidity_uint16(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, uint16_t *humidity)
+int8_t HIDS_convertHumidity_uint16(WE_sensorInterface_t* sensorInterface, int16_t rawHumidity, uint16_t* humidity)
 {
-  int32_t relHum;
-  
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    int32_t relHum;
+
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      *humidity = 0;
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            *humidity = 0;
+            return WE_FAIL;
+        }
     }
-  }
 
-  // Decode Humidity
-  // Calculate humidity in decimal i.e. 15.0 = 1500.
+    // Decode Humidity
+    // Calculate humidity in decimal i.e. 15.0 = 1500.
 
-  relHum = ((((int32_t) hidsCalibrationData.H1_rh - (int32_t) hidsCalibrationData.H0_rh) * ((int32_t) rawHumidity - (int32_t) hidsCalibrationData.H0_T0_out)) * 100) /
-      ((int32_t) hidsCalibrationData.H1_T0_out - (int32_t) hidsCalibrationData.H0_T0_out) + (((int32_t) hidsCalibrationData.H0_rh) * 100);
+    relHum = ((((int32_t)hidsCalibrationData.H1_rh - (int32_t)hidsCalibrationData.H0_rh) * ((int32_t)rawHumidity - (int32_t)hidsCalibrationData.H0_T0_out)) * 100) / ((int32_t)hidsCalibrationData.H1_T0_out - (int32_t)hidsCalibrationData.H0_T0_out) + (((int32_t)hidsCalibrationData.H0_rh) * 100);
 
-  if (relHum > 100 * 100)
-  {
-    *humidity = 100 * 100;
-  }
-  else if (relHum < 0)
-  {
-    *humidity = 0;
-  }
-  else
-  {
-    *humidity = (uint16_t) relHum; // provide unsigned % measurement unit
-  }
+    if (relHum > 100 * 100)
+    {
+        *humidity = 100 * 100;
+    }
+    else if (relHum < 0)
+    {
+        *humidity = 0;
+    }
+    else
+    {
+        *humidity = (uint16_t)relHum; // provide unsigned % measurement unit
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1035,33 +1008,31 @@ int8_t HIDS_convertHumidity_uint16(WE_sensorInterface_t* sensorInterface, int16_
  * @param[out] temperature The returned temperature in 0.01°C
  * @return Error code
  */
-int8_t HIDS_convertTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int16_t *temperature)
+int8_t HIDS_convertTemperature_int16(WE_sensorInterface_t* sensorInterface, int16_t rawTemp, int16_t* temperature)
 {
-  int32_t tTemp;
+    int32_t tTemp;
 
-  if (hidsCalibrationData.calibrationPresent == 0)
-  {
-    if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+    if (hidsCalibrationData.calibrationPresent == 0)
     {
-      *temperature = 0;
-      return WE_FAIL;
+        if (WE_FAIL == HIDS_readCalibrationData(sensorInterface))
+        {
+            *temperature = 0;
+            return WE_FAIL;
+        }
     }
-  }
 
-  // Decode temperature
-  // Calculate temperature in decimal of degree
-  // centigrade i.e. 15.0 = 1500.
+    // Decode temperature
+    // Calculate temperature in decimal of degree
+    // centigrade i.e. 15.0 = 1500.
 
-  tTemp = ((((int32_t) rawTemp - (int32_t) hidsCalibrationData.T0_out) * ((int32_t) hidsCalibrationData.T1_degC - (int32_t) hidsCalibrationData.T0_degC)) * 100) /
-      ((int32_t) hidsCalibrationData.T1_out - (int32_t) hidsCalibrationData.T0_out) + (((int32_t) hidsCalibrationData.T0_degC) * 100);
+    tTemp = ((((int32_t)rawTemp - (int32_t)hidsCalibrationData.T0_out) * ((int32_t)hidsCalibrationData.T1_degC - (int32_t)hidsCalibrationData.T0_degC)) * 100) / ((int32_t)hidsCalibrationData.T1_out - (int32_t)hidsCalibrationData.T0_out) + (((int32_t)hidsCalibrationData.T0_degC) * 100);
 
-  // provide signed celsius*100 measurement unit
+    // provide signed celsius*100 measurement unit
 
-  *temperature = (int16_t) tTemp;
+    *temperature = (int16_t)tTemp;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* ********************************************************* */
 
@@ -1072,51 +1043,51 @@ int8_t HIDS_convertTemperature_int16(WE_sensorInterface_t* sensorInterface, int1
  */
 int8_t HIDS_readCalibrationData(WE_sensorInterface_t* sensorInterface)
 {
-  /* Temperature calibration data for T0 and T1 points */
-  if (WE_FAIL == HIDS_get_T0_degC(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    /* Temperature calibration data for T0 and T1 points */
+    if (WE_FAIL == HIDS_get_T0_degC(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_T1_degC(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_T1_degC(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_T0_OUT(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_T0_OUT(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_T1_OUT(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_T1_OUT(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  /* Relative humidity calibration data for H0 and H1 points */
-  if (WE_FAIL == HIDS_get_H0_rh(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    /* Relative humidity calibration data for H0 and H1 points */
+    if (WE_FAIL == HIDS_get_H0_rh(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_H1_rh(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_H1_rh(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_H0_T0_out(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_H0_T0_out(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == HIDS_get_H1_T0_out(sensorInterface))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_get_H1_T0_out(sensorInterface))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.calibrationPresent = 1;
+    hidsCalibrationData.calibrationPresent = 1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1126,24 +1097,24 @@ int8_t HIDS_readCalibrationData(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_H0_T0_out(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
-  int16_t temp;
+    uint8_t buffer;
+    int16_t temp;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_T0_OUT_H, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_T0_OUT_H, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  temp = (((int16_t) buffer) << 8);
+    temp = (((int16_t)buffer) << 8);
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_T0_OUT_L, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_T0_OUT_L, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.H0_T0_out = temp | buffer;
+    hidsCalibrationData.H0_T0_out = temp | buffer;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1153,24 +1124,24 @@ static int8_t HIDS_get_H0_T0_out(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_H1_T0_out(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
-  int16_t temp;
+    uint8_t buffer;
+    int16_t temp;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_T0_OUT_H, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_T0_OUT_H, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  temp = (((int16_t) buffer) << 8);
+    temp = (((int16_t)buffer) << 8);
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_T0_OUT_L, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_T0_OUT_L, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.H1_T0_out = temp | buffer;
+    hidsCalibrationData.H1_T0_out = temp | buffer;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1180,16 +1151,16 @@ static int8_t HIDS_get_H1_T0_out(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_H0_rh(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
+    uint8_t buffer;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_RH_X2, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H0_RH_X2, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.H0_rh = buffer >> 1;
+    hidsCalibrationData.H0_rh = buffer >> 1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1199,16 +1170,16 @@ static int8_t HIDS_get_H0_rh(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_H1_rh(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
+    uint8_t buffer;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_RH_X2, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_H1_RH_X2, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.H1_rh = buffer >> 1;
+    hidsCalibrationData.H1_rh = buffer >> 1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1218,24 +1189,24 @@ static int8_t HIDS_get_H1_rh(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_T0_OUT(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
-  int16_t temp;
+    uint8_t buffer;
+    int16_t temp;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_OUT_H, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_OUT_H, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  temp = (((int16_t) buffer) << 8);
+    temp = (((int16_t)buffer) << 8);
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_OUT_L, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_OUT_L, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.T0_out = temp | buffer;
+    hidsCalibrationData.T0_out = temp | buffer;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1245,26 +1216,25 @@ static int8_t HIDS_get_T0_OUT(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_T1_OUT(WE_sensorInterface_t* sensorInterface)
 {
-  uint8_t buffer;
-  int16_t temp;
+    uint8_t buffer;
+    int16_t temp;
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_OUT_H, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_OUT_H, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  temp = (((int16_t) buffer) << 8);
+    temp = (((int16_t)buffer) << 8);
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_OUT_L, 1, &buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_OUT_L, 1, &buffer))
+    {
+        return WE_FAIL;
+    }
 
-  hidsCalibrationData.T1_out = temp | buffer;
+    hidsCalibrationData.T1_out = temp | buffer;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /**
  * @brief Read T0_degC (calibration data) and store the value in hidsCalibrationData.
@@ -1273,29 +1243,28 @@ static int8_t HIDS_get_T1_OUT(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_T0_degC(WE_sensorInterface_t* sensorInterface)
 {
-  uint16_t T0_degC_x8_u16;
-  uint8_t lsb, msb;
+    uint16_t T0_degC_x8_u16;
+    uint8_t lsb, msb;
 
-  /* Temperature calibration data for T0 and T1 - 2 MSBs for T0 and T1, where [0+1] = T0 MSBs and [2+3] = T1 MSBs */
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_T1_DEGC_H2, 1, &msb))
-  {
-    return WE_FAIL;
-  }
+    /* Temperature calibration data for T0 and T1 - 2 MSBs for T0 and T1, where [0+1] = T0 MSBs and [2+3] = T1 MSBs */
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_T1_DEGC_H2, 1, &msb))
+    {
+        return WE_FAIL;
+    }
 
-  /* Get LSBs for T0 */
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_DEGC_X8, 1, &lsb))
-  {
-    return WE_FAIL;
-  }
+    /* Get LSBs for T0 */
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_DEGC_X8, 1, &lsb))
+    {
+        return WE_FAIL;
+    }
 
-  /* Calc T0 using 8 LSBs + 2 MSBs */
-  T0_degC_x8_u16 = (((uint16_t) (msb & 0x03)) << 8) | ((uint16_t) lsb);
+    /* Calc T0 using 8 LSBs + 2 MSBs */
+    T0_degC_x8_u16 = (((uint16_t)(msb & 0x03)) << 8) | ((uint16_t)lsb);
 
-  // Divide by 8 (=3LSBs)
-  hidsCalibrationData.T0_degC = T0_degC_x8_u16 >> 3;
+    // Divide by 8 (=3LSBs)
+    hidsCalibrationData.T0_degC = T0_degC_x8_u16 >> 3;
 
-
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1305,27 +1274,27 @@ static int8_t HIDS_get_T0_degC(WE_sensorInterface_t* sensorInterface)
  */
 static int8_t HIDS_get_T1_degC(WE_sensorInterface_t* sensorInterface)
 {
-  uint16_t T1_degC_x8_u16;
-  uint8_t lsb, msb;
+    uint16_t T1_degC_x8_u16;
+    uint8_t lsb, msb;
 
-  /* Temperature calibration data for T0 and T1 - 2 MSBs for T0 and T1, where [0+1] = T0 MSBs and [2+3] = T1 MSBs */
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_T1_DEGC_H2, 1, &msb))
-  {
-    return WE_FAIL;
-  }
+    /* Temperature calibration data for T0 and T1 - 2 MSBs for T0 and T1, where [0+1] = T0 MSBs and [2+3] = T1 MSBs */
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T0_T1_DEGC_H2, 1, &msb))
+    {
+        return WE_FAIL;
+    }
 
-  /* Get LSBs for T1 */
+    /* Get LSBs for T1 */
 
-  if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_DEGC_X8, 1, &lsb))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == HIDS_ReadReg(sensorInterface, HIDS_T1_DEGC_X8, 1, &lsb))
+    {
+        return WE_FAIL;
+    }
 
-  /* Calc T1 using 8 LSBs + 2 MSBs */
-  T1_degC_x8_u16 = (((uint16_t) (msb & 0x0C)) << 6) | ((uint16_t) lsb);
+    /* Calc T1 using 8 LSBs + 2 MSBs */
+    T1_degC_x8_u16 = (((uint16_t)(msb & 0x0C)) << 6) | ((uint16_t)lsb);
 
-  // Divide by 8 (=3LSBs)
-  hidsCalibrationData.T1_degC = T1_degC_x8_u16 >> 3;
+    // Divide by 8 (=3LSBs)
+    hidsCalibrationData.T1_degC = T1_degC_x8_u16 >> 3;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }

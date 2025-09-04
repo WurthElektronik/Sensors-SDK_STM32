@@ -25,28 +25,22 @@
 
 /**
  * @file
- * @brief Driver file for the WSEN-PDUS sensor.
+ * @brief Driver file for the WSEN-PDUS-25131308XXX01 sensor.
  */
 
 #include "WSEN_PDUS_25131308XXX01.h"
 
 #include <stdio.h>
 
-#include "platform.h"
+#include <platform.h>
 
-#define PDUS_BASE		(uint64_t)2513130800000LL
+#define PDUS_BASE (uint64_t)2513130800000LL
 
 /**
  * @brief Default sensor interface configuration.
  */
 static WE_sensorInterface_t pdusDefaultSensorInterface = {
-    .sensorType = WE_PDUS,
-    .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = PDUS_ADDRESS_I2C, .burstMode = 0, .slaveTransmitterMode = 1, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
-                .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
-                .readTimeout = 1000,
-                .writeTimeout = 1000},
-    .handle = 0};
+    .sensorType = WE_PDUS, .interfaceType = WE_i2c, .options = {.i2c = {.address = PDUS_ADDRESS_I2C, .burstMode = 0, .protocol = WE_i2cProtocol_Raw, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0}, .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000}, .handle = 0};
 
 /**
  * @brief Read data from sensor.
@@ -60,11 +54,9 @@ static WE_sensorInterface_t pdusDefaultSensorInterface = {
  * @param[out] data Target buffer
  * @return Error Code
  */
-static inline int8_t PDUS_ReadReg(WE_sensorInterface_t* sensorInterface,
-                                  uint16_t numBytesToRead,
-                                  uint8_t *data)
+static inline int8_t PDUS_ReadReg(WE_sensorInterface_t* sensorInterface, uint16_t numBytesToRead, uint8_t* data)
 {
-  /*
+    /*
    * Caution: This sensor uses 5V Vcc and logic levels.
    * Level conversion to 3.3V is required to talk with a STM32 or any
    * other 3.3V MCU.
@@ -84,7 +76,7 @@ static inline int8_t PDUS_ReadReg(WE_sensorInterface_t* sensorInterface,
    * Master has to ACK each byte and provide clock.
    */
 
-  return WE_ReadReg(sensorInterface, 0, numBytesToRead, data);
+    return WE_ReadReg(sensorInterface, 0, numBytesToRead, data);
 }
 
 /**
@@ -94,8 +86,8 @@ static inline int8_t PDUS_ReadReg(WE_sensorInterface_t* sensorInterface,
  */
 int8_t PDUS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
-  *sensorInterface = pdusDefaultSensorInterface;
-  return WE_SUCCESS;
+    *sensorInterface = pdusDefaultSensorInterface;
+    return WE_SUCCESS;
 }
 
 /**
@@ -104,19 +96,19 @@ int8_t PDUS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] data Pointer to raw pressure value (unconverted), 15 bits
  * @retval Error code
  */
-int8_t PDUS_getRawPressure(WE_sensorInterface_t* sensorInterface, uint16_t *pressure)
+int8_t PDUS_getRawPressure(WE_sensorInterface_t* sensorInterface, uint16_t* pressure)
 {
-  uint8_t tmp[2] = {0};
+    uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == PDUS_ReadReg(sensorInterface, 2, tmp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == PDUS_ReadReg(sensorInterface, 2, tmp))
+    {
+        return WE_FAIL;
+    }
 
-  *pressure = (uint16_t) ((tmp[0] & 0x7F) << 8);
-  *pressure |= (uint16_t) tmp[1];
+    *pressure = (uint16_t)((tmp[0] & 0x7F) << 8);
+    *pressure |= (uint16_t)tmp[1];
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -126,22 +118,22 @@ int8_t PDUS_getRawPressure(WE_sensorInterface_t* sensorInterface, uint16_t *pres
  * @param[out] temperature Pointer to raw temperature value (unconverted), 15 bits
  * @retval Error code
  */
-int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, uint16_t *pressure, uint16_t *temperature)
+int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, uint16_t* pressure, uint16_t* temperature)
 {
-  uint8_t tmp[4] = {0};
+    uint8_t tmp[4] = {0};
 
-  if (WE_FAIL == PDUS_ReadReg(sensorInterface, 4, tmp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == PDUS_ReadReg(sensorInterface, 4, tmp))
+    {
+        return WE_FAIL;
+    }
 
-  *pressure = (uint16_t) ((tmp[0] & 0x7F) << 8);
-  *pressure |= (uint16_t) tmp[1];
+    *pressure = (uint16_t)((tmp[0] & 0x7F) << 8);
+    *pressure |= (uint16_t)tmp[1];
 
-  *temperature = (uint16_t) ((tmp[2] & 0x7F) << 8);
-  *temperature |= (uint16_t) tmp[3];
+    *temperature = (uint16_t)((tmp[2] & 0x7F) << 8);
+    *temperature |= (uint16_t)tmp[3];
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 #ifdef WE_USE_FLOAT
@@ -153,22 +145,17 @@ int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, 
  * @param[out] presskPa Pointer to pressure value
  * @retval Error code
  */
-int8_t PDUS_getPressure_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float *presskPa)
+int8_t PDUS_getPressure_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float* presskPa)
 {
-  uint16_t rawPres = 0;
+    uint16_t rawPres = 0;
 
-  if (WE_FAIL == PDUS_getRawPressure(sensorInterface, &rawPres))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == PDUS_getRawPressure(sensorInterface, &rawPres))
+    {
+        return WE_FAIL;
+    }
 
-  if (rawPres < P_MIN_VAL_PDUS)
-  {
-    rawPres = P_MIN_VAL_PDUS;
-  }
-
-  /* Perform conversion (depending on sensor sub-type) */
-  return PDUS_convertPressureToFloat(type, rawPres, presskPa);
+    /* Perform conversion (depending on sensor sub-type) */
+    return PDUS_convertPressureToFloat(type, rawPres, presskPa);
 }
 
 /**
@@ -179,21 +166,21 @@ int8_t PDUS_getPressure_float(WE_sensorInterface_t* sensorInterface, PDUS_Sensor
  * @param[out] tempDegC Pointer to temperature value
  * @retval Error code
  */
-int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float *presskPa, float *tempDegC)
+int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float* presskPa, float* tempDegC)
 {
-  uint16_t rawPres = 0;
-  uint16_t rawTemp = 0;
+    uint16_t rawPres = 0;
+    uint16_t rawTemp = 0;
 
-  if (WE_FAIL == PDUS_getRawPressureAndTemperature(sensorInterface, &rawPres, &rawTemp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == PDUS_getRawPressureAndTemperature(sensorInterface, &rawPres, &rawTemp))
+    {
+        return WE_FAIL;
+    }
 
-  /* Apply temperature offset to raw temperature and convert to °C */
-  *tempDegC = (((float) (rawTemp - T_MIN_VAL_PDUS) * 4.272f) / 1000);
+    /* Apply temperature offset to raw temperature and convert to °C */
+    *tempDegC = (((float)(rawTemp - T_MIN_TYP_VAL_PDUS) * 4.272f) / 1000);
 
-  /* Perform conversion regarding sensor sub-type */
-  return PDUS_convertPressureToFloat(type, rawPres, presskPa);
+    /* Perform conversion regarding sensor sub-type */
+    return PDUS_convertPressureToFloat(type, rawPres, presskPa);
 }
 
 /**
@@ -203,41 +190,39 @@ int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
  * @param[out] presskPa Pointer to pressure value
  * @retval Error code
  */
-int8_t PDUS_convertPressureToFloat(PDUS_SensorType_t type, uint16_t rawPressure, float *presskPa)
+int8_t PDUS_convertPressureToFloat(PDUS_SensorType_t type, uint16_t rawPressure, float* presskPa)
 {
-  float temp = (float) (rawPressure - P_MIN_VAL_PDUS);
-  switch (type)
-  {
-  case PDUS_pdus0:
-    *presskPa = ((temp * 7.63f) / 1000000) - 0.1f;
-    break;
+    float temp = (float)((float)rawPressure - (float)P_MIN_TYP_VAL_PDUS);
+    switch (type)
+    {
+        case PDUS_pdus0:
+            *presskPa = ((temp * 7.63f) / 1000000) - 0.1f;
+            break;
 
-  case PDUS_pdus1:
-    *presskPa = ((temp * 7.63f) / 100000) - 1.0f;
-    break;
+        case PDUS_pdus1:
+            *presskPa = ((temp * 7.63f) / 100000) - 1.0f;
+            break;
 
-  case PDUS_pdus2:
-    *presskPa = ((temp * 7.63f) / 10000) - 10.0f;
-    break;
+        case PDUS_pdus2:
+            *presskPa = ((temp * 7.63f) / 10000) - 10.0f;
+            break;
 
-  case PDUS_pdus3:
-    *presskPa = ((temp * 3.815f) / 1000);
-    break;
+        case PDUS_pdus3:
+            *presskPa = ((temp * 3.815f) / 1000);
+            break;
 
-  case PDUS_pdus4:
-    *presskPa = ((temp * 4.196f) / 100) - 100.0f;
-    break;
+        case PDUS_pdus4:
+            *presskPa = ((temp * 4.196f) / 100) - 100.0f;
+            break;
 
-  case PDUS_pdus5:
-    *presskPa = ((temp * 5.722f) / 100);
-    break;
+        case PDUS_pdus5:
+            *presskPa = ((temp * 5.722f) / 100);
+            break;
 
-  default:
-    return WE_FAIL;
-  }
-  return WE_SUCCESS;
+        default:
+            return WE_FAIL;
+    }
+    return WE_SUCCESS;
 }
 
 #endif /* WE_USE_FLOAT */
-
-

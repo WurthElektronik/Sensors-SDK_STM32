@@ -18,40 +18,22 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2025 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
  */
 
 /**
  * @file
- * @brief Header file for platform-specific functions.
+ * @brief Header file for WSEN-PDMS SPI example.
+ *
+ * Basic usage of the PDMS differential pressure sensor connected via SPI.
  */
 
-#ifndef PLATFORM_H_INCLUDED
-#define PLATFORM_H_INCLUDED
+#ifndef WSEN_PDMS_25131308XXX05_SPI_EXAMPLE_H_INCLUDED
+#define WSEN_PDMS_25131308XXX05_SPI_EXAMPLE_H_INCLUDED
 
-#include <stdbool.h>
-#include <stdint.h>
+void WE_pdmsSpiExampleInit();
+void WE_pdmsSpiExampleLoop();
 
-#include "SensorsSDK/WeSensorsSDK.h"
-
-/* Read a register's content */
-extern int8_t WE_ReadReg(WE_sensorInterface_t* interface,
-                         uint8_t regAdr,
-                         uint16_t numBytesToRead,
-                         uint8_t *data);
-
-/* Write a register's content */
-extern int8_t WE_WriteReg(WE_sensorInterface_t* interface,
-                          uint8_t regAdr,
-                          uint16_t numBytesToWrite,
-                          uint8_t *data);
-
-extern int8_t WE_isSensorInterfaceReady(WE_sensorInterface_t* interface);
-
-/* Delay in milliseconds */
-extern void WE_Delay(uint32_t Delay);
-
-
-#endif /* PLATFORM_H_INCLUDED */
+#endif /* WSEN_PDMS_25131308XXX05_SPI_EXAMPLE_H_INCLUDED */

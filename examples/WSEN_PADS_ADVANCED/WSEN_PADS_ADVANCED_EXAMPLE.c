@@ -30,31 +30,25 @@
  * Advanced usage of the PADS absolute pressure sensor connected via I2C (data-ready interrupt,
  * AUTOZERO mode, usage of the FIFO buffer).
  */
-
 #include "WSEN_PADS_ADVANCED_EXAMPLE.h"
-
+#include "../SensorsSDK/WSEN_PADS_2511020213301/WSEN_PADS_2511020213301.h"
+#include "gpio.h"
+#include "i2c.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "i2c.h"
-#include "usart.h"
-#include "gpio.h"
-
-#include <platform.h>
-
-#include "../SensorsSDK/WSEN_PADS_2511020213301/WSEN_PADS_2511020213301.h"
-
 /* Enum used to switch between different example modes (see variable padsExampleMode) */
 typedef enum
 {
-  PADS_exampleDataReadyInterrupt,   /* Example demonstrating usage of data-ready interrupt (new sample available) */
-  PADS_exampleAutoZero,             /* Example showing how to use the AUTOZERO functionality (setting a reference pressure, output of pressure difference) */
-  PADS_exampleFifoMode,             /* Example demonstrating usage of FIFO buffer (full/overrun interrupt) */
-  PADS_exampleContinuousMode,       /* Example demonstrating usage of FIFO buffer in continuous mode (threshold interrupt) */
-  PADS_exampleBypassToFifoMode      /* Example showing how to start FIFO mode when a pressure high/low interrupt has been triggered */
+    PADS_exampleDataReadyInterrupt, /* Example demonstrating usage of data-ready interrupt (new sample available) */
+    PADS_exampleAutoZero,           /* Example showing how to use the AUTOZERO functionality (setting a reference pressure, output of pressure difference) */
+    PADS_exampleFifoMode,           /* Example demonstrating usage of FIFO buffer (full/overrun interrupt) */
+    PADS_exampleContinuousMode,     /* Example demonstrating usage of FIFO buffer in continuous mode (threshold interrupt) */
+    PADS_exampleBypassToFifoMode    /* Example showing how to start FIFO mode when a pressure high/low interrupt has been triggered */
 } PADS_advanced_example_mode;
 
 /* Number of samples to be discarded after startup (to ensure that the value used as reference pressure is valid) */
@@ -82,9 +76,6 @@ void PADS_startFifoExample();
 void PADS_startContinuousExample();
 void PADS_startBypassToFifoExample();
 
-/* Debug output functions */
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
 static void debugPrintPressure_int(int32_t pressure);
 static void debugPrintTemperature_int(int16_t temperature);
 
@@ -94,29 +85,30 @@ static void debugPrintTemperature_int(int16_t temperature);
  */
 void WE_padsAdvancedExampleInit()
 {
-  char bufferMajor[4];
-  char bufferMinor[4];
-  sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
-  sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
-  debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
-  debugPrint(bufferMajor);
-  debugPrint(".");
-  debugPrintln(bufferMinor);
-  debugPrintln("This is the advanced example program for the PADS sensor.");
-  debugPrintln("Note that for this example to work, the following pin/interrupt configuration is required:");
-  debugPrintln("* INT_0 to PA0, rising edge interrupt only");
+    char bufferMajor[4];
+    char bufferMinor[4];
+    sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
+    sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
+    debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
+    debugPrint(bufferMajor);
+    debugPrint(".");
+    debugPrintln(bufferMinor);
+    debugPrintln("This is the advanced example program for the PADS sensor.");
+    debugPrintln("Note that for this example to work, the following pin/interrupt configuration is required:");
+    debugPrintln("* INT_0 to PA0, rising edge interrupt only");
 
-  /* init PADS */
-  if (false == PADS_init())
-  {
-    debugPrintln("**** PADS_Init() error. STOP ****");
+    /* init PADS */
+    if (false == PADS_init())
+    {
+        debugPrintln("**** PADS_Init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
+
+    /* LED on */
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
     HAL_Delay(5);
-    while(1);
-  }
-
-  /* LED on */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  HAL_Delay(5);
 }
 
 /**
@@ -125,28 +117,28 @@ void WE_padsAdvancedExampleInit()
  */
 void WE_padsAdvancedExampleLoop()
 {
-  switch (padsExampleMode)
-  {
-  case PADS_exampleDataReadyInterrupt:
-    PADS_startDataReadyInterruptExample();
-    break;
+    switch (padsExampleMode)
+    {
+        case PADS_exampleDataReadyInterrupt:
+            PADS_startDataReadyInterruptExample();
+            break;
 
-  case PADS_exampleAutoZero:
-    PADS_startAutoZeroExample();
-    break;
+        case PADS_exampleAutoZero:
+            PADS_startAutoZeroExample();
+            break;
 
-  case PADS_exampleFifoMode:
-    PADS_startFifoExample();
-    break;
+        case PADS_exampleFifoMode:
+            PADS_startFifoExample();
+            break;
 
-  case PADS_exampleContinuousMode:
-    PADS_startContinuousExample();
-    break;
+        case PADS_exampleContinuousMode:
+            PADS_startContinuousExample();
+            break;
 
-  case PADS_exampleBypassToFifoMode:
-    PADS_startBypassToFifoExample();
-    break;
-  }
+        case PADS_exampleBypassToFifoMode:
+            PADS_startBypassToFifoExample();
+            break;
+    }
 }
 
 /**
@@ -154,73 +146,73 @@ void WE_padsAdvancedExampleLoop()
  */
 static bool PADS_init(void)
 {
-  /* Initialize sensor interface (i2c with PADS address, burst mode activated) */
-  PADS_getDefaultInterface(&pads);
-  pads.interfaceType = WE_i2c;
-  pads.options.i2c.address = PADS_ADDRESS_I2C_0;
-  pads.options.i2c.burstMode = 1;
-  pads.handle = &hi2c1;
+    /* Initialize sensor interface (i2c with PADS address, burst mode activated) */
+    PADS_getDefaultInterface(&pads);
+    pads.interfaceType = WE_i2c;
+    pads.options.i2c.address = PADS_ADDRESS_I2C_0;
+    pads.options.i2c.burstMode = 1;
+    pads.handle = &hi2c1;
 
-  /* Wait for boot */
-  HAL_Delay(50);
-  while (WE_SUCCESS != WE_isSensorInterfaceReady(&pads))
-  {
-  }
-  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
-
-  HAL_Delay(5);
-
-  /* First communication test */
-  uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
-  {
-    if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+    /* Wait for boot */
+    HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&pads))
     {
-      debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+
+    HAL_Delay(5);
+
+    /* First communication test */
+    uint8_t deviceIdValue = 0;
+    if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
+    {
+        if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+        {
+            debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
+        }
+        else
+        {
+            debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
+            return false;
+        }
     }
     else
     {
-      debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
-      return false;
+        debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
+        return false;
     }
-  }
-  else
-  {
-    debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
-    return false;
-  }
 
-  /* Perform soft reset of the sensor */
-  PADS_softReset(&pads, PADS_enable);
-  PADS_state_t swReset;
-  do
-  {
-    PADS_getSoftResetState(&pads, &swReset);
-  } while (swReset);
-  debugPrintln("**** PADS reset complete ****");
+    /* Perform soft reset of the sensor */
+    PADS_softReset(&pads, PADS_enable);
+    PADS_state_t swReset;
+    do
+    {
+        PADS_getSoftResetState(&pads, &swReset);
+    } while (swReset);
+    debugPrintln("**** PADS reset complete ****");
 
-  /* Enable low-noise configuration */
-  PADS_setPowerMode(&pads, PADS_lowNoise);
+    /* Enable low-noise configuration */
+    PADS_setPowerMode(&pads, PADS_lowNoise);
 
-  /* Automatic increment register address */
-  PADS_enableAutoIncrement(&pads, PADS_enable);
+    /* Automatic increment register address */
+    PADS_enableAutoIncrement(&pads, PADS_enable);
 
-  /* Enable additional low pass filter */
-  PADS_enableLowPassFilter(&pads, PADS_enable);
+    /* Enable additional low pass filter */
+    PADS_enableLowPassFilter(&pads, PADS_enable);
 
-  /* Set filter bandwidth of ODR/20 */
-  PADS_setLowPassFilterConfig(&pads, PADS_lpFilterBW2);
+    /* Set filter bandwidth of ODR/20 */
+    PADS_setLowPassFilterConfig(&pads, PADS_lpFilterBW2);
 
-  /* Enable block data update */
-  PADS_enableBlockDataUpdate(&pads, PADS_enable);
+    /* Enable block data update */
+    PADS_enableBlockDataUpdate(&pads, PADS_enable);
 
-  /* Interrupts are active high */
-  PADS_setInterruptActiveLevel(&pads, PADS_activeHigh);
+    /* Interrupts are active high */
+    PADS_setInterruptActiveLevel(&pads, PADS_activeHigh);
 
-  /* Interrupts are push-pull */
-  PADS_setInterruptPinType(&pads, PADS_pushPull);
+    /* Interrupts are push-pull */
+    PADS_setInterruptPinType(&pads, PADS_pushPull);
 
-  return true;
+    return true;
 }
 
 /**
@@ -230,41 +222,41 @@ static bool PADS_init(void)
  */
 void PADS_startDataReadyInterruptExample()
 {
-  debugPrintln("Starting data-ready interrupt example");
+    debugPrintln("Starting data-ready interrupt example");
 
-  /* Disable FIFO */
-  PADS_setFifoMode(&pads, PADS_bypassMode);
+    /* Disable FIFO */
+    PADS_setFifoMode(&pads, PADS_bypassMode);
 
-  /* Enable data-ready interrupt */
-  PADS_enableDataReadyInterrupt(&pads, PADS_enable);
+    /* Enable data-ready interrupt */
+    PADS_enableDataReadyInterrupt(&pads, PADS_enable);
 
-  /* Activate data-ready interrupt in event control register */
-  PADS_setInterruptEventControl(&pads, PADS_dataReady);
+    /* Activate data-ready interrupt in event control register */
+    PADS_setInterruptEventControl(&pads, PADS_dataReady);
 
-  /* Enable continuous operation with an update rate of 50 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
+    /* Enable continuous operation with an update rate of 50 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
 
-  uint32_t printIntervalMs = 1000;
-  uint32_t printTime = HAL_GetTick() + printIntervalMs;
+    uint32_t printIntervalMs = 1000;
+    uint32_t printTime = HAL_GetTick() + printIntervalMs;
 
-  int32_t pressure = 0;
+    int32_t pressure = 0;
 
-  while (1)
-  {
-
-    if (interruptTriggered == true)
+    while (1)
     {
-      interruptTriggered = false;
-      PADS_getPressure_int(&pads, &pressure);
-    }
 
-    uint32_t currentTime = HAL_GetTick();
-    if (currentTime > printTime)
-    {
-      debugPrintPressure_int(pressure);
-      printTime = currentTime + printIntervalMs;
+        if (interruptTriggered == true)
+        {
+            interruptTriggered = false;
+            PADS_getPressure_int(&pads, &pressure);
+        }
+
+        uint32_t currentTime = HAL_GetTick();
+        if (currentTime > printTime)
+        {
+            debugPrintPressure_int(pressure);
+            printTime = currentTime + printIntervalMs;
+        }
     }
-  }
 }
 
 /**
@@ -276,79 +268,79 @@ void PADS_startDataReadyInterruptExample()
  */
 void PADS_startAutoZeroExample()
 {
-  debugPrintln("Starting auto-zero example");
+    debugPrintln("Starting auto-zero example");
 
-  /* Disable FIFO */
-  PADS_setFifoMode(&pads, PADS_bypassMode);
+    /* Disable FIFO */
+    PADS_setFifoMode(&pads, PADS_bypassMode);
 
-  /* Enable data-ready interrupt */
-  PADS_enableDataReadyInterrupt(&pads, PADS_enable);
+    /* Enable data-ready interrupt */
+    PADS_enableDataReadyInterrupt(&pads, PADS_enable);
 
-  /* Activate data-ready interrupt in event control register */
-  PADS_setInterruptEventControl(&pads, PADS_dataReady);
+    /* Activate data-ready interrupt in event control register */
+    PADS_setInterruptEventControl(&pads, PADS_dataReady);
 
-  /* Discard first samples */
-  for (uint8_t i = 0; i < PADS_EXAMPLE_DISCARD_SAMPLES_COUNT; i++)
-  {
-    /* Start a conversion (one shot) */
-    PADS_enableOneShot(&pads, PADS_enable);
-    PADS_state_t presStatus;
-    do
+    /* Discard first samples */
+    for (uint8_t i = 0; i < PADS_EXAMPLE_DISCARD_SAMPLES_COUNT; i++)
     {
-      PADS_isPressureDataAvailable(&pads, &presStatus);
-    } while (presStatus != PADS_enable);
-  }
+        /* Start a conversion (one shot) */
+        PADS_enableOneShot(&pads, PADS_enable);
+        PADS_state_t presStatus;
+        do
+        {
+            PADS_isPressureDataAvailable(&pads, &presStatus);
+        } while (presStatus != PADS_enable);
+    }
 
-  /* Set either AUTOZERO (standard output register contain differential signal) or
+    /* Set either AUTOZERO (standard output register contain differential signal) or
    * AUTOREFP (standard output registers contain the usual output) mode */
-  PADS_enableAutoZeroMode(&pads, PADS_enable);
-//  PADS_enableAutoRefp(&pads, PADS_enable);
+    PADS_enableAutoZeroMode(&pads, PADS_enable);
+    //  PADS_enableAutoRefp(&pads, PADS_enable);
 
-  /* Wait for AUTOZERO to be revoked (after first conversion) */
-  PADS_state_t autoZero = PADS_enable;
-  while (autoZero == PADS_enable)
-  {
-    PADS_isEnablingAutoZeroMode(&pads, &autoZero);
-  }
-
-  /* Retrieve and print the reference pressure that has been set when enabling AUTOZERO/AUTOREFP mode */
-  uint32_t refPressure;
-  PADS_getReferencePressure(&pads, &refPressure);
-  debugPrint("Reference pressure: ");
-  debugPrintPressure_int(refPressure);
-
-  /* Enable continuous operation with an update rate of 50 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
-
-  uint32_t printIntervalMs = 1000;
-  uint32_t printTime = HAL_GetTick() + printIntervalMs;
-
-  int32_t pressure = 0;
-  int32_t rawPressure = 0;
-
-  while (1)
-  {
-    if (interruptTriggered == true)
+    /* Wait for AUTOZERO to be revoked (after first conversion) */
+    PADS_state_t autoZero = PADS_enable;
+    while (autoZero == PADS_enable)
     {
-      interruptTriggered = false;
-
-      PADS_getRawPressure(&pads, &rawPressure);
-      PADS_getDifferentialPressure_int(&pads, &pressure);
+        PADS_isEnablingAutoZeroMode(&pads, &autoZero);
     }
 
-    uint32_t currentTime = HAL_GetTick();
-    if (currentTime > printTime)
-    {
-      /* Print both raw pressure and pressure in kPa */
-      char buffer[32];
-      sprintf(buffer, "%ld", rawPressure);
-      debugPrint("Raw pressure: ");
-      debugPrintln(buffer);
+    /* Retrieve and print the reference pressure that has been set when enabling AUTOZERO/AUTOREFP mode */
+    uint32_t refPressure;
+    PADS_getReferencePressure(&pads, &refPressure);
+    debugPrint("Reference pressure: ");
+    debugPrintPressure_int(refPressure);
 
-      debugPrintPressure_int(pressure);
-      printTime = currentTime + printIntervalMs;
+    /* Enable continuous operation with an update rate of 50 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
+
+    uint32_t printIntervalMs = 1000;
+    uint32_t printTime = HAL_GetTick() + printIntervalMs;
+
+    int32_t pressure = 0;
+    int32_t rawPressure = 0;
+
+    while (1)
+    {
+        if (interruptTriggered == true)
+        {
+            interruptTriggered = false;
+
+            PADS_getRawPressure(&pads, &rawPressure);
+            PADS_getDifferentialPressure_int(&pads, &pressure);
+        }
+
+        uint32_t currentTime = HAL_GetTick();
+        if (currentTime > printTime)
+        {
+            /* Print both raw pressure and pressure in kPa */
+            char buffer[32];
+            sprintf(buffer, "%ld", rawPressure);
+            debugPrint("Raw pressure: ");
+            debugPrintln(buffer);
+
+            debugPrintPressure_int(pressure);
+            printTime = currentTime + printIntervalMs;
+        }
     }
-  }
 }
 
 /**
@@ -358,69 +350,69 @@ void PADS_startAutoZeroExample()
  */
 void PADS_startFifoExample()
 {
-  debugPrintln("Starting FIFO example");
+    debugPrintln("Starting FIFO example");
 
-  /* Enable FIFO mode */
-  PADS_setFifoMode(&pads, PADS_fifoEnabled);
+    /* Enable FIFO mode */
+    PADS_setFifoMode(&pads, PADS_fifoEnabled);
 
-  /* Enable interrupts for FIFO buffer full and overrun events on INT1 */
-  PADS_enableFifoOverrunInterrupt(&pads, PADS_enable);
-  PADS_enableFifoFullInterrupt(&pads, PADS_enable);
+    /* Enable interrupts for FIFO buffer full and overrun events on INT1 */
+    PADS_enableFifoOverrunInterrupt(&pads, PADS_enable);
+    PADS_enableFifoFullInterrupt(&pads, PADS_enable);
 
-  /* Activate FIFO full and overrun interrupts in event control register */
-  PADS_setInterruptEventControl(&pads, PADS_dataReady);
+    /* Activate FIFO full and overrun interrupts in event control register */
+    PADS_setInterruptEventControl(&pads, PADS_dataReady);
 
-  /* Enable continuous operation with an update rate of 200 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
+    /* Enable continuous operation with an update rate of 200 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
 
-  uint32_t printIntervalMs = 1000;
-  uint32_t printTime = HAL_GetTick() + printIntervalMs;
+    uint32_t printIntervalMs = 1000;
+    uint32_t printTime = HAL_GetTick() + printIntervalMs;
 
-  int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
-  int16_t temperatureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
+    int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
+    int16_t temperatureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
 
-  while (1)
-  {
-    if (interruptTriggered == true)
+    while (1)
     {
-      interruptTriggered = false;
+        if (interruptTriggered == true)
+        {
+            interruptTriggered = false;
 
-      /* Get pressure and temperature measurements in one go. */
-      PADS_getFifoValues_int(&pads, PADS_FIFO_BUFFER_SIZE, pressureBuffer, temperatureBuffer);
+            /* Get pressure and temperature measurements in one go. */
+            PADS_getFifoValues_int(&pads, PADS_FIFO_BUFFER_SIZE, pressureBuffer, temperatureBuffer);
 
-      /* Alternatively, one of the following functions can be used to get pressure or temperature. */
-//      PADS_getFifoPressure_int(&pads, PADS_FIFO_BUFFER_SIZE, pressureBuffer);
-//      PADS_getFifoTemperature_int(&pads, PADS_FIFO_BUFFER_SIZE, temperatureBuffer);
+            /* Alternatively, one of the following functions can be used to get pressure or temperature. */
+            //      PADS_getFifoPressure_int(&pads, PADS_FIFO_BUFFER_SIZE, pressureBuffer);
+            //      PADS_getFifoTemperature_int(&pads, PADS_FIFO_BUFFER_SIZE, temperatureBuffer);
 
-      /* Must set to bypass mode and then re-enable FIFO mode to start capturing of new data. */
-      PADS_setFifoMode(&pads, PADS_bypassMode);
-      PADS_setFifoMode(&pads, PADS_fifoEnabled);
+            /* Must set to bypass mode and then re-enable FIFO mode to start capturing of new data. */
+            PADS_setFifoMode(&pads, PADS_bypassMode);
+            PADS_setFifoMode(&pads, PADS_fifoEnabled);
+        }
+
+        uint32_t currentTime = HAL_GetTick();
+        if (currentTime > printTime)
+        {
+            /* Compute average of captured pressure/temperature values and print the results */
+
+            uint32_t pressure = 0;
+            for (uint8_t i = 0; i < PADS_FIFO_BUFFER_SIZE; i++)
+            {
+                pressure += pressureBuffer[i];
+            }
+            pressure /= PADS_FIFO_BUFFER_SIZE;
+            debugPrintPressure_int(pressure);
+
+            int32_t temperature = 0;
+            for (uint8_t i = 0; i < PADS_FIFO_BUFFER_SIZE; i++)
+            {
+                temperature += temperatureBuffer[i];
+            }
+            temperature /= PADS_FIFO_BUFFER_SIZE;
+            debugPrintTemperature_int(temperature);
+
+            printTime = currentTime + printIntervalMs;
+        }
     }
-
-    uint32_t currentTime = HAL_GetTick();
-    if (currentTime > printTime)
-    {
-      /* Compute average of captured pressure/temperature values and print the results */
-
-      uint32_t pressure = 0;
-      for (uint8_t i = 0; i < PADS_FIFO_BUFFER_SIZE; i++)
-      {
-        pressure += pressureBuffer[i];
-      }
-      pressure /= PADS_FIFO_BUFFER_SIZE;
-      debugPrintPressure_int(pressure);
-
-      int32_t temperature = 0;
-      for (uint8_t i = 0; i < PADS_FIFO_BUFFER_SIZE; i++)
-      {
-        temperature += temperatureBuffer[i];
-      }
-      temperature /= PADS_FIFO_BUFFER_SIZE;
-      debugPrintTemperature_int(temperature);
-
-      printTime = currentTime + printIntervalMs;
-    }
-  }
 }
 
 /**
@@ -430,69 +422,69 @@ void PADS_startFifoExample()
  */
 void PADS_startContinuousExample()
 {
-  debugPrintln("Starting continuous mode example");
+    debugPrintln("Starting continuous mode example");
 
-  /* Enable FIFO continuous mode */
-  PADS_setFifoMode(&pads, PADS_continuousMode);
+    /* Enable FIFO continuous mode */
+    PADS_setFifoMode(&pads, PADS_continuousMode);
 
-  /* Set FIFO fill threshold */
-  const int fifoThresh = PADS_FIFO_BUFFER_SIZE / 4;
-  PADS_setFifoThreshold(&pads, fifoThresh);
+    /* Set FIFO fill threshold */
+    const int fifoThresh = PADS_FIFO_BUFFER_SIZE / 4;
+    PADS_setFifoThreshold(&pads, fifoThresh);
 
-  /* Interrupt for FIFO buffer fill threshold reached on INT1 */
-  PADS_enableFifoThresholdInterrupt(&pads, PADS_enable);
+    /* Interrupt for FIFO buffer fill threshold reached on INT1 */
+    PADS_enableFifoThresholdInterrupt(&pads, PADS_enable);
 
-  /* Activate FIFO threshold interrupt in event control register */
-  PADS_setInterruptEventControl(&pads, PADS_dataReady);
+    /* Activate FIFO threshold interrupt in event control register */
+    PADS_setInterruptEventControl(&pads, PADS_dataReady);
 
-  /* Enable continuous operation with an update rate of 200 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
+    /* Enable continuous operation with an update rate of 200 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
 
-  uint32_t printIntervalMs = 1000;
-  uint32_t printTime = HAL_GetTick() + printIntervalMs;
+    uint32_t printIntervalMs = 1000;
+    uint32_t printTime = HAL_GetTick() + printIntervalMs;
 
-  int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
-  int16_t temperatureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
+    int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
+    int16_t temperatureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
 
-  while (1)
-  {
-    if (interruptTriggered == true)
+    while (1)
     {
-      interruptTriggered = false;
+        if (interruptTriggered == true)
+        {
+            interruptTriggered = false;
 
-      /* Get pressure and temperature measurements in one go. */
-      /* Note: Samples must be read faster than the ODR. */
-      PADS_getFifoValues_int(&pads, fifoThresh, pressureBuffer, temperatureBuffer);
+            /* Get pressure and temperature measurements in one go. */
+            /* Note: Samples must be read faster than the ODR. */
+            PADS_getFifoValues_int(&pads, fifoThresh, pressureBuffer, temperatureBuffer);
 
-      /* Alternatively, one of the following functions can be used to get pressure or temperature. */
-//      PADS_getFifoPressure_int(&pads, fifoThresh, pressureBuffer);
-//      PADS_getFifoTemperature_int(&pads, fifoThresh, temperatureBuffer);
+            /* Alternatively, one of the following functions can be used to get pressure or temperature. */
+            //      PADS_getFifoPressure_int(&pads, fifoThresh, pressureBuffer);
+            //      PADS_getFifoTemperature_int(&pads, fifoThresh, temperatureBuffer);
+        }
+
+        uint32_t currentTime = HAL_GetTick();
+        if (currentTime > printTime)
+        {
+            /* Compute average of captured pressure/temperature values and print the results */
+
+            uint32_t pressure = 0;
+            for (uint8_t i = 0; i < fifoThresh; i++)
+            {
+                pressure += pressureBuffer[i];
+            }
+            pressure /= fifoThresh;
+            debugPrintPressure_int(pressure);
+
+            int32_t temperature = 0;
+            for (uint8_t i = 0; i < fifoThresh; i++)
+            {
+                temperature += temperatureBuffer[i];
+            }
+            temperature /= fifoThresh;
+            debugPrintTemperature_int(temperature);
+
+            printTime = currentTime + printIntervalMs;
+        }
     }
-
-    uint32_t currentTime = HAL_GetTick();
-    if (currentTime > printTime)
-    {
-      /* Compute average of captured pressure/temperature values and print the results */
-
-      uint32_t pressure = 0;
-      for (uint8_t i = 0; i < fifoThresh; i++)
-      {
-        pressure += pressureBuffer[i];
-      }
-      pressure /= fifoThresh;
-      debugPrintPressure_int(pressure);
-
-      int32_t temperature = 0;
-      for (uint8_t i = 0; i < fifoThresh; i++)
-      {
-        temperature += temperatureBuffer[i];
-      }
-      temperature /= fifoThresh;
-      debugPrintTemperature_int(temperature);
-
-      printTime = currentTime + printIntervalMs;
-    }
-  }
 }
 
 /**
@@ -504,136 +496,135 @@ void PADS_startContinuousExample()
  */
 void PADS_startBypassToFifoExample()
 {
-  debugPrintln("Starting bypass-to-FIFO mode example");
+    debugPrintln("Starting bypass-to-FIFO mode example");
 
-  /* Discard first samples */
-  for (uint8_t i = 0; i < PADS_EXAMPLE_DISCARD_SAMPLES_COUNT; i++)
-  {
-    /* Start a conversion (one shot) */
-    PADS_enableOneShot(&pads, PADS_enable);
-    PADS_state_t presStatus;
-    do
+    /* Discard first samples */
+    for (uint8_t i = 0; i < PADS_EXAMPLE_DISCARD_SAMPLES_COUNT; i++)
     {
-      PADS_isPressureDataAvailable(&pads, &presStatus);
-    } while (presStatus != PADS_enable);
-  }
-
-  /* Set FIFO fill threshold */
-  const int fifoThresh = PADS_FIFO_BUFFER_SIZE / 4;
-  PADS_setFifoThreshold(&pads, fifoThresh);
-
-  /* Stop filling FIFO as soon as the configured threshold is reached */
-  PADS_enableStopOnThreshold(&pads, PADS_enable);
-
-  /* Set either AUTOZERO (standard output register contain differential signal) or
-   * AUTOREFP (standard output registers contain the usual output) mode */
-  PADS_enableAutoZeroMode(&pads, PADS_enable);
-//  PADS_enableAutoRefp(&pads, PADS_enable);
-
-  /* Wait for AUTOZERO to be revoked (after first conversion) */
-  PADS_state_t autoZero = PADS_enable;
-  while (autoZero == PADS_enable)
-  {
-    PADS_isEnablingAutoZeroMode(&pads, &autoZero);
-  }
-
-  /* Retrieve and print the reference pressure that has been set when enabling AUTOZERO/AUTOREFP mode */
-  uint32_t refPressure;
-  PADS_getReferencePressure(&pads, &refPressure);
-  debugPrint("Reference pressure: ");
-  debugPrintPressure_int(refPressure);
-
-  /* Set pressure threshold (relative to reference pressure, used for high/low pressure events) */
-  PADS_setPressureThreshold(&pads, PADS_EXAMPLE_PRESSURE_THRESH);
-
-  /* Retrieve and print the configured pressure threshold */
-  uint32_t pressureThresh;
-  PADS_getPressureThreshold(&pads, &pressureThresh);
-  debugPrint("Pressure threshold: ");
-  debugPrintPressure_int(pressureThresh);
-
-  /* Enable bypass-to-FIFO mode */
-  PADS_setFifoMode(&pads, PADS_bypassToFifo);
-
-  /* Enable high and low pressure interrupts */
-  PADS_enableDiffPressureInterrupt(&pads, PADS_enable);
-  PADS_enableLowPressureInterrupt(&pads, PADS_enable);
-  PADS_enableHighPressureInterrupt(&pads, PADS_enable);
-
-  /* Activate high/low pressure interrupts in event control register */
-  PADS_setInterruptEventControl(&pads, PADS_pressureHighOrLow);
-
-  /* Enable continuous operation with an update rate of 200 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
-
-  int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
-
-  /* Last FIFO thresh exceeded state */
-  PADS_state_t lastThreshExceededState = PADS_disable;
-
-  /* Last FIFO buffer fill level */
-//  uint8_t lastFillLevel = 0;
-
-  while (1)
-  {
-    if (interruptTriggered == true)
-    {
-      interruptTriggered = false;
-
-      PADS_intSource_t intSource;
-      PADS_getInterruptSource(&pads, &intSource);
-
-      debugPrint("Interrupt triggered, interrupt status = ");
-      debugPrintln(intSource.intStatus ? "1" : "0");
-      if (intSource.diffPresLowEvent)
-      {
-        debugPrintln("Low pressure event");
-      }
-      if (intSource.diffPresHighEvent)
-      {
-        debugPrintln("High pressure event");
-      }
-    }
-
-    PADS_state_t threshExceeded;
-    PADS_isFifoThresholdReached(&pads, &threshExceeded);
-    if (lastThreshExceededState != threshExceeded)
-    {
-      if (threshExceeded == PADS_enable)
-      {
-        debugPrintln("FIFO thresh exceeded event");
-
-        PADS_getFifoPressure_int(&pads, fifoThresh, pressureBuffer);
-
-        /* Compute average of captured pressure values */
-
-        uint32_t pressure = 0;
-        for (uint8_t i = 0; i < fifoThresh; i++)
+        /* Start a conversion (one shot) */
+        PADS_enableOneShot(&pads, PADS_enable);
+        PADS_state_t presStatus;
+        do
         {
-          pressure += pressureBuffer[i];
-        }
-        pressure /= fifoThresh;
-        debugPrintPressure_int(pressure);
-
-
-        /* Must set to bypass mode and then re-enable bypass-to-FIFO mode to start capturing of new data. */
-        PADS_setFifoMode(&pads, PADS_bypassMode);
-        PADS_setFifoMode(&pads, PADS_bypassToFifo);
-      }
-      lastThreshExceededState = threshExceeded;
+            PADS_isPressureDataAvailable(&pads, &presStatus);
+        } while (presStatus != PADS_enable);
     }
 
-    /* Uncomment the following lines to print the current FIFO fill level */
-//    uint8_t fillLevel;
-//    PADS_getFifoFillLevel(&pads, &fillLevel);
-//    if (fillLevel != lastFillLevel)
-//    {
-//      char buffer[50];
-//      sprintf(buffer, "FIFO fill level = %d", fillLevel);
-//      debugPrintln(buffer);
-//      lastFillLevel = fillLevel;
-//    }
-  }
+    /* Set FIFO fill threshold */
+    const int fifoThresh = PADS_FIFO_BUFFER_SIZE / 4;
+    PADS_setFifoThreshold(&pads, fifoThresh);
+
+    /* Stop filling FIFO as soon as the configured threshold is reached */
+    PADS_enableStopOnThreshold(&pads, PADS_enable);
+
+    /* Set either AUTOZERO (standard output register contain differential signal) or
+   * AUTOREFP (standard output registers contain the usual output) mode */
+    PADS_enableAutoZeroMode(&pads, PADS_enable);
+    //  PADS_enableAutoRefp(&pads, PADS_enable);
+
+    /* Wait for AUTOZERO to be revoked (after first conversion) */
+    PADS_state_t autoZero = PADS_enable;
+    while (autoZero == PADS_enable)
+    {
+        PADS_isEnablingAutoZeroMode(&pads, &autoZero);
+    }
+
+    /* Retrieve and print the reference pressure that has been set when enabling AUTOZERO/AUTOREFP mode */
+    uint32_t refPressure;
+    PADS_getReferencePressure(&pads, &refPressure);
+    debugPrint("Reference pressure: ");
+    debugPrintPressure_int(refPressure);
+
+    /* Set pressure threshold (relative to reference pressure, used for high/low pressure events) */
+    PADS_setPressureThreshold(&pads, PADS_EXAMPLE_PRESSURE_THRESH);
+
+    /* Retrieve and print the configured pressure threshold */
+    uint32_t pressureThresh;
+    PADS_getPressureThreshold(&pads, &pressureThresh);
+    debugPrint("Pressure threshold: ");
+    debugPrintPressure_int(pressureThresh);
+
+    /* Enable bypass-to-FIFO mode */
+    PADS_setFifoMode(&pads, PADS_bypassToFifo);
+
+    /* Enable high and low pressure interrupts */
+    PADS_enableDiffPressureInterrupt(&pads, PADS_enable);
+    PADS_enableLowPressureInterrupt(&pads, PADS_enable);
+    PADS_enableHighPressureInterrupt(&pads, PADS_enable);
+
+    /* Activate high/low pressure interrupts in event control register */
+    PADS_setInterruptEventControl(&pads, PADS_pressureHighOrLow);
+
+    /* Enable continuous operation with an update rate of 200 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate200Hz);
+
+    int32_t pressureBuffer[PADS_FIFO_BUFFER_SIZE] = {0};
+
+    /* Last FIFO thresh exceeded state */
+    PADS_state_t lastThreshExceededState = PADS_disable;
+
+    /* Last FIFO buffer fill level */
+    //  uint8_t lastFillLevel = 0;
+
+    while (1)
+    {
+        if (interruptTriggered == true)
+        {
+            interruptTriggered = false;
+
+            PADS_intSource_t intSource;
+            PADS_getInterruptSource(&pads, &intSource);
+
+            debugPrint("Interrupt triggered, interrupt status = ");
+            debugPrintln(intSource.intStatus ? "1" : "0");
+            if (intSource.diffPresLowEvent)
+            {
+                debugPrintln("Low pressure event");
+            }
+            if (intSource.diffPresHighEvent)
+            {
+                debugPrintln("High pressure event");
+            }
+        }
+
+        PADS_state_t threshExceeded;
+        PADS_isFifoThresholdReached(&pads, &threshExceeded);
+        if (lastThreshExceededState != threshExceeded)
+        {
+            if (threshExceeded == PADS_enable)
+            {
+                debugPrintln("FIFO thresh exceeded event");
+
+                PADS_getFifoPressure_int(&pads, fifoThresh, pressureBuffer);
+
+                /* Compute average of captured pressure values */
+
+                uint32_t pressure = 0;
+                for (uint8_t i = 0; i < fifoThresh; i++)
+                {
+                    pressure += pressureBuffer[i];
+                }
+                pressure /= fifoThresh;
+                debugPrintPressure_int(pressure);
+
+                /* Must set to bypass mode and then re-enable bypass-to-FIFO mode to start capturing of new data. */
+                PADS_setFifoMode(&pads, PADS_bypassMode);
+                PADS_setFifoMode(&pads, PADS_bypassToFifo);
+            }
+            lastThreshExceededState = threshExceeded;
+        }
+
+        /* Uncomment the following lines to print the current FIFO fill level */
+        //    uint8_t fillLevel;
+        //    PADS_getFifoFillLevel(&pads, &fillLevel);
+        //    if (fillLevel != lastFillLevel)
+        //    {
+        //      char buffer[50];
+        //      sprintf(buffer, "FIFO fill level = %d", fillLevel);
+        //      debugPrintln(buffer);
+        //      lastFillLevel = fillLevel;
+        //    }
+    }
 }
 
 #if defined(STM32L432xx)
@@ -641,47 +632,32 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin);
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (HAL_GPIO_ReadPin(GPIOA, GPIO_Pin) == GPIO_PIN_SET)
-  {
-    HAL_GPIO_EXTI_Rising_Callback(GPIO_Pin);
-  }
-  else
-  {
-    HAL_GPIO_EXTI_Falling_Callback(GPIO_Pin);
-  }
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_Pin) == GPIO_PIN_SET)
+    {
+        HAL_GPIO_EXTI_Rising_Callback(GPIO_Pin);
+    }
+    else
+    {
+        HAL_GPIO_EXTI_Falling_Callback(GPIO_Pin);
+    }
 }
 #endif
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
-  /* Interrupt source depends on example mode. */
+    /* Interrupt source depends on example mode. */
 
-  if (GPIO_Pin == GPIO_PIN_0)
-  {
-    /* Trigger event handling in main function. */
-    interruptTriggered = true;
+    if (GPIO_Pin == GPIO_PIN_0)
+    {
+        /* Trigger event handling in main function. */
+        interruptTriggered = true;
 
-    /* Toggle LED */
-    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-  }
+        /* Toggle LED */
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    }
 }
 
-void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
-{
-  UNUSED(GPIO_Pin);
-}
-
-static void debugPrint(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-  char newline[2] = "\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
-}
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) { UNUSED(GPIO_Pin); }
 
 /**
  * @brief Prints the pressure to the debug interface.
@@ -689,23 +665,23 @@ static void debugPrintln(char _out[])
  */
 static void debugPrintPressure_int(int32_t pressurePa)
 {
-  uint16_t full = (uint16_t) (abs(pressurePa) / 1000);
-  uint16_t decimals = (uint16_t) (abs(pressurePa) % 1000); /* 3 decimal places */
+    uint16_t full = (uint16_t)(abs(pressurePa) / 1000);
+    uint16_t decimals = (uint16_t)(abs(pressurePa) % 1000); /* 3 decimal places */
 
-  char bufferFull[4]; /* max 3 pre-decimal point positions */
-  char bufferDecimals[4]; /* 3 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%03u", decimals);
+    char bufferFull[4];     /* max 3 pre-decimal point positions */
+    char bufferDecimals[4]; /* 3 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%03u", decimals);
 
-  debugPrint("PADS pressure (int) = ");
-  if (pressurePa < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" kPa");
+    debugPrint("PADS pressure (int) = ");
+    if (pressurePa < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" kPa");
 }
 
 /**
@@ -714,21 +690,21 @@ static void debugPrintPressure_int(int32_t pressurePa)
  */
 static void debugPrintTemperature_int(int16_t temperature)
 {
-  uint16_t full = ((uint16_t) abs(temperature)) / 100;
-  uint16_t decimals = (uint16_t) (abs(temperature) % 100); /* 2 decimal places */
+    uint16_t full = ((uint16_t)abs(temperature)) / 100;
+    uint16_t decimals = (uint16_t)(abs(temperature) % 100); /* 2 decimal places */
 
-  char bufferFull[4]; /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
-  char bufferDecimals[3]; /* 2 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%02u", decimals);
+    char bufferFull[4];     /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
+    char bufferDecimals[3]; /* 2 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%02u", decimals);
 
-  debugPrint("PADS temperature (int) = ");
-  if (temperature < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" degrees Celsius");
+    debugPrint("PADS temperature (int) = ");
+    if (temperature < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" degrees Celsius");
 }

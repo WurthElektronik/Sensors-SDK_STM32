@@ -29,31 +29,22 @@
  *
  * Basic usage of the PDUS differential pressure sensor connected via I2C.
  */
-
 #include "WSEN_PDUS_EXAMPLE.h"
-
+#include "../SensorsSDK/WSEN_PDUS_25131308XXX01/WSEN_PDUS_25131308XXX01.h"
+#include "gpio.h"
+#include "i2c.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "i2c.h"
-#include "usart.h"
-#include "gpio.h"
-
-#include <platform.h>
-
-#include "../SensorsSDK/WSEN_PDUS_25131308XXX01/WSEN_PDUS_25131308XXX01.h"
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t pdus;
 
 /* Sensor initialization function */
 static bool PDUS_init(void);
-
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
 
 #ifdef WE_USE_FLOAT
 static void debugPrintPressure_float(float pressureKPa);
@@ -66,32 +57,33 @@ static void debugPrintTemperature_float(float temperature);
  */
 void WE_pdusExampleInit()
 {
-  char bufferMajor[4];
-  char bufferMinor[4];
-  sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
-  sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
-  debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
-  debugPrint(bufferMajor);
-  debugPrint(".");
-  debugPrintln(bufferMinor);
-  debugPrintln("This is the example program for the PDUS sensor.");
-  debugPrintln("Notes:");
-  debugPrintln("* You need to use the correct sensor sub-type when converting pressure data (the default is PDUS_pdus3).");
-  debugPrintln("* External 1k pull-up resistors should be used for SDA/SCL.");
-  debugPrint("* Some of the PDUS sensor uses 5V Vcc and logic levels. ");
-  debugPrintln("For those articles a level conversion to 3.3V is required to talk with a STM32 (or any other 3.3V MCU).");
+    char bufferMajor[4];
+    char bufferMinor[4];
+    sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
+    sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
+    debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
+    debugPrint(bufferMajor);
+    debugPrint(".");
+    debugPrintln(bufferMinor);
+    debugPrintln("This is the example program for the PDUS sensor.");
+    debugPrintln("Notes:");
+    debugPrintln("* You need to use the correct sensor sub-type when converting pressure data (the default is PDUS_pdus3).");
+    debugPrintln("* External 1k pull-up resistors should be used for SDA/SCL.");
+    debugPrint("* Some of the PDUS sensor uses 5V Vcc and logic levels. ");
+    debugPrintln("For those articles a level conversion to 3.3V is required to talk with a STM32 (or any other 3.3V MCU).");
 
-  /* init PDUS */
-  if (false == PDUS_init())
-  {
-    debugPrintln("**** PDUS_Init() error. STOP ****");
+    /* init PDUS */
+    if (false == PDUS_init())
+    {
+        debugPrintln("**** PDUS_Init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
+
+    /* LED on */
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
     HAL_Delay(5);
-    while(1);
-  }
-
-  /* LED on */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  HAL_Delay(5);
 }
 
 /**
@@ -101,41 +93,41 @@ void WE_pdusExampleInit()
 void WE_pdusExampleLoop()
 {
 #ifdef WE_USE_FLOAT
-  float presskPaP;
-  float tempDegCP;
+    float presskPaP;
+    float tempDegCP;
 
-  /* Please select PDUS_SensorType_t here accordingly to convert raw values to pressure values */
-  if (WE_SUCCESS == PDUS_getPressureAndTemperature_float(&pdus, PDUS_pdus3, &presskPaP, &tempDegCP))
-  {
-    debugPrintPressure_float(presskPaP);
-    debugPrintTemperature_float(tempDegCP);
-  }
-  else
-  {
-    debugPrintln("**** PDUS_getPressureAndTemperature_float(): Failed ****");
-  }
+    /* Please select PDUS_SensorType_t here accordingly to convert raw values to pressure values */
+    if (WE_SUCCESS == PDUS_getPressureAndTemperature_float(&pdus, PDUS_pdus3, &presskPaP, &tempDegCP))
+    {
+        debugPrintPressure_float(presskPaP);
+        debugPrintTemperature_float(tempDegCP);
+    }
+    else
+    {
+        debugPrintln("**** PDUS_getPressureAndTemperature_float(): Failed ****");
+    }
 #else
-  uint16_t pressureRaw;
-  uint16_t temperatureRaw;
-  if (WE_SUCCESS == PDUS_getRawPressureAndTemperature(&pdus, &pressureRaw, &temperatureRaw))
-  {
-    char pressureStr[6];
-    char temperatureStr[6];
-    sprintf(pressureStr, "%u", pressureRaw);
-    sprintf(temperatureStr, "%u", temperatureRaw);
-    debugPrint("PDUS pressure (raw) = ");
-    debugPrintln(pressureStr);
-    debugPrint("PDUS temperature (raw) = ");
-    debugPrintln(temperatureStr);
-  }
-  else
-  {
-    debugPrintln("**** PDUS_getPressureAndTemperature_float(): Failed ****");
-  }
+    uint16_t pressureRaw;
+    uint16_t temperatureRaw;
+    if (WE_SUCCESS == PDUS_getRawPressureAndTemperature(&pdus, &pressureRaw, &temperatureRaw))
+    {
+        char pressureStr[6];
+        char temperatureStr[6];
+        sprintf(pressureStr, "%u", pressureRaw);
+        sprintf(temperatureStr, "%u", temperatureRaw);
+        debugPrint("PDUS pressure (raw) = ");
+        debugPrintln(pressureStr);
+        debugPrint("PDUS temperature (raw) = ");
+        debugPrintln(temperatureStr);
+    }
+    else
+    {
+        debugPrintln("**** PDUS_getPressureAndTemperature_float(): Failed ****");
+    }
 #endif // WE_USE_FLOAT
 
-  /* Max. sample interval: See data sheet 25131308xxx01 - "Response time" = 2.2ms */
-  HAL_Delay(1000);
+    /* Max. sample interval: See data sheet 25131308xxx01 - "Response time" = 2.2ms */
+    HAL_Delay(1000);
 }
 
 /**
@@ -143,34 +135,22 @@ void WE_pdusExampleLoop()
  */
 static bool PDUS_init(void)
 {
-  /* Initialize sensor interface (i2c with PDUS address, burst mode activated) */
-  PDUS_getDefaultInterface(&pdus);
-  pdus.interfaceType = WE_i2c;
-  pdus.options.i2c.burstMode = 1;
-  pdus.handle = &hi2c1;
+    /* Initialize sensor interface (i2c with PDUS address, burst mode activated) */
+    PDUS_getDefaultInterface(&pdus);
+    pdus.interfaceType = WE_i2c;
+    pdus.options.i2c.burstMode = 1;
+    pdus.handle = &hi2c1;
 
-  /* Wait for boot */
-  HAL_Delay(50);
-  while (WE_SUCCESS != WE_isSensorInterfaceReady(&pdus))
-  {
-  }
-  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+    /* Wait for boot */
+    HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&pdus))
+    {
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
-  HAL_Delay(5);
+    HAL_Delay(5);
 
-  return true;
-}
-
-static void debugPrint(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-  char newline[2] = "\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
+    return true;
 }
 
 #ifdef WE_USE_FLOAT
@@ -181,24 +161,24 @@ static void debugPrintln(char _out[])
  */
 static void debugPrintPressure_float(float pressureKPa)
 {
-  float pressureAbs = fabs(pressureKPa);
-  uint16_t full = (uint16_t) pressureAbs;
-  uint16_t decimals = (uint16_t) (((uint32_t) (pressureAbs * 10000)) % 10000); /* 4 decimal places */
+    float pressureAbs = fabs(pressureKPa);
+    uint16_t full = (uint16_t)pressureAbs;
+    uint16_t decimals = (uint16_t)(((uint32_t)(pressureAbs * 10000)) % 10000); /* 4 decimal places */
 
-  char bufferFull[4]; /* max 3 pre-decimal point positions */
-  char bufferDecimals[5]; /* 4 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%04u", decimals);
+    char bufferFull[4];     /* max 3 pre-decimal point positions */
+    char bufferDecimals[5]; /* 4 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%04u", decimals);
 
-  debugPrint("PDUS pressure (float) = ");
-  if (pressureKPa < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" kPa");
+    debugPrint("PDUS pressure (float) = ");
+    if (pressureKPa < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" kPa");
 }
 
 /**
@@ -207,24 +187,24 @@ static void debugPrintPressure_float(float pressureKPa)
  */
 static void debugPrintTemperature_float(float tempDegC)
 {
-  float tempAbs = fabs(tempDegC);
-  uint16_t full = (uint16_t) tempAbs;
-  uint16_t decimals = ((uint16_t) (tempAbs * 100)) % 100; /* 2 decimal places */
+    float tempAbs = fabs(tempDegC);
+    uint16_t full = (uint16_t)tempAbs;
+    uint16_t decimals = ((uint16_t)(tempAbs * 100)) % 100; /* 2 decimal places */
 
-  char bufferFull[4]; /* 3 pre-decimal point positions (from 0 to 70 degrees Celsius) */
-  char bufferDecimals[3]; /* 2 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%02u", decimals);
+    char bufferFull[4];     /* 3 pre-decimal point positions (from 0 to 70 degrees Celsius) */
+    char bufferDecimals[3]; /* 2 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%02u", decimals);
 
-  debugPrint("PDUS temperature (float) = ");
-  if (tempDegC < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" degrees Celsius");
+    debugPrint("PDUS temperature (float) = ");
+    if (tempDegC < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" degrees Celsius");
 }
 
 #endif

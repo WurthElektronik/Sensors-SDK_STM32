@@ -25,27 +25,22 @@
 
 /**
  * @file
- * @brief Driver file for the WSEN-ITDS sensor.
+ * @brief Driver file for the WSEN-ITDS-2533020201601 sensor.
  */
 
 #include "WSEN_ITDS_2533020201601.h"
 
 #include <stdio.h>
 
-#include "platform.h"
+#include <platform.h>
 
 /**
  * @brief Default sensor interface configuration.
  */
-static WE_sensorInterface_t itdsDefaultSensorInterface = {
-    .sensorType = WE_ITDS,
-    .interfaceType = WE_i2c,
-    .options = {.i2c = {.address = ITDS_ADDRESS_I2C_1, .burstMode = 0, .slaveTransmitterMode = 0, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0},
-                .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .reserved = 0},
-                .readTimeout = 1000,
-                .writeTimeout = 1000},
-    .handle = 0};
-
+static WE_sensorInterface_t itdsDefaultSensorInterface = {.sensorType = WE_ITDS,
+                                                          .interfaceType = WE_i2c,
+                                                          .options = {.i2c = {.address = ITDS_ADDRESS_I2C_1, .burstMode = 0, .protocol = WE_i2cProtocol_RegisterBased, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0}, .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000},
+                                                          .handle = 0};
 
 /**
  * @brief Stores the current value of the full scale parameter.
@@ -57,7 +52,6 @@ static WE_sensorInterface_t itdsDefaultSensorInterface = {
  */
 static ITDS_fullScale_t currentFullScale = ITDS_twoG;
 
-
 /**
  * @brief Read data from sensor.
  *
@@ -67,13 +61,7 @@ static ITDS_fullScale_t currentFullScale = ITDS_twoG;
  * @param[out] data Target buffer
  * @return Error Code
  */
-static inline int8_t ITDS_ReadReg(WE_sensorInterface_t* sensorInterface,
-                                  uint8_t regAdr,
-                                  uint16_t numBytesToRead,
-                                  uint8_t *data)
-{
-  return WE_ReadReg(sensorInterface, regAdr, numBytesToRead, data);
-}
+static inline int8_t ITDS_ReadReg(WE_sensorInterface_t* sensorInterface, uint8_t regAdr, uint16_t numBytesToRead, uint8_t* data) { return WE_ReadReg(sensorInterface, regAdr, numBytesToRead, data); }
 
 /**
  * @brief Write data to sensor.
@@ -84,13 +72,7 @@ static inline int8_t ITDS_ReadReg(WE_sensorInterface_t* sensorInterface,
  * @param[in] data Source buffer
  * @return Error Code
  */
-static inline int8_t ITDS_WriteReg(WE_sensorInterface_t* sensorInterface,
-                                   uint8_t regAdr,
-                                   uint16_t numBytesToWrite,
-                                   uint8_t *data)
-{
-  return WE_WriteReg(sensorInterface, regAdr, numBytesToWrite, data);
-}
+static inline int8_t ITDS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_t regAdr, uint16_t numBytesToWrite, uint8_t* data) { return WE_WriteReg(sensorInterface, regAdr, numBytesToWrite, data); }
 
 /**
  * @brief Returns the default sensor interface configuration.
@@ -99,8 +81,8 @@ static inline int8_t ITDS_WriteReg(WE_sensorInterface_t* sensorInterface,
  */
 int8_t ITDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
-  *sensorInterface = itdsDefaultSensorInterface;
-  return WE_SUCCESS;
+    *sensorInterface = itdsDefaultSensorInterface;
+    return WE_SUCCESS;
 }
 
 /**
@@ -112,11 +94,7 @@ int8_t ITDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] deviceID The returned device ID.
  * @retval Error code
  */
-int8_t ITDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_DEVICE_ID_REG, 1, deviceID);
-}
-
+int8_t ITDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID) { return ITDS_ReadReg(sensorInterface, ITDS_DEVICE_ID_REG, 1, deviceID); }
 
 /* CTRL_1 */
 
@@ -128,16 +106,16 @@ int8_t ITDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t *deviceID
  */
 int8_t ITDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t odr)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl1.outputDataRate = odr;
+    ctrl1.outputDataRate = odr;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1);
 }
 
 /**
@@ -146,18 +124,18 @@ int8_t ITDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_output
  * @param[out] odr The returned output data rate.
  * @retval Error code
  */
-int8_t ITDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t *odr)
+int8_t ITDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t* odr)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  *odr = (ITDS_outputDataRate_t) ctrl1.outputDataRate;
+    *odr = (ITDS_outputDataRate_t)ctrl1.outputDataRate;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -168,16 +146,16 @@ int8_t ITDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_output
  */
 int8_t ITDS_setOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t opMode)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl1.operatingMode = opMode;
+    ctrl1.operatingMode = opMode;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1);
 }
 
 /**
@@ -186,18 +164,18 @@ int8_t ITDS_setOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operati
  * @param[out] opMode The returned operating mode.
  * @retval Error code
  */
-int8_t ITDS_getOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t *opMode)
+int8_t ITDS_getOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t* opMode)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-      return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  *opMode = (ITDS_operatingMode_t) ctrl1.operatingMode;
+    *opMode = (ITDS_operatingMode_t)ctrl1.operatingMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -208,16 +186,16 @@ int8_t ITDS_getOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operati
  */
 int8_t ITDS_setPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t powerMode)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl1.powerMode = powerMode;
+    ctrl1.powerMode = powerMode;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1);
 }
 
 /**
@@ -226,18 +204,18 @@ int8_t ITDS_setPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t
  * @param[out] powerMode The returned power mode.
  * @retval Error code
  */
-int8_t ITDS_getPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t *powerMode)
+int8_t ITDS_getPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t* powerMode)
 {
-  ITDS_ctrl1_t ctrl1;
+    ITDS_ctrl1_t ctrl1;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t *) &ctrl1))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    {
+        return WE_FAIL;
+    }
 
-  *powerMode = ctrl1.powerMode;
+    *powerMode = ctrl1.powerMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /* CTRL REG 2 */
@@ -250,16 +228,16 @@ int8_t ITDS_getPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t
  */
 int8_t ITDS_reboot(WE_sensorInterface_t* sensorInterface, ITDS_state_t reboot)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.boot = reboot;
+    ctrl2.boot = reboot;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -268,18 +246,18 @@ int8_t ITDS_reboot(WE_sensorInterface_t* sensorInterface, ITDS_state_t reboot)
  * @param[out] rebooting The returned reboot state.
  * @retval Error code
  */
-int8_t ITDS_isRebooting(WE_sensorInterface_t* sensorInterface, ITDS_state_t *rebooting)
+int8_t ITDS_isRebooting(WE_sensorInterface_t* sensorInterface, ITDS_state_t* rebooting)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  *rebooting = (ITDS_state_t) ctrl2.boot;
+    *rebooting = (ITDS_state_t)ctrl2.boot;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -290,16 +268,16 @@ int8_t ITDS_isRebooting(WE_sensorInterface_t* sensorInterface, ITDS_state_t *reb
  */
 int8_t ITDS_softReset(WE_sensorInterface_t* sensorInterface, ITDS_state_t swReset)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.softReset = swReset;
+    ctrl2.softReset = swReset;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -308,18 +286,18 @@ int8_t ITDS_softReset(WE_sensorInterface_t* sensorInterface, ITDS_state_t swRese
  * @param[out] swReset The returned software reset state.
  * @retval Error code
  */
-int8_t ITDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *swReset)
+int8_t ITDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* swReset)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  *swReset = (ITDS_state_t) ctrl2.softReset;
+    *swReset = (ITDS_state_t)ctrl2.softReset;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -330,16 +308,16 @@ int8_t ITDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ITDS_state_
  */
 int8_t ITDS_setCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t disconnectPU)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.disCSPullUp = disconnectPU;
+    ctrl2.disCSPullUp = disconnectPU;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -348,20 +326,19 @@ int8_t ITDS_setCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] puDisconnected The returned CS pin pull up state
  * @retval Error code
  */
-int8_t ITDS_isCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t *puDisconnected)
+int8_t ITDS_isCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t* puDisconnected)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  *puDisconnected = (ITDS_state_t) ctrl2.disCSPullUp;
+    *puDisconnected = (ITDS_state_t)ctrl2.disCSPullUp;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /**
  * @brief Enable/disable block data update mode
@@ -371,16 +348,16 @@ int8_t ITDS_isCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ITDS_state_t bdu)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.blockDataUpdate = bdu;
+    ctrl2.blockDataUpdate = bdu;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -389,17 +366,17 @@ int8_t ITDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ITDS_st
  * @param[out] bdu The returned block data update state
  * @retval Error code
  */
-int8_t ITDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *bdu)
+int8_t ITDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* bdu)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
-  *bdu = (ITDS_state_t) ctrl2.blockDataUpdate;
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
+    *bdu = (ITDS_state_t)ctrl2.blockDataUpdate;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -410,16 +387,16 @@ int8_t ITDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ITDS
  */
 int8_t ITDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, ITDS_state_t autoIncr)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.autoAddIncr = autoIncr;
+    ctrl2.autoAddIncr = autoIncr;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -428,18 +405,18 @@ int8_t ITDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] autoIncr The returned auto increment mode state
  * @retval Error code
  */
-int8_t ITDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *autoIncr)
+int8_t ITDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* autoIncr)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  *autoIncr = (ITDS_state_t) ctrl2.autoAddIncr;
+    *autoIncr = (ITDS_state_t)ctrl2.autoAddIncr;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -450,16 +427,16 @@ int8_t ITDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ITDS_state_t i2cDisable)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl2.i2cDisable = i2cDisable;
+    ctrl2.i2cDisable = i2cDisable;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2);
 }
 
 /**
@@ -468,20 +445,19 @@ int8_t ITDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] i2cDisabled The returned I2C interface disable state (0: I2C enabled, 1: I2C disabled)
  * @retval Error code
  */
-int8_t ITDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *i2cDisabled)
+int8_t ITDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* i2cDisabled)
 {
-  ITDS_ctrl2_t ctrl2;
+    ITDS_ctrl2_t ctrl2;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t *) &ctrl2))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    {
+        return WE_FAIL;
+    }
 
-  *i2cDisabled = (ITDS_state_t) ctrl2.i2cDisable;
+    *i2cDisabled = (ITDS_state_t)ctrl2.i2cDisable;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* CTRL REG 3 */
 
@@ -493,16 +469,16 @@ int8_t ITDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_setSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t selfTest)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.selfTestMode = selfTest;
+    ctrl3.selfTestMode = selfTest;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -511,18 +487,18 @@ int8_t ITDS_setSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTest
  * @param[out] selfTest The returned self test mode
  * @retval Error code
  */
-int8_t ITDS_getSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t *selfTest)
+int8_t ITDS_getSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t* selfTest)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *selfTest = (ITDS_selfTestConfig_t) ctrl3.selfTestMode;
+    *selfTest = (ITDS_selfTestConfig_t)ctrl3.selfTestMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -533,16 +509,16 @@ int8_t ITDS_getSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTest
  */
 int8_t ITDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t pinType)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.intPinConf = pinType;
+    ctrl3.intPinConf = pinType;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -551,18 +527,18 @@ int8_t ITDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_inte
  * @param[out] pinType The returned interrupt pin type.
  * @retval Error code
  */
-int8_t ITDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t *pinType)
+int8_t ITDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t* pinType)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *pinType = (ITDS_interruptPinConfig_t) ctrl3.intPinConf;
+    *pinType = (ITDS_interruptPinConfig_t)ctrl3.intPinConf;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -573,16 +549,16 @@ int8_t ITDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_inte
  */
 int8_t ITDS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, ITDS_state_t lir)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.enLatchedInterrupt = lir;
+    ctrl3.enLatchedInterrupt = lir;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -591,18 +567,18 @@ int8_t ITDS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, ITDS_s
  * @param[out] lir The returned latched interrupts state.
  * @retval Error code
  */
-int8_t ITDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *lir)
+int8_t ITDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lir)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *lir = (ITDS_state_t) ctrl3.enLatchedInterrupt;
+    *lir = (ITDS_state_t)ctrl3.enLatchedInterrupt;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -613,16 +589,16 @@ int8_t ITDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ITD
  */
 int8_t ITDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t level)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.intActiveLevel = level;
+    ctrl3.intActiveLevel = level;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -631,18 +607,18 @@ int8_t ITDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] level The returned interrupt active level
  * @retval Error code
  */
-int8_t ITDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t *level)
+int8_t ITDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t* level)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *level = (ITDS_interruptActiveLevel_t) ctrl3.intActiveLevel;
+    *level = (ITDS_interruptActiveLevel_t)ctrl3.intActiveLevel;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -653,16 +629,16 @@ int8_t ITDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_
  */
 int8_t ITDS_startSingleDataConversion(WE_sensorInterface_t* sensorInterface, ITDS_state_t start)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.startSingleDataConv = start;
+    ctrl3.startSingleDataConv = start;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -671,18 +647,18 @@ int8_t ITDS_startSingleDataConversion(WE_sensorInterface_t* sensorInterface, ITD
  * @param[out] start Is set to true if single data conversion has been requested.
  * @retval Error code
  */
-int8_t ITDS_isSingleDataConversionStarted(WE_sensorInterface_t* sensorInterface, ITDS_state_t *start)
+int8_t ITDS_isSingleDataConversionStarted(WE_sensorInterface_t* sensorInterface, ITDS_state_t* start)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *start = (ITDS_state_t) ctrl3.startSingleDataConv;
+    *start = (ITDS_state_t)ctrl3.startSingleDataConv;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -693,16 +669,16 @@ int8_t ITDS_isSingleDataConversionStarted(WE_sensorInterface_t* sensorInterface,
  */
 int8_t ITDS_setSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t conversionTrigger)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl3.singleConvTrigger = conversionTrigger;
+    ctrl3.singleConvTrigger = conversionTrigger;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3);
 }
 
 /**
@@ -711,20 +687,19 @@ int8_t ITDS_setSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface
  * @param[out] conversionTrigger The returned single data conversion (on-demand) trigger.
  * @retval Error code
  */
-int8_t ITDS_getSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t *conversionTrigger)
+int8_t ITDS_getSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t* conversionTrigger)
 {
-  ITDS_ctrl3_t ctrl3;
+    ITDS_ctrl3_t ctrl3;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t *) &ctrl3))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    {
+        return WE_FAIL;
+    }
 
-  *conversionTrigger = (ITDS_singleDataConversionTrigger_t) ctrl3.singleConvTrigger;
+    *conversionTrigger = (ITDS_singleDataConversionTrigger_t)ctrl3.singleConvTrigger;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* CTRL REG 4  */
 
@@ -736,16 +711,16 @@ int8_t ITDS_getSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface
  */
 int8_t ITDS_enable6DOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int06D)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.sixDINT0 = int06D;
+    ctrl4.sixDINT0 = int06D;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -754,18 +729,18 @@ int8_t ITDS_enable6DOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t i
  * @param[out] int06D The returned 6D interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_is6DOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int06D)
+int8_t ITDS_is6DOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int06D)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int06D = (ITDS_state_t) ctrl4.sixDINT0;
+    *int06D = (ITDS_state_t)ctrl4.sixDINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -776,16 +751,16 @@ int8_t ITDS_is6DOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_
  */
 int8_t ITDS_enableSingleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0SingleTap)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.singleTapINT0 = int0SingleTap;
+    ctrl4.singleTapINT0 = int0SingleTap;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -794,18 +769,18 @@ int8_t ITDS_enableSingleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] int0SingleTap The returned single-tap interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0SingleTap)
+int8_t ITDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0SingleTap)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0SingleTap = (ITDS_state_t) ctrl4.singleTapINT0;
+    *int0SingleTap = (ITDS_state_t)ctrl4.singleTapINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -816,16 +791,16 @@ int8_t ITDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_enableWakeUpOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0WakeUp)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.wakeUpINT0 = int0WakeUp;
+    ctrl4.wakeUpINT0 = int0WakeUp;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -834,17 +809,17 @@ int8_t ITDS_enableWakeUpOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state
  * @param[out] int0WakeUp The returned wake-up interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isWakeUpOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0WakeUp)
+int8_t ITDS_isWakeUpOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0WakeUp)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0WakeUp = (ITDS_state_t) ctrl4.wakeUpINT0;
-  return WE_SUCCESS;
+    *int0WakeUp = (ITDS_state_t)ctrl4.wakeUpINT0;
+    return WE_SUCCESS;
 }
 
 /**
@@ -855,16 +830,16 @@ int8_t ITDS_isWakeUpOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_st
  */
 int8_t ITDS_enableFreeFallINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FreeFall)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.freeFallINT0 = int0FreeFall;
+    ctrl4.freeFallINT0 = int0FreeFall;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -873,20 +848,19 @@ int8_t ITDS_enableFreeFallINT0(WE_sensorInterface_t* sensorInterface, ITDS_state
  * @param[out] int0FreeFall The returned free-fall enable state
  * @retval Error code
  */
-int8_t ITDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0FreeFall)
+int8_t ITDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FreeFall)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0FreeFall = (ITDS_state_t) ctrl4.freeFallINT0;
+    *int0FreeFall = (ITDS_state_t)ctrl4.freeFallINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /**
  * @brief Enable/disable the double-tap interrupt on INT_0
@@ -896,16 +870,16 @@ int8_t ITDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_st
  */
 int8_t ITDS_enableDoubleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DoubleTap)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.doubleTapINT0 = int0DoubleTap;
+    ctrl4.doubleTapINT0 = int0DoubleTap;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -914,18 +888,18 @@ int8_t ITDS_enableDoubleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] int0DoubleTap The returned double-tap interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0DoubleTap)
+int8_t ITDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DoubleTap)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0DoubleTap = (ITDS_state_t) ctrl4.doubleTapINT0;
+    *int0DoubleTap = (ITDS_state_t)ctrl4.doubleTapINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -936,16 +910,16 @@ int8_t ITDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoFull)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.fifoFullINT0 = int0FifoFull;
+    ctrl4.fifoFullINT0 = int0FifoFull;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -954,18 +928,18 @@ int8_t ITDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ITDS_state
  * @param[out] int0FifoFull The returned FIFO full interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0FifoFull)
+int8_t ITDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoFull)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0FifoFull = (ITDS_state_t) ctrl4.fifoFullINT0;
+    *int0FifoFull = (ITDS_state_t)ctrl4.fifoFullINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -976,16 +950,16 @@ int8_t ITDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_st
  */
 int8_t ITDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoThreshold)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.fifoThresholdINT0 = int0FifoThreshold;
+    ctrl4.fifoThresholdINT0 = int0FifoThreshold;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -994,18 +968,18 @@ int8_t ITDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] int0FifoThreshold The returned FIFO threshold interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0FifoThreshold)
+int8_t ITDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoThreshold)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0FifoThreshold = (ITDS_state_t) ctrl4.fifoThresholdINT0;
+    *int0FifoThreshold = (ITDS_state_t)ctrl4.fifoThresholdINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1016,16 +990,16 @@ int8_t ITDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, IT
  */
 int8_t ITDS_enableDataReadyINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DataReady)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl4.dataReadyINT0 = int0DataReady;
+    ctrl4.dataReadyINT0 = int0DataReady;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4);
 }
 
 /**
@@ -1034,20 +1008,19 @@ int8_t ITDS_enableDataReadyINT0(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] int0DataReady The returned data-ready interrupt enable State
  * @retval Error code
  */
-int8_t ITDS_isDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int0DataReady)
+int8_t ITDS_isDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DataReady)
 {
-  ITDS_ctrl4_t ctrl4;
+    ITDS_ctrl4_t ctrl4;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t *) &ctrl4))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    {
+        return WE_FAIL;
+    }
 
-  *int0DataReady = (ITDS_state_t) ctrl4.dataReadyINT0;
+    *int0DataReady = (ITDS_state_t)ctrl4.dataReadyINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* CTRL REG 5 */
 
@@ -1059,16 +1032,16 @@ int8_t ITDS_isDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_enableSleepStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepStatus)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.sleepStateINT1 = int1SleepStatus;
+    ctrl5.sleepStateINT1 = int1SleepStatus;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1077,18 +1050,18 @@ int8_t ITDS_enableSleepStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_st
  * @param[out] int1SleepStatus The returned sleep status interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isSleepStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1SleepStatus)
+int8_t ITDS_isSleepStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepStatus)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1SleepStatus = (ITDS_state_t) ctrl5.sleepStateINT1;
+    *int1SleepStatus = (ITDS_state_t)ctrl5.sleepStateINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1101,16 +1074,16 @@ int8_t ITDS_isSleepStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS
  */
 int8_t ITDS_enableSleepStatusChangeINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepChange)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.sleepStatusChangeINT1 = int1SleepChange;
+    ctrl5.sleepStatusChangeINT1 = int1SleepChange;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1121,18 +1094,18 @@ int8_t ITDS_enableSleepStatusChangeINT1(WE_sensorInterface_t* sensorInterface, I
  * @param[out] int1SleepChange The returned sleep status change interrupt state
  * @retval Error code
  */
-int8_t ITDS_isSleepStatusChangeINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1SleepChange)
+int8_t ITDS_isSleepStatusChangeINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepChange)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1SleepChange = (ITDS_state_t) ctrl5.sleepStatusChangeINT1;
+    *int1SleepChange = (ITDS_state_t)ctrl5.sleepStatusChangeINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1143,16 +1116,16 @@ int8_t ITDS_isSleepStatusChangeINT1Enabled(WE_sensorInterface_t* sensorInterface
  */
 int8_t ITDS_enableBootStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1Boot)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.bootStatusINT1 = int1Boot;
+    ctrl5.bootStatusINT1 = int1Boot;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1161,18 +1134,18 @@ int8_t ITDS_enableBootStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_sta
  * @param[out] int1Boot The returned boot interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isBootStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1Boot)
+int8_t ITDS_isBootStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1Boot)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1Boot = (ITDS_state_t) ctrl5.bootStatusINT1;
+    *int1Boot = (ITDS_state_t)ctrl5.bootStatusINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1183,16 +1156,16 @@ int8_t ITDS_isBootStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_
  */
 int8_t ITDS_enableTempDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1TempDataReady)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.tempDataReadyINT1 = int1TempDataReady;
+    ctrl5.tempDataReadyINT1 = int1TempDataReady;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1201,18 +1174,18 @@ int8_t ITDS_enableTempDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] int1TempDataReady The returned temperature data-ready interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isTempDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1TempDataReady)
+int8_t ITDS_isTempDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1TempDataReady)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1TempDataReady = (ITDS_state_t) ctrl5.tempDataReadyINT1;
+    *int1TempDataReady = (ITDS_state_t)ctrl5.tempDataReadyINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1223,16 +1196,16 @@ int8_t ITDS_isTempDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, IT
  */
 int8_t ITDS_enableFifoOverrunIntINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoOverrun)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.fifoOverrunINT1 = int1FifoOverrun;
+    ctrl5.fifoOverrunINT1 = int1FifoOverrun;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1241,17 +1214,17 @@ int8_t ITDS_enableFifoOverrunIntINT1(WE_sensorInterface_t* sensorInterface, ITDS
  * @param[out] int1FifoOverrun The returned FIFO overrun interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isFifoOverrunIntINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1FifoOverrun)
+int8_t ITDS_isFifoOverrunIntINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoOverrun)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1FifoOverrun = (ITDS_state_t) ctrl5.fifoOverrunINT1;
-  return WE_SUCCESS;
+    *int1FifoOverrun = (ITDS_state_t)ctrl5.fifoOverrunINT1;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1262,16 +1235,16 @@ int8_t ITDS_isFifoOverrunIntINT1Enabled(WE_sensorInterface_t* sensorInterface, I
  */
 int8_t ITDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoFull)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.fifoFullINT1 = int1FifoFull;
+    ctrl5.fifoFullINT1 = int1FifoFull;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1280,18 +1253,18 @@ int8_t ITDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ITDS_state
  * @param[out] int1FifoFull The returned FIFO full interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1FifoFull)
+int8_t ITDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoFull)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1FifoFull = (ITDS_state_t) ctrl5.fifoFullINT1;
+    *int1FifoFull = (ITDS_state_t)ctrl5.fifoFullINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1302,16 +1275,16 @@ int8_t ITDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_st
  */
 int8_t ITDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoThresholdInt)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.fifoThresholdINT1 = int1FifoThresholdInt;
+    ctrl5.fifoThresholdINT1 = int1FifoThresholdInt;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1320,17 +1293,17 @@ int8_t ITDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] int1FifoThresholdInt The returned FIFO threshold interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1FifoThresholdInt)
+int8_t ITDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoThresholdInt)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1FifoThresholdInt = (ITDS_state_t) ctrl5.fifoThresholdINT1;
-  return WE_SUCCESS;
+    *int1FifoThresholdInt = (ITDS_state_t)ctrl5.fifoThresholdINT1;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1341,16 +1314,16 @@ int8_t ITDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, IT
  */
 int8_t ITDS_enableDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1DataReadyInt)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl5.dataReadyINT1 = int1DataReadyInt;
+    ctrl5.dataReadyINT1 = int1DataReadyInt;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5);
 }
 
 /**
@@ -1359,20 +1332,19 @@ int8_t ITDS_enableDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] int1DataReadyInt The returned data-ready interrupt enable state
  * @retval Error code
  */
-int8_t ITDS_isDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1DataReadyInt)
+int8_t ITDS_isDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1DataReadyInt)
 {
-  ITDS_ctrl5_t ctrl5;
+    ITDS_ctrl5_t ctrl5;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t *) &ctrl5))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    {
+        return WE_FAIL;
+    }
 
-  *int1DataReadyInt = (ITDS_state_t) ctrl5.dataReadyINT1;
+    *int1DataReadyInt = (ITDS_state_t)ctrl5.dataReadyINT1;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* CTRL REG 6 */
 
@@ -1384,16 +1356,16 @@ int8_t ITDS_isDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_s
  */
 int8_t ITDS_setFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t filteringCutoff)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl6.filterBandwidth = filteringCutoff;
+    ctrl6.filterBandwidth = filteringCutoff;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6);
 }
 
 /**
@@ -1402,18 +1374,18 @@ int8_t ITDS_setFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandw
  * @param[out] filteringCutoff The returned filtering cut-off
  * @retval Error code
  */
-int8_t ITDS_getFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t *filteringCutoff)
+int8_t ITDS_getFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t* filteringCutoff)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  *filteringCutoff = (ITDS_bandwidth_t) ctrl6.filterBandwidth;
+    *filteringCutoff = (ITDS_bandwidth_t)ctrl6.filterBandwidth;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1424,24 +1396,24 @@ int8_t ITDS_getFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandw
  */
 int8_t ITDS_setFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t fullScale)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl6.fullScale = fullScale;
+    ctrl6.fullScale = fullScale;
 
-  int8_t errCode = ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+    int8_t errCode = ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6);
 
-  /* Store current full scale value to allow convenient conversion of sensor readings */
-  if (WE_SUCCESS == errCode)
-  {
-    currentFullScale = fullScale;
-  }
+    /* Store current full scale value to allow convenient conversion of sensor readings */
+    if (WE_SUCCESS == errCode)
+    {
+        currentFullScale = fullScale;
+    }
 
-  return errCode;
+    return errCode;
 }
 
 /**
@@ -1450,21 +1422,21 @@ int8_t ITDS_setFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t
  * @param[out] fullScale The returned full scale.
  * @retval Error code
  */
-int8_t ITDS_getFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t *fullScale)
+int8_t ITDS_getFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t* fullScale)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  *fullScale = (ITDS_fullScale_t) ctrl6.fullScale;
-  
-  /* Store current full scale value to allow convenient conversion of sensor readings */
-  currentFullScale = *fullScale;
+    *fullScale = (ITDS_fullScale_t)ctrl6.fullScale;
 
-  return WE_SUCCESS;
+    /* Store current full scale value to allow convenient conversion of sensor readings */
+    currentFullScale = *fullScale;
+
+    return WE_SUCCESS;
 }
 
 /**
@@ -1475,16 +1447,16 @@ int8_t ITDS_getFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t
  */
 int8_t ITDS_setFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t filterType)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl6.filterPath = filterType;
+    ctrl6.filterPath = filterType;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6);
 }
 
 /**
@@ -1493,18 +1465,18 @@ int8_t ITDS_setFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType
  * @param[out] filterType The returned filter type
  * @retval Error code
  */
-int8_t ITDS_getFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t *filterType)
+int8_t ITDS_getFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t* filterType)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  *filterType = (ITDS_filterType_t) ctrl6.filterPath;
+    *filterType = (ITDS_filterType_t)ctrl6.filterPath;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1515,16 +1487,16 @@ int8_t ITDS_getFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType
  */
 int8_t ITDS_enableLowNoise(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowNoise)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl6.enLowNoise = lowNoise;
+    ctrl6.enLowNoise = lowNoise;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6);
 }
 
 /**
@@ -1533,20 +1505,19 @@ int8_t ITDS_enableLowNoise(WE_sensorInterface_t* sensorInterface, ITDS_state_t l
  * @param[out] lowNoise The returned low noise configuration
  * @retval Error code
  */
-int8_t ITDS_isLowNoiseEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *lowNoise)
+int8_t ITDS_isLowNoiseEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowNoise)
 {
-  ITDS_ctrl6_t ctrl6;
+    ITDS_ctrl6_t ctrl6;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t *) &ctrl6))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    {
+        return WE_FAIL;
+    }
 
-  *lowNoise = (ITDS_state_t) ctrl6.enLowNoise;
+    *lowNoise = (ITDS_state_t)ctrl6.enLowNoise;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* STATUS REG 0x27 */
 /* Note: The status register is partially duplicated to the STATUS_DETECT register. */
@@ -1557,10 +1528,7 @@ int8_t ITDS_isLowNoiseEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] status The returned sensor event data
  * @retval Error code
  */
-int8_t ITDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, ITDS_status_t *status)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t *) status);
-}
+int8_t ITDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, ITDS_status_t* status) { return ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t*)status); }
 
 /**
  * @brief Check if new acceleration samples are available.
@@ -1568,18 +1536,18 @@ int8_t ITDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, ITDS_status
  * @param[out] dataReady The returned data-ready state.
  * @retval Error code
  */
-int8_t ITDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t *dataReady)
+int8_t ITDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady)
 {
-  ITDS_status_t statusRegister;
+    ITDS_status_t statusRegister;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t *) &statusRegister))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    {
+        return WE_FAIL;
+    }
 
-  *dataReady = (ITDS_state_t) statusRegister.dataReady;
+    *dataReady = (ITDS_state_t)statusRegister.dataReady;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1588,18 +1556,18 @@ int8_t ITDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] singleTap The returned single-tap event state.
  * @retval Error code
  */
-int8_t ITDS_getSingleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *singleTap)
+int8_t ITDS_getSingleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* singleTap)
 {
-  ITDS_status_t statusRegister;
+    ITDS_status_t statusRegister;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t *) &statusRegister))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    {
+        return WE_FAIL;
+    }
 
-  *singleTap = (ITDS_state_t) statusRegister.singleTap;
+    *singleTap = (ITDS_state_t)statusRegister.singleTap;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1608,18 +1576,18 @@ int8_t ITDS_getSingleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] doubleTap The returned double-tap event state
  * @retval Error code
  */
-int8_t ITDS_getDoubleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *doubleTap)
+int8_t ITDS_getDoubleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap)
 {
-  ITDS_status_t statusRegister;
+    ITDS_status_t statusRegister;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t *) &statusRegister))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    {
+        return WE_FAIL;
+    }
 
-  *doubleTap = (ITDS_state_t) statusRegister.doubleTap;
+    *doubleTap = (ITDS_state_t)statusRegister.doubleTap;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1628,20 +1596,19 @@ int8_t ITDS_getDoubleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] sleepState The returned sleep state.
  * @retval Error code
  */
-int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *sleepState)
+int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleepState)
 {
-  ITDS_status_t statusRegister;
+    ITDS_status_t statusRegister;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t *) &statusRegister))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    {
+        return WE_FAIL;
+    }
 
-  *sleepState = (ITDS_state_t) statusRegister.sleepState;
+    *sleepState = (ITDS_state_t)statusRegister.sleepState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* X_OUT_L_REG */
 
@@ -1655,23 +1622,22 @@ int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *s
  * @param[out] xRawAcc The returned raw X-axis acceleration
  * @retval Error code
  */
-int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t *xRawAcc)
+int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t* xRawAcc)
 {
-  int16_t xAxisAccelerationRaw = 0;
-  uint8_t tmp[2] = {0};
+    int16_t xAxisAccelerationRaw = 0;
+    uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 2, tmp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 2, tmp))
+    {
+        return WE_FAIL;
+    }
 
-  xAxisAccelerationRaw = (int16_t) (tmp[1] << 8);
-  xAxisAccelerationRaw |= (int16_t) tmp[0];
+    xAxisAccelerationRaw = (int16_t)(tmp[1] << 8);
+    xAxisAccelerationRaw |= (int16_t)tmp[0];
 
-  *xRawAcc = xAxisAccelerationRaw;
-  return WE_SUCCESS;
+    *xRawAcc = xAxisAccelerationRaw;
+    return WE_SUCCESS;
 }
-
 
 /* Y_OUT_L_REG */
 
@@ -1685,23 +1651,22 @@ int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t *
  * @param[out] yRawAcc The returned raw Y-axis acceleration
  * @retval Error code
  */
-int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t *yRawAcc)
+int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t* yRawAcc)
 {
-  int16_t yAxisAccelerationRaw = 0;
-  uint8_t tmp[2] = {0};
+    int16_t yAxisAccelerationRaw = 0;
+    uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_Y_OUT_L_REG, 2, tmp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_Y_OUT_L_REG, 2, tmp))
+    {
+        return WE_FAIL;
+    }
 
-  yAxisAccelerationRaw = (int16_t) (tmp[1] << 8);
-  yAxisAccelerationRaw |= (int16_t) tmp[0];
+    yAxisAccelerationRaw = (int16_t)(tmp[1] << 8);
+    yAxisAccelerationRaw |= (int16_t)tmp[0];
 
-  *yRawAcc = yAxisAccelerationRaw;
-  return WE_SUCCESS;
+    *yRawAcc = yAxisAccelerationRaw;
+    return WE_SUCCESS;
 }
-
 
 /* Z_OUT_L_REG */
 
@@ -1715,23 +1680,22 @@ int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t *
  * @param[out] zRawAcc The returned raw Z-axis acceleration
  * @retval Error code
  */
-int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t *zRawAcc)
+int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t* zRawAcc)
 {
-  int16_t zAxisAccelerationRaw = 0;
-  uint8_t tmp[2] = {0};
+    int16_t zAxisAccelerationRaw = 0;
+    uint8_t tmp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_Z_OUT_L_REG, 2, tmp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_Z_OUT_L_REG, 2, tmp))
+    {
+        return WE_FAIL;
+    }
 
-  zAxisAccelerationRaw = (int16_t) (tmp[1] << 8);
-  zAxisAccelerationRaw |= (int16_t) tmp[0];
+    zAxisAccelerationRaw = (int16_t)(tmp[1] << 8);
+    zAxisAccelerationRaw |= (int16_t)tmp[0];
 
-  *zRawAcc = zAxisAccelerationRaw;
-  return WE_SUCCESS;
+    *zRawAcc = zAxisAccelerationRaw;
+    return WE_SUCCESS;
 }
-
 
 /**
  * @brief Returns one or more acceleration samples (raw) for all axes.
@@ -1746,52 +1710,46 @@ int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t *
  * @param[out] zRawAcc Z-axis raw acceleration
  * @retval Error code
  */
-int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface,
-                                uint8_t numSamples,
-                                int16_t *xRawAcc,
-                                int16_t *yRawAcc,
-                                int16_t *zRawAcc)
+int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xRawAcc, int16_t* yRawAcc, int16_t* zRawAcc)
 {
-  /* Max. buffer size is 192 (32 slot, 16 bit values) */
-  uint8_t buffer[192];
+    /* Max. buffer size is 192 (32 slot, 16 bit values) */
+    uint8_t buffer[192];
 
-  if (numSamples > 32)
-  {
-    return WE_FAIL;
-  }
+    if (numSamples > 32)
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
+    {
+        return WE_FAIL;
+    }
 
-  int16_t sample;
-  uint8_t *bufferPtr = buffer;
-  for (uint8_t i = 0; i < numSamples; i++)
-  {
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    xRawAcc[i] = sample;
+    int16_t sample;
+    uint8_t* bufferPtr = buffer;
+    for (uint8_t i = 0; i < numSamples; i++)
+    {
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        xRawAcc[i] = sample;
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    yRawAcc[i] = sample;
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        yRawAcc[i] = sample;
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    zRawAcc[i] = sample;
-  }
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        zRawAcc[i] = sample;
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
-
 
 #ifdef WE_USE_FLOAT
 
@@ -1807,15 +1765,15 @@ int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface,
  * @param[out] xAcc X axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float *xAcc)
+int8_t ITDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float* xAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationX(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *xAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationX(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *xAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -1830,15 +1788,15 @@ int8_t ITDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float 
  * @param[out] yAcc Y axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float *yAcc)
+int8_t ITDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float* yAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationY(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *yAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationY(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *yAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -1853,15 +1811,15 @@ int8_t ITDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float 
  * @param[out] zAcc Z axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float *zAcc)
+int8_t ITDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float* zAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationZ(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *zAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationZ(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *zAcc = ITDS_convertAcceleration_float(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -1879,49 +1837,45 @@ int8_t ITDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float 
  * @param[out] zAcc Z-axis acceleration in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface,
-                                   uint8_t numSamples,
-                                   float *xAcc,
-                                   float *yAcc,
-                                   float *zAcc)
+int8_t ITDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, float* xAcc, float* yAcc, float* zAcc)
 {
-  /* Max. buffer size is 192 (32 slot, 16 bit values) */
-  uint8_t buffer[192];
+    /* Max. buffer size is 192 (32 slot, 16 bit values) */
+    uint8_t buffer[192];
 
-  if (numSamples > 32)
-  {
-    return WE_FAIL;
-  }
+    if (numSamples > 32)
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
+    {
+        return WE_FAIL;
+    }
 
-  uint16_t sample;
-  uint8_t *bufferPtr = buffer;
-  for (uint8_t i = 0; i < numSamples; i++)
-  {
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    xAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
+    uint16_t sample;
+    uint8_t* bufferPtr = buffer;
+    for (uint8_t i = 0; i < numSamples; i++)
+    {
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        xAcc[i] = ITDS_convertAcceleration_float((int16_t)sample, currentFullScale);
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    yAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        yAcc[i] = ITDS_convertAcceleration_float((int16_t)sample, currentFullScale);
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    zAcc[i] = ITDS_convertAcceleration_float((int16_t) sample, currentFullScale);
-  }
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        zAcc[i] = ITDS_convertAcceleration_float((int16_t)sample, currentFullScale);
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1932,25 +1886,25 @@ int8_t ITDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface,
  */
 float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale)
 {
-  switch (fullScale)
-  {
-  case ITDS_twoG:
-    return ITDS_convertAccelerationFs2g_float(acc);
+    switch (fullScale)
+    {
+        case ITDS_twoG:
+            return ITDS_convertAccelerationFs2g_float(acc);
 
-  case ITDS_fourG:
-    return ITDS_convertAccelerationFs4g_float(acc);
+        case ITDS_fourG:
+            return ITDS_convertAccelerationFs4g_float(acc);
 
-  case ITDS_eightG:
-    return ITDS_convertAccelerationFs8g_float(acc);
+        case ITDS_eightG:
+            return ITDS_convertAccelerationFs8g_float(acc);
 
-  case ITDS_sixteenG:
-    return ITDS_convertAccelerationFs16g_float(acc);
+        case ITDS_sixteenG:
+            return ITDS_convertAccelerationFs16g_float(acc);
 
-  default:
-    break;
-  }
+        default:
+            break;
+    }
 
-  return 0;
+    return 0;
 }
 
 /**
@@ -1966,10 +1920,7 @@ float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-float ITDS_convertAccelerationFs2g_float(int16_t acc)
-{
-  return ((float) acc) * 0.061f;
-}
+float ITDS_convertAccelerationFs2g_float(int16_t acc) { return ((float)acc) * 0.061f; }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -1984,10 +1935,7 @@ float ITDS_convertAccelerationFs2g_float(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-float ITDS_convertAccelerationFs4g_float(int16_t acc)
-{
-  return ((float) acc) * 0.122f;
-}
+float ITDS_convertAccelerationFs4g_float(int16_t acc) { return ((float)acc) * 0.122f; }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -2002,10 +1950,7 @@ float ITDS_convertAccelerationFs4g_float(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-float ITDS_convertAccelerationFs8g_float(int16_t acc)
-{
-  return ((float) acc) * 0.244f;
-}
+float ITDS_convertAccelerationFs8g_float(int16_t acc) { return ((float)acc) * 0.244f; }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -2020,12 +1965,8 @@ float ITDS_convertAccelerationFs8g_float(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-float ITDS_convertAccelerationFs16g_float(int16_t acc)
-{
-  return ((float) acc) * 0.488f;
-}
+float ITDS_convertAccelerationFs16g_float(int16_t acc) { return ((float)acc) * 0.488f; }
 #endif /* WE_USE_FLOAT */
-
 
 /**
  * @brief Reads the X axis acceleration in [mg].
@@ -2039,15 +1980,15 @@ float ITDS_convertAccelerationFs16g_float(int16_t acc)
  * @param[out] xAcc X axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t *xAcc)
+int8_t ITDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t* xAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationX(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *xAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationX(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *xAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -2062,15 +2003,15 @@ int8_t ITDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t 
  * @param[out] yAcc Y axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t *yAcc)
+int8_t ITDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t* yAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationY(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *yAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationY(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *yAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -2085,15 +2026,15 @@ int8_t ITDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t 
  * @param[out] zAcc Z axis acceleration value in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t *zAcc)
+int8_t ITDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t* zAcc)
 {
-  int16_t rawAcc;
-  if (WE_FAIL == ITDS_getRawAccelerationZ(sensorInterface, &rawAcc))
-  {
-    return WE_FAIL;
-  }
-  *zAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
-  return WE_SUCCESS;
+    int16_t rawAcc;
+    if (WE_FAIL == ITDS_getRawAccelerationZ(sensorInterface, &rawAcc))
+    {
+        return WE_FAIL;
+    }
+    *zAcc = ITDS_convertAcceleration_int(rawAcc, currentFullScale);
+    return WE_SUCCESS;
 }
 
 /**
@@ -2111,49 +2052,45 @@ int8_t ITDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t 
  * @param[out] zAcc Z-axis acceleration in [mg]
  * @retval Error code
  */
-int8_t ITDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface,
-                                 uint8_t numSamples,
-                                 int16_t *xAcc,
-                                 int16_t *yAcc,
-                                 int16_t *zAcc)
+int8_t ITDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xAcc, int16_t* yAcc, int16_t* zAcc)
 {
-  /* Max. buffer size is 192 (32 slot, 16 bit values) */
-  uint8_t buffer[192];
+    /* Max. buffer size is 192 (32 slot, 16 bit values) */
+    uint8_t buffer[192];
 
-  if (numSamples > 32)
-  {
-    return WE_FAIL;
-  }
+    if (numSamples > 32)
+    {
+        return WE_FAIL;
+    }
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_X_OUT_L_REG, 3 * 2 * numSamples, buffer))
+    {
+        return WE_FAIL;
+    }
 
-  uint16_t sample;
-  uint8_t *bufferPtr = buffer;
-  for (uint8_t i = 0; i < numSamples; i++)
-  {
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    xAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
+    uint16_t sample;
+    uint8_t* bufferPtr = buffer;
+    for (uint8_t i = 0; i < numSamples; i++)
+    {
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        xAcc[i] = ITDS_convertAcceleration_int((int16_t)sample, currentFullScale);
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    yAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        yAcc[i] = ITDS_convertAcceleration_int((int16_t)sample, currentFullScale);
 
-    sample = ((int16_t) *bufferPtr);
-    bufferPtr++;
-    sample |= (int16_t) ((*bufferPtr) << 8);
-    bufferPtr++;
-    zAcc[i] = ITDS_convertAcceleration_int((int16_t) sample, currentFullScale);
-  }
+        sample = ((int16_t)*bufferPtr);
+        bufferPtr++;
+        sample |= (int16_t)((*bufferPtr) << 8);
+        bufferPtr++;
+        zAcc[i] = ITDS_convertAcceleration_int((int16_t)sample, currentFullScale);
+    }
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2164,23 +2101,23 @@ int8_t ITDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface,
  */
 int16_t ITDS_convertAcceleration_int(int16_t acc, ITDS_fullScale_t fullScale)
 {
-  switch (fullScale)
-  {
-  case ITDS_twoG:
-    return ITDS_convertAccelerationFs2g_int(acc);
+    switch (fullScale)
+    {
+        case ITDS_twoG:
+            return ITDS_convertAccelerationFs2g_int(acc);
 
-  case ITDS_sixteenG:
-    return ITDS_convertAccelerationFs16g_int(acc);
+        case ITDS_sixteenG:
+            return ITDS_convertAccelerationFs16g_int(acc);
 
-  case ITDS_fourG:
-    return ITDS_convertAccelerationFs4g_int(acc);
+        case ITDS_fourG:
+            return ITDS_convertAccelerationFs4g_int(acc);
 
-  case ITDS_eightG:
-    return ITDS_convertAccelerationFs8g_int(acc);
+        case ITDS_eightG:
+            return ITDS_convertAccelerationFs8g_int(acc);
 
-  default:
-    return 0;
-  }
+        default:
+            return 0;
+    }
 }
 
 /**
@@ -2189,10 +2126,7 @@ int16_t ITDS_convertAcceleration_int(int16_t acc, ITDS_fullScale_t fullScale)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-int16_t ITDS_convertAccelerationFs2g_int(int16_t acc)
-{
-  return (int16_t) ((((int32_t) acc) * 61) / 1000);
-}
+int16_t ITDS_convertAccelerationFs2g_int(int16_t acc) { return (int16_t)((((int32_t)acc) * 61) / 1000); }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -2200,10 +2134,7 @@ int16_t ITDS_convertAccelerationFs2g_int(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-int16_t ITDS_convertAccelerationFs4g_int(int16_t acc)
-{
-  return (int16_t) ((((int32_t) acc) * 122) / 1000);
-}
+int16_t ITDS_convertAccelerationFs4g_int(int16_t acc) { return (int16_t)((((int32_t)acc) * 122) / 1000); }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -2211,10 +2142,7 @@ int16_t ITDS_convertAccelerationFs4g_int(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-int16_t ITDS_convertAccelerationFs8g_int(int16_t acc)
-{
-  return (int16_t) ((((int32_t) acc) * 244) / 1000);
-}
+int16_t ITDS_convertAccelerationFs8g_int(int16_t acc) { return (int16_t)((((int32_t)acc) * 244) / 1000); }
 
 /**
  * @brief Converts the supplied raw acceleration sampled using
@@ -2222,11 +2150,7 @@ int16_t ITDS_convertAccelerationFs8g_int(int16_t acc)
  * @param[in] acc Raw acceleration value (accelerometer output)
  * @retval The converted acceleration in [mg]
  */
-int16_t ITDS_convertAccelerationFs16g_int(int16_t acc)
-{
-  return (int16_t) ((((int32_t) acc) * 488) / 1000);
-}
-
+int16_t ITDS_convertAccelerationFs16g_int(int16_t acc) { return (int16_t)((((int32_t)acc) * 488) / 1000); }
 
 /* ITDS_T_OUT_REG */
 
@@ -2237,16 +2161,16 @@ int16_t ITDS_convertAccelerationFs16g_int(int16_t acc)
  * @retval Error code
  */
 
-int8_t ITDS_getTemperature8bit(WE_sensorInterface_t* sensorInterface, uint8_t *temp8bit)
+int8_t ITDS_getTemperature8bit(WE_sensorInterface_t* sensorInterface, uint8_t* temp8bit)
 {
-  uint8_t temperatureValue8bit;
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_T_OUT_REG, 1, &temperatureValue8bit))
-  {
-    return WE_FAIL;
-  }
+    uint8_t temperatureValue8bit;
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_T_OUT_REG, 1, &temperatureValue8bit))
+    {
+        return WE_FAIL;
+    }
 
-  *temp8bit = temperatureValue8bit;
-  return WE_SUCCESS;
+    *temp8bit = temperatureValue8bit;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2255,21 +2179,21 @@ int8_t ITDS_getTemperature8bit(WE_sensorInterface_t* sensorInterface, uint8_t *t
  * @param[out] temp12bit The returned temperature
  * @retval Error code
  */
-int8_t  ITDS_getRawTemperature12bit(WE_sensorInterface_t* sensorInterface, int16_t *temp12bit)
+int8_t ITDS_getRawTemperature12bit(WE_sensorInterface_t* sensorInterface, int16_t* temp12bit)
 {
-  uint8_t temp[2] = {0};
+    uint8_t temp[2] = {0};
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_T_OUT_L_REG, 2, temp))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_T_OUT_L_REG, 2, temp))
+    {
+        return WE_FAIL;
+    }
 
-  *temp12bit = (int16_t) (temp[1] << 8);
-  *temp12bit |= (int16_t) temp[0];
+    *temp12bit = (int16_t)(temp[1] << 8);
+    *temp12bit |= (int16_t)temp[0];
 
-  *temp12bit = (*temp12bit) >> 4;
+    *temp12bit = (*temp12bit) >> 4;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 #ifdef WE_USE_FLOAT
@@ -2280,22 +2204,21 @@ int8_t  ITDS_getRawTemperature12bit(WE_sensorInterface_t* sensorInterface, int16
  * @param[out] tempDegC The returned temperature
  * @retval Error code
  */
-int8_t  ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float *tempDegC)
+int8_t ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float* tempDegC)
 {
-  int16_t rawTemp = 0;
-  if (WE_SUCCESS == ITDS_getRawTemperature12bit(sensorInterface, &rawTemp))
-  {
-    *tempDegC = (((float) rawTemp) / 16.0f) + 25.0f;
-  }
-  else
-  {
-    return WE_FAIL;
-  }
-  return WE_SUCCESS;
+    int16_t rawTemp = 0;
+    if (WE_SUCCESS == ITDS_getRawTemperature12bit(sensorInterface, &rawTemp))
+    {
+        *tempDegC = (((float)rawTemp) / 16.0f) + 25.0f;
+    }
+    else
+    {
+        return WE_FAIL;
+    }
+    return WE_SUCCESS;
 }
 
 #endif /* WE_USE_FLOAT */
-
 
 /* FIFO_CTRL (0x2E) */
 
@@ -2307,16 +2230,16 @@ int8_t  ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float *t
  */
 int8_t ITDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifoThreshold)
 {
-  ITDS_fifoCtrl_t fifoCtrl;
+    ITDS_fifoCtrl_t fifoCtrl;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl))
+    {
+        return WE_FAIL;
+    }
 
-  fifoCtrl.fifoThresholdLevel = fifoThreshold;
+    fifoCtrl.fifoThresholdLevel = fifoThreshold;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl);
+    return ITDS_WriteReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl);
 }
 
 /**
@@ -2325,18 +2248,18 @@ int8_t ITDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifo
  * @param[out] fifoThreshold The returned FIFO threshold (value between 0 and 31)
  * @retval Error code
  */
-int8_t ITDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t *fifoThreshold)
+int8_t ITDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThreshold)
 {
-  ITDS_fifoCtrl_t fifoCtrl;
+    ITDS_fifoCtrl_t fifoCtrl;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl))
+    {
+        return WE_FAIL;
+    }
 
-  *fifoThreshold = fifoCtrl.fifoThresholdLevel;
+    *fifoThreshold = fifoCtrl.fifoThresholdLevel;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2347,16 +2270,16 @@ int8_t ITDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t *fif
  */
 int8_t ITDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t fifoMode)
 {
-  ITDS_fifoCtrl_t fifoCtrl;
+    ITDS_fifoCtrl_t fifoCtrl;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl))
+    {
+        return WE_FAIL;
+    }
 
-  fifoCtrl.fifoMode = fifoMode;
+    fifoCtrl.fifoMode = fifoMode;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl);
+    return ITDS_WriteReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl);
 }
 
 /**
@@ -2365,20 +2288,19 @@ int8_t ITDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t f
  * @param[out] fifoMode The returned FIFO mode
  * @retval Error code
  */
-int8_t ITDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t *fifoMode)
+int8_t ITDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t* fifoMode)
 {
-  ITDS_fifoCtrl_t fifoCtrl;
+    ITDS_fifoCtrl_t fifoCtrl;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t *) &fifoCtrl))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrl))
+    {
+        return WE_FAIL;
+    }
 
-  *fifoMode = (ITDS_FifoMode_t) fifoCtrl.fifoMode;
+    *fifoMode = (ITDS_FifoMode_t)fifoCtrl.fifoMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* FIFO_SAMPLES (0x2F) */
 
@@ -2388,10 +2310,7 @@ int8_t ITDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t *
  * @param[out] fifoSamplesStatus The returned FIFO samples status
  * @retval Error code
  */
-int8_t ITDS_getFifoSamplesRegister(WE_sensorInterface_t* sensorInterface, ITDS_fifoSamples_t *fifoSamplesStatus)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t *) fifoSamplesStatus);
-}
+int8_t ITDS_getFifoSamplesRegister(WE_sensorInterface_t* sensorInterface, ITDS_fifoSamples_t* fifoSamplesStatus) { return ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t*)fifoSamplesStatus); }
 
 /**
  * @brief Read the FIFO threshold state [FIFO filling is lower than threshold level /
@@ -2401,18 +2320,18 @@ int8_t ITDS_getFifoSamplesRegister(WE_sensorInterface_t* sensorInterface, ITDS_f
  * @param[out] fifoThr The returned FIFO threshold state
  * @retval Error code
  */
-int8_t ITDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ITDS_state_t *fifoThr)
+int8_t ITDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoThr)
 {
-  ITDS_fifoSamples_t fifoSamples;
+    ITDS_fifoSamples_t fifoSamples;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t *) &fifoSamples))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t*)&fifoSamples))
+    {
+        return WE_FAIL;
+    }
 
-  *fifoThr = (ITDS_state_t) fifoSamples.fifoThresholdState;
+    *fifoThr = (ITDS_state_t)fifoSamples.fifoThresholdState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2423,18 +2342,18 @@ int8_t ITDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ITDS_s
  * @param[out] fifoOverrun The returned FIFO overrun state.
  * @retval Error code
  */
-int8_t ITDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ITDS_state_t *fifoOverrun)
+int8_t ITDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoOverrun)
 {
-  ITDS_fifoSamples_t fifoSamples;
+    ITDS_fifoSamples_t fifoSamples;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t *) &fifoSamples))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t*)&fifoSamples))
+    {
+        return WE_FAIL;
+    }
 
-  *fifoOverrun = (ITDS_state_t) fifoSamples.fifoOverrunState;
+    *fifoOverrun = (ITDS_state_t)fifoSamples.fifoOverrunState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2443,20 +2362,19 @@ int8_t ITDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ITDS_stat
  * @param[out] fifoFill The returned FIFO fill level (0-32)
  * @retval Error code
  */
-int8_t ITDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t *fifoFill)
+int8_t ITDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoFill)
 {
-  ITDS_fifoSamples_t fifoSamples;
+    ITDS_fifoSamples_t fifoSamples;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t *) &fifoSamples))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FIFO_SAMPLES_REG, 1, (uint8_t*)&fifoSamples))
+    {
+        return WE_FAIL;
+    }
 
-  *fifoFill = fifoSamples.fifoFillLevel;
+    *fifoFill = fifoSamples.fifoFillLevel;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* TAP_X_TH (0x30) */
 
@@ -2468,16 +2386,16 @@ int8_t ITDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t *fif
  */
 int8_t ITDS_enable4DDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t detection4D)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapXThresh.fourDDetectionEnabled = detection4D;
+    tapXThresh.fourDDetectionEnabled = detection4D;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh);
 }
 
 /**
@@ -2486,18 +2404,18 @@ int8_t ITDS_enable4DDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] detection4D The returned 4D orientation detection enable state.
  * @retval Error code
  */
-int8_t ITDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *detection4D)
+int8_t ITDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* detection4D)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *detection4D = (ITDS_state_t) tapXThresh.fourDDetectionEnabled;
+    *detection4D = (ITDS_state_t)tapXThresh.fourDDetectionEnabled;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2508,16 +2426,16 @@ int8_t ITDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_sta
  */
 int8_t ITDS_setTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdX)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapXThresh.xAxisTapThreshold = tapThresholdX;
+    tapXThresh.xAxisTapThreshold = tapThresholdX;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh);
 }
 
 /**
@@ -2526,18 +2444,18 @@ int8_t ITDS_setTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t tapT
  * @param[out] tapThresholdX The returned tap threshold for axis X
  * @retval Error code
  */
-int8_t ITDS_getTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t *tapThresholdX)
+int8_t ITDS_getTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdX)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapThresholdX = tapXThresh.xAxisTapThreshold;
+    *tapThresholdX = tapXThresh.xAxisTapThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2548,16 +2466,16 @@ int8_t ITDS_getTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t *tap
  */
 int8_t ITDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t threshold6D)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapXThresh.sixDThreshold = threshold6D;
+    tapXThresh.sixDThreshold = threshold6D;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh);
 }
 
 /**
@@ -2566,20 +2484,19 @@ int8_t ITDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_threshold
  * @param[out] threshold6D The returned 6D orientation detection threshold
  * @retval Error code
  */
-int8_t ITDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t *threshold6D)
+int8_t ITDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t* threshold6D)
 {
-  ITDS_tapXThreshold_t tapXThresh;
+    ITDS_tapXThreshold_t tapXThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t *) &tapXThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_X_TH_REG, 1, (uint8_t*)&tapXThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *threshold6D = (ITDS_thresholdDegree_t) tapXThresh.sixDThreshold;
+    *threshold6D = (ITDS_thresholdDegree_t)tapXThresh.sixDThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* TAP_Y_TH (0x31) */
 
@@ -2591,16 +2508,16 @@ int8_t ITDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_threshold
  */
 int8_t ITDS_setTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdY)
 {
-  ITDS_tapYThreshold_t tapYThresh;
+    ITDS_tapYThreshold_t tapYThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapYThresh.yAxisTapThreshold = tapThresholdY;
+    tapYThresh.yAxisTapThreshold = tapThresholdY;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh);
 }
 
 /**
@@ -2609,17 +2526,17 @@ int8_t ITDS_setTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t tapT
  * @param[out] tapThresholdY The returned tap threshold for axis Y.
  * @retval Error code
  */
-int8_t ITDS_getTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t *tapThresholdY)
+int8_t ITDS_getTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdY)
 {
-  ITDS_tapYThreshold_t tapYThresh;
+    ITDS_tapYThreshold_t tapYThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapThresholdY = tapYThresh.yAxisTapThreshold;
-  return WE_SUCCESS;
+    *tapThresholdY = tapYThresh.yAxisTapThreshold;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2630,16 +2547,16 @@ int8_t ITDS_getTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t *tap
  */
 int8_t ITDS_setTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t priority)
 {
-  ITDS_tapYThreshold_t tapYThresh;
+    ITDS_tapYThreshold_t tapYThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapYThresh.tapAxisPriority = priority;
+    tapYThresh.tapAxisPriority = priority;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh);
 }
 
 /**
@@ -2648,20 +2565,19 @@ int8_t ITDS_setTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAx
  * @param[out] priority The returned axis tap detection priority
  * @retval Error code
  */
-int8_t ITDS_getTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t *priority)
+int8_t ITDS_getTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t* priority)
 {
-  ITDS_tapYThreshold_t tapYThresh;
+    ITDS_tapYThreshold_t tapYThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t *) &tapYThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Y_TH_REG, 1, (uint8_t*)&tapYThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *priority = (ITDS_tapAxisPriority_t) tapYThresh.tapAxisPriority;
+    *priority = (ITDS_tapAxisPriority_t)tapYThresh.tapAxisPriority;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* TAP_Z_TH (0x32) */
 
@@ -2673,16 +2589,16 @@ int8_t ITDS_getTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAx
  */
 int8_t ITDS_setTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdZ)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapZThresh.zAxisTapThreshold = tapThresholdZ;
+    tapZThresh.zAxisTapThreshold = tapThresholdZ;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh);
 }
 
 /**
@@ -2691,18 +2607,18 @@ int8_t ITDS_setTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t tapT
  * @param[out] tapThresholdZ The returned tap threshold for axis Z.
  * @retval Error code
  */
-int8_t ITDS_getTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t *tapThresholdZ)
+int8_t ITDS_getTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdZ)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapThresholdZ = tapZThresh.zAxisTapThreshold;
+    *tapThresholdZ = tapZThresh.zAxisTapThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2713,16 +2629,16 @@ int8_t ITDS_getTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t *tap
  */
 int8_t ITDS_enableTapX(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapX)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapZThresh.enTapX = tapX;
+    tapZThresh.enTapX = tapX;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh);
 }
 
 /**
@@ -2731,18 +2647,18 @@ int8_t ITDS_enableTapX(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapX)
  * @param[out] tapX The returned tap X direction state
  * @retval Error code
  */
-int8_t ITDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapX)
+int8_t ITDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapX)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapX = (ITDS_state_t) tapZThresh.enTapX;
+    *tapX = (ITDS_state_t)tapZThresh.enTapX;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2753,16 +2669,16 @@ int8_t ITDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *t
  */
 int8_t ITDS_enableTapY(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapY)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapZThresh.enTapY = tapY;
+    tapZThresh.enTapY = tapY;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh);
 }
 
 /**
@@ -2771,18 +2687,18 @@ int8_t ITDS_enableTapY(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapY)
  * @param[out] tapY The returned tap Y direction state
  * @retval Error code
  */
-int8_t ITDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapY)
+int8_t ITDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapY)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapY = (ITDS_state_t) tapZThresh.enTapY;
+    *tapY = (ITDS_state_t)tapZThresh.enTapY;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2793,16 +2709,16 @@ int8_t ITDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *t
  */
 int8_t ITDS_enableTapZ(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapZ)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  tapZThresh.enTapZ = tapZ;
+    tapZThresh.enTapZ = tapZ;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh);
+    return ITDS_WriteReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh);
 }
 
 /**
@@ -2811,20 +2727,19 @@ int8_t ITDS_enableTapZ(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapZ)
  * @param[out] tapZ The returned tap Z direction state
  * @retval Error code
  */
-int8_t ITDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapZ)
+int8_t ITDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZ)
 {
-  ITDS_tapZThreshold_t tapZThresh;
+    ITDS_tapZThreshold_t tapZThresh;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t *) &tapZThresh))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_Z_TH_REG, 1, (uint8_t*)&tapZThresh))
+    {
+        return WE_FAIL;
+    }
 
-  *tapZ = (ITDS_state_t) tapZThresh.enTapZ;
+    *tapZ = (ITDS_state_t)tapZThresh.enTapZ;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* INT_DUR (0x33) */
 
@@ -2836,16 +2751,16 @@ int8_t ITDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *t
  */
 int8_t ITDS_setTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t latencyTime)
 {
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  intDuration.latency = latencyTime;
+    intDuration.latency = latencyTime;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration);
 }
 
 /**
@@ -2854,18 +2769,18 @@ int8_t ITDS_setTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t lat
  * @param[out] latencyTime The returned latency time
  * @retval Error code
  */
-int8_t ITDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t *latencyTime)
+int8_t ITDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t* latencyTime)
 {
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *latencyTime = intDuration.latency;
+    *latencyTime = intDuration.latency;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2876,16 +2791,16 @@ int8_t ITDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t *la
  */
 int8_t ITDS_setTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t quietTime)
 {
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  intDuration.quiet = quietTime;
+    intDuration.quiet = quietTime;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration);
 }
 
 /**
@@ -2894,19 +2809,19 @@ int8_t ITDS_setTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t quiet
  * @param[out] quietTime The returned quiet time
  * @retval Error code
  */
-int8_t ITDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t *quietTime)
+int8_t ITDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t* quietTime)
 {
 
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *quietTime = intDuration.quiet;
+    *quietTime = intDuration.quiet;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -2917,16 +2832,16 @@ int8_t ITDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t *quie
  */
 int8_t ITDS_setTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t shockTime)
 {
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  intDuration.shock = shockTime;
+    intDuration.shock = shockTime;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration);
 }
 
 /**
@@ -2935,20 +2850,19 @@ int8_t ITDS_setTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t shock
  * @param[out] shockTime The returned shock time.
  * @retval Error code
  */
-int8_t ITDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t *shockTime)
+int8_t ITDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t* shockTime)
 {
-  ITDS_intDuration_t intDuration;
+    ITDS_intDuration_t intDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t *) &intDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_INT_DUR_REG, 1, (uint8_t*)&intDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *shockTime = intDuration.shock;
+    *shockTime = intDuration.shock;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* WAKE_UP_TH */
 
@@ -2960,16 +2874,16 @@ int8_t ITDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t *shoc
  */
 int8_t ITDS_enableDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t doubleTap)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpThreshReg.enDoubleTapEvent = doubleTap;
+    wakeUpThreshReg.enDoubleTapEvent = doubleTap;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg);
 }
 
 /**
@@ -2978,18 +2892,18 @@ int8_t ITDS_enableDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_sta
  * @param[out] doubleTap The returned tap event state [0: only single, 1: single and double-tap]
  * @retval Error code
  */
-int8_t ITDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *doubleTap)
+int8_t ITDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  *doubleTap = (ITDS_state_t) wakeUpThreshReg.enDoubleTapEvent;
+    *doubleTap = (ITDS_state_t)wakeUpThreshReg.enDoubleTapEvent;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3000,16 +2914,16 @@ int8_t ITDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ITDS_
  */
 int8_t ITDS_enableInactivityDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t inactivity)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpThreshReg.enInactivityEvent = inactivity;
+    wakeUpThreshReg.enInactivityEvent = inactivity;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg);
 }
 
 /**
@@ -3018,18 +2932,18 @@ int8_t ITDS_enableInactivityDetection(WE_sensorInterface_t* sensorInterface, ITD
  * @param[out] inactivity The returned inactivity (sleep) detection enable state.
  * @retval Error code
  */
-int8_t ITDS_isInactivityDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *inactivity)
+int8_t ITDS_isInactivityDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* inactivity)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  *inactivity = (ITDS_state_t) wakeUpThreshReg.enInactivityEvent;
+    *inactivity = (ITDS_state_t)wakeUpThreshReg.enInactivityEvent;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3040,16 +2954,16 @@ int8_t ITDS_isInactivityDetectionEnabled(WE_sensorInterface_t* sensorInterface, 
  */
 int8_t ITDS_setWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t wakeUpThresh)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpThreshReg.wakeUpThreshold = wakeUpThresh;
+    wakeUpThreshReg.wakeUpThreshold = wakeUpThresh;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg);
 }
 
 /**
@@ -3058,20 +2972,19 @@ int8_t ITDS_setWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t wa
  * @param[out] wakeUpThresh The returned wake-up threshold.
  * @retval Error code
  */
-int8_t ITDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t *wakeUpThresh)
+int8_t ITDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* wakeUpThresh)
 {
-  ITDS_wakeUpThreshold_t wakeUpThreshReg;
+    ITDS_wakeUpThreshold_t wakeUpThreshReg;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t *) &wakeUpThreshReg))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_TH_REG, 1, (uint8_t*)&wakeUpThreshReg))
+    {
+        return WE_FAIL;
+    }
 
-  *wakeUpThresh = wakeUpThreshReg.wakeUpThreshold;
+    *wakeUpThresh = wakeUpThreshReg.wakeUpThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* WAKE_UP_DUR */
 
@@ -3083,16 +2996,16 @@ int8_t ITDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t *w
  */
 int8_t ITDS_setFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationMsb)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpDuration.freeFallDurationMSB = freeFallDurationMsb;
+    wakeUpDuration.freeFallDurationMSB = freeFallDurationMsb;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration);
 }
 
 /**
@@ -3101,17 +3014,17 @@ int8_t ITDS_setFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_
  * @param[out] freeFallDurationMsb The returned free-fall duration MSB
  * @retval Error code
  */
-int8_t ITDS_getFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t *freeFallDurationMsb)
+int8_t ITDS_getFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationMsb)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *freeFallDurationMsb = wakeUpDuration.freeFallDurationMSB;
-  return WE_SUCCESS;
+    *freeFallDurationMsb = wakeUpDuration.freeFallDurationMSB;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3122,16 +3035,16 @@ int8_t ITDS_getFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t ITDS_enableStationaryDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t stationary)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpDuration.enStationary = stationary;
+    wakeUpDuration.enStationary = stationary;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration);
 }
 
 /**
@@ -3140,18 +3053,18 @@ int8_t ITDS_enableStationaryDetection(WE_sensorInterface_t* sensorInterface, ITD
  * @param[out] stationary The returned stationary detection enable state
  * @retval Error code
  */
-int8_t ITDS_isStationaryDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *stationary)
+int8_t ITDS_isStationaryDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* stationary)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *stationary = (ITDS_state_t) wakeUpDuration.enStationary;
+    *stationary = (ITDS_state_t)wakeUpDuration.enStationary;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3162,16 +3075,16 @@ int8_t ITDS_isStationaryDetectionEnabled(WE_sensorInterface_t* sensorInterface, 
  */
 int8_t ITDS_setWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpDuration.wakeUpDuration = duration;
+    wakeUpDuration.wakeUpDuration = duration;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration);
 }
 
 /**
@@ -3180,18 +3093,18 @@ int8_t ITDS_setWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t dur
  * @param[out] duration The returned wake-up duration (two bits)
  * @retval Error code
  */
-int8_t ITDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t *duration)
+int8_t ITDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *duration = wakeUpDuration.wakeUpDuration;
+    *duration = wakeUpDuration.wakeUpDuration;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3202,16 +3115,16 @@ int8_t ITDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t *du
  */
 int8_t ITDS_setSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  wakeUpDuration.sleepDuration = duration;
+    wakeUpDuration.sleepDuration = duration;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration);
+    return ITDS_WriteReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration);
 }
 
 /**
@@ -3220,20 +3133,19 @@ int8_t ITDS_setSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t dura
  * @param[out] duration The returned sleep mode duration
  * @retval Error code
  */
-int8_t ITDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t *duration)
+int8_t ITDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration)
 {
-  ITDS_wakeUpDuration_t wakeUpDuration;
+    ITDS_wakeUpDuration_t wakeUpDuration;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t *) &wakeUpDuration))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDuration))
+    {
+        return WE_FAIL;
+    }
 
-  *duration = wakeUpDuration.sleepDuration;
+    *duration = wakeUpDuration.sleepDuration;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* FREE_FALL */
 
@@ -3245,12 +3157,12 @@ int8_t ITDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t *dur
  */
 int8_t ITDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDuration)
 {
-  /* Set first 5 bits as LSB, 6th bit as MSB */
-  if (WE_FAIL == ITDS_setFreeFallDurationLSB(sensorInterface, freeFallDuration & 0x1F))
-  {
-    return WE_FAIL;
-  }
-  return ITDS_setFreeFallDurationMSB(sensorInterface, (freeFallDuration >> 5) & 0x1);
+    /* Set first 5 bits as LSB, 6th bit as MSB */
+    if (WE_FAIL == ITDS_setFreeFallDurationLSB(sensorInterface, freeFallDuration & 0x1F))
+    {
+        return WE_FAIL;
+    }
+    return ITDS_setFreeFallDurationMSB(sensorInterface, (freeFallDuration >> 5) & 0x1);
 }
 
 /**
@@ -3259,23 +3171,23 @@ int8_t ITDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t f
  * @param[out] freeFallDuration The returned free-fall duration (6 bits)
  * @retval Error code
  */
-int8_t ITDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t *freeFallDuration)
+int8_t ITDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDuration)
 {
-  uint8_t lsb;
-  uint8_t msb;
+    uint8_t lsb;
+    uint8_t msb;
 
-  if (WE_FAIL == ITDS_getFreeFallDurationLSB(sensorInterface, &lsb))
-  {
-    return WE_FAIL;
-  }
-  if (WE_FAIL == ITDS_getFreeFallDurationMSB(sensorInterface, &msb))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_getFreeFallDurationLSB(sensorInterface, &lsb))
+    {
+        return WE_FAIL;
+    }
+    if (WE_FAIL == ITDS_getFreeFallDurationMSB(sensorInterface, &msb))
+    {
+        return WE_FAIL;
+    }
 
-  *freeFallDuration = (lsb & 0x1F) | ((msb & 0x1) << 5);
+    *freeFallDuration = (lsb & 0x1F) | ((msb & 0x1) << 5);
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3286,16 +3198,16 @@ int8_t ITDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t *
  */
 int8_t ITDS_setFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationLsb)
 {
-  ITDS_freeFall_t freeFall;
+    ITDS_freeFall_t freeFall;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    {
+        return WE_FAIL;
+    }
 
-  freeFall.freeFallDurationLSB = freeFallDurationLsb;
+    freeFall.freeFallDurationLSB = freeFallDurationLsb;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall);
+    return ITDS_WriteReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall);
 }
 
 /**
@@ -3304,17 +3216,17 @@ int8_t ITDS_setFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_
  * @param[out] freeFallDurationLsb The returned free-fall duration LSB (5 bits)
  * @retval Error code
  */
-int8_t ITDS_getFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t *freeFallDurationLsb)
+int8_t ITDS_getFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationLsb)
 {
-  ITDS_freeFall_t freeFall;
+    ITDS_freeFall_t freeFall;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    {
+        return WE_FAIL;
+    }
 
-  *freeFallDurationLsb = freeFall.freeFallDurationLSB;
-  return WE_SUCCESS;
+    *freeFallDurationLsb = freeFall.freeFallDurationLSB;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3325,16 +3237,16 @@ int8_t ITDS_getFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t ITDS_setFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t threshold)
 {
-  ITDS_freeFall_t freeFall;
+    ITDS_freeFall_t freeFall;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    {
+        return WE_FAIL;
+    }
 
-  freeFall.freeFallThreshold = threshold;
+    freeFall.freeFallThreshold = threshold;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall);
+    return ITDS_WriteReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall);
 }
 
 /**
@@ -3343,19 +3255,18 @@ int8_t ITDS_setFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_Fre
  * @param[out] threshold The returned encoded free-fall threshold value (3 bits)
  * @retval Error code
  */
-int8_t ITDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t *threshold)
+int8_t ITDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t* threshold)
 {
-  ITDS_freeFall_t freeFall;
+    ITDS_freeFall_t freeFall;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t *) &freeFall))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    {
+        return WE_FAIL;
+    }
 
-  *threshold = (ITDS_FreeFallThreshold_t) freeFall.freeFallThreshold;
-  return WE_SUCCESS;
+    *threshold = (ITDS_FreeFallThreshold_t)freeFall.freeFallThreshold;
+    return WE_SUCCESS;
 }
-
 
 /* STATUS_DETECT */
 /* Note: Most of the status bits are already covered by the STATUS_REG register. */
@@ -3366,10 +3277,7 @@ int8_t ITDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_Fre
  * @param[out] statusDetect The returned status detect register state
  * @retval Error code
  */
-int8_t ITDS_getStatusDetectRegister(WE_sensorInterface_t* sensorInterface, ITDS_statusDetect_t *statusDetect)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_STATUS_DETECT_REG, 1, (uint8_t *) statusDetect);
-}
+int8_t ITDS_getStatusDetectRegister(WE_sensorInterface_t* sensorInterface, ITDS_statusDetect_t* statusDetect) { return ITDS_ReadReg(sensorInterface, ITDS_STATUS_DETECT_REG, 1, (uint8_t*)statusDetect); }
 
 /**
  * @brief Check if new temperature samples are available.
@@ -3377,19 +3285,18 @@ int8_t ITDS_getStatusDetectRegister(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] dataReady The returned data-ready state
  * @retval Error code
  */
-int8_t ITDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t *dataReady)
+int8_t ITDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady)
 {
-  ITDS_statusDetect_t statusDetect;
+    ITDS_statusDetect_t statusDetect;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_DETECT_REG, 1, (uint8_t *) &statusDetect))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_STATUS_DETECT_REG, 1, (uint8_t*)&statusDetect))
+    {
+        return WE_FAIL;
+    }
 
-  *dataReady = (ITDS_state_t) statusDetect.temperatureDataReady;
-  return WE_SUCCESS;
+    *dataReady = (ITDS_state_t)statusDetect.temperatureDataReady;
+    return WE_SUCCESS;
 }
-
 
 /* WAKE_UP_EVENT */
 
@@ -3399,10 +3306,7 @@ int8_t ITDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ITDS_s
  * @param[out] status The returned wake-up event status
  * @retval Error code
  */
-int8_t ITDS_getWakeUpEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_wakeUpEvent_t *status)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) status);
-}
+int8_t ITDS_getWakeUpEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_wakeUpEvent_t* status) { return ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)status); }
 
 /**
  * @brief Read the wake-up event detection status on axis X
@@ -3410,18 +3314,18 @@ int8_t ITDS_getWakeUpEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_w
  * @param[out] wakeUpX The returned wake-up event detection status on axis X.
  * @retval Error code
  */
-int8_t ITDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *wakeUpX)
+int8_t ITDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpX)
 {
-  ITDS_wakeUpEvent_t wakeUpEvent;
+    ITDS_wakeUpEvent_t wakeUpEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) &wakeUpEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&wakeUpEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *wakeUpX = (ITDS_state_t) wakeUpEvent.wakeUpX;
+    *wakeUpX = (ITDS_state_t)wakeUpEvent.wakeUpX;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3430,18 +3334,18 @@ int8_t ITDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *
  * @param[out] wakeUpY The returned wake-up event detection status on axis Y.
  * @retval Error code
  */
-int8_t ITDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *wakeUpY)
+int8_t ITDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpY)
 {
-  ITDS_wakeUpEvent_t wakeUpEvent;
+    ITDS_wakeUpEvent_t wakeUpEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) &wakeUpEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&wakeUpEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *wakeUpY = (ITDS_state_t) wakeUpEvent.wakeUpY;
+    *wakeUpY = (ITDS_state_t)wakeUpEvent.wakeUpY;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3450,18 +3354,18 @@ int8_t ITDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *
  * @param[out] wakeUpZ The returned wake-up event detection status on axis Z.
  * @retval Error code
  */
-int8_t ITDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *wakeUpZ)
+int8_t ITDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpZ)
 {
-  ITDS_wakeUpEvent_t wakeUpEvent;
+    ITDS_wakeUpEvent_t wakeUpEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) &wakeUpEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&wakeUpEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *wakeUpZ = (ITDS_state_t) wakeUpEvent.wakeUpZ;
+    *wakeUpZ = (ITDS_state_t)wakeUpEvent.wakeUpZ;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3470,18 +3374,18 @@ int8_t ITDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *
  * @param[out] wakeUpState The returned wake-up event detection state.
  * @retval Error code
  */
-int8_t ITDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *wakeUpState)
+int8_t ITDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpState)
 {
-  ITDS_wakeUpEvent_t wakeUpEvent;
+    ITDS_wakeUpEvent_t wakeUpEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) &wakeUpEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&wakeUpEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *wakeUpState = (ITDS_state_t) wakeUpEvent.wakeUpState;
+    *wakeUpState = (ITDS_state_t)wakeUpEvent.wakeUpState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3490,20 +3394,19 @@ int8_t ITDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *w
  * @param[out] freeFall The returned free-fall event status.
  * @retval Error code
  */
-int8_t ITDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *freeFall)
+int8_t ITDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* freeFall)
 {
-  ITDS_wakeUpEvent_t wakeUpEvent;
+    ITDS_wakeUpEvent_t wakeUpEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t *) &wakeUpEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&wakeUpEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *freeFall = (ITDS_state_t) wakeUpEvent.freeFallState;
+    *freeFall = (ITDS_state_t)wakeUpEvent.freeFallState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* TAP EVENT 0x39 */
 
@@ -3513,10 +3416,7 @@ int8_t ITDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  * @param[out] status The returned tap event status
  * @retval Error code
  */
-int8_t ITDS_getTapEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_tapEvent_t *status)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) status);
-}
+int8_t ITDS_getTapEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_tapEvent_t* status) { return ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)status); }
 
 /**
  * @brief Read the tap event status (tap event on any axis)
@@ -3524,18 +3424,18 @@ int8_t ITDS_getTapEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_tapE
  * @param[out] tapEventState The returned tap event state
  * @retval Error code
  */
-int8_t ITDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapEventState)
+int8_t ITDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapEventState)
 {
-  ITDS_tapEvent_t tapEvent;
+    ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)&tapEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *tapEventState = (ITDS_state_t) tapEvent.tapEventState;
+    *tapEventState = (ITDS_state_t)tapEvent.tapEventState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3544,18 +3444,18 @@ int8_t ITDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapE
  * @param[out] tapSign The returned tap event acceleration sign
  * @retval Error code
  */
-int8_t ITDS_getTapSign(WE_sensorInterface_t* sensorInterface, ITDS_tapSign_t *tapSign)
+int8_t ITDS_getTapSign(WE_sensorInterface_t* sensorInterface, ITDS_tapSign_t* tapSign)
 {
-  ITDS_tapEvent_t tapEvent;
+    ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)&tapEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *tapSign = (ITDS_tapSign_t) tapEvent.tapSign;
+    *tapSign = (ITDS_tapSign_t)tapEvent.tapSign;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3564,18 +3464,18 @@ int8_t ITDS_getTapSign(WE_sensorInterface_t* sensorInterface, ITDS_tapSign_t *ta
  * @param[out] tapXAxis The returned tap event status on axis X.
  * @retval Error code
  */
-int8_t ITDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapXAxis)
+int8_t ITDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapXAxis)
 {
-  ITDS_tapEvent_t tapEvent;
+    ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)&tapEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *tapXAxis = (ITDS_state_t) tapEvent.tapXAxis;
+    *tapXAxis = (ITDS_state_t)tapEvent.tapXAxis;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3584,18 +3484,18 @@ int8_t ITDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  * @param[out] tapYAxis The returned tap event status on axis Y.
  * @retval Error code
  */
-int8_t ITDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapYAxis)
+int8_t ITDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapYAxis)
 {
-  ITDS_tapEvent_t tapEvent;
+    ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)&tapEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *tapYAxis = (ITDS_state_t) tapEvent.tapYAxis;
+    *tapYAxis = (ITDS_state_t)tapEvent.tapYAxis;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3604,20 +3504,19 @@ int8_t ITDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  * @param[out] tapZAxis The returned tap event status on axis Z.
  * @retval Error code
  */
-int8_t ITDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t *tapZAxis)
+int8_t ITDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZAxis)
 {
-  ITDS_tapEvent_t tapEvent;
+    ITDS_tapEvent_t tapEvent;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t *) &tapEvent))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_TAP_EVENT_REG, 1, (uint8_t*)&tapEvent))
+    {
+        return WE_FAIL;
+    }
 
-  *tapZAxis = (ITDS_state_t) tapEvent.tapZAxis;
+    *tapZAxis = (ITDS_state_t)tapEvent.tapZAxis;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* 6D_EVENT */
 
@@ -3627,10 +3526,7 @@ int8_t ITDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  * @param[out] status The returned 6D event status.
  * @retval Error code
  */
-int8_t ITDS_get6dEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_6dEvent_t *status)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) status);
-}
+int8_t ITDS_get6dEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_6dEvent_t* status) { return ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)status); }
 
 /**
  * @brief Check if 6D orientation change event has occurred.
@@ -3638,18 +3534,18 @@ int8_t ITDS_get6dEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_6dEve
  * @param[out] orientationChanged The returned 6D orientation change event status
  * @retval Error code
  */
-int8_t ITDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ITDS_state_t *orientationChanged)
+int8_t ITDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ITDS_state_t* orientationChanged)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *orientationChanged = (ITDS_state_t) event6d.sixDChange;
+    *orientationChanged = (ITDS_state_t)event6d.sixDChange;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3658,18 +3554,18 @@ int8_t ITDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] xlOverThreshold The returned XL over threshold state
  * @retval Error code
  */
-int8_t ITDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *xlOverThreshold)
+int8_t ITDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xlOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *xlOverThreshold = (ITDS_state_t) event6d.xlOverThreshold;
+    *xlOverThreshold = (ITDS_state_t)event6d.xlOverThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3678,18 +3574,18 @@ int8_t ITDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] xhOverThreshold The returned XH over threshold state
  * @retval Error code
  */
-int8_t ITDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *xhOverThreshold)
+int8_t ITDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xhOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *xhOverThreshold = (ITDS_state_t) event6d.xhOverThreshold;
+    *xhOverThreshold = (ITDS_state_t)event6d.xhOverThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3698,18 +3594,18 @@ int8_t ITDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] ylOverThreshold The returned YL over threshold state
  * @retval Error code
  */
-int8_t ITDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *ylOverThreshold)
+int8_t ITDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* ylOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *ylOverThreshold = (ITDS_state_t) event6d.ylOverThreshold;
+    *ylOverThreshold = (ITDS_state_t)event6d.ylOverThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3718,17 +3614,17 @@ int8_t ITDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] yhOverThreshold The returned YH over threshold state
  * @retval Error code
  */
-int8_t ITDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *yhOverThreshold)
+int8_t ITDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* yhOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *yhOverThreshold = (ITDS_state_t) event6d.yhOverThreshold;
-  return WE_SUCCESS;
+    *yhOverThreshold = (ITDS_state_t)event6d.yhOverThreshold;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3737,18 +3633,18 @@ int8_t ITDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] zlOverThreshold The returned ZL over threshold state
  * @retval Error code
  */
-int8_t ITDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *zlOverThreshold)
+int8_t ITDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zlOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *zlOverThreshold = (ITDS_state_t) event6d.zlOverThreshold;
+    *zlOverThreshold = (ITDS_state_t)event6d.zlOverThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3757,20 +3653,19 @@ int8_t ITDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] zhOverThreshold The returned ZH over threshold state
  * @retval Error code
  */
-int8_t ITDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t *zhOverThreshold)
+int8_t ITDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zhOverThreshold)
 {
-  ITDS_6dEvent_t event6d;
+    ITDS_6dEvent_t event6d;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t *) &event6d))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_6D_EVENT_REG, 1, (uint8_t*)&event6d))
+    {
+        return WE_FAIL;
+    }
 
-  *zhOverThreshold = (ITDS_state_t) event6d.zhOverThreshold;
+    *zhOverThreshold = (ITDS_state_t)event6d.zhOverThreshold;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* ALL_INT_EVENT */
 
@@ -3780,10 +3675,7 @@ int8_t ITDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] events The returned interrupt events status
  * @retval Error code
  */
-int8_t ITDS_getAllInterruptEvents(WE_sensorInterface_t* sensorInterface, ITDS_allInterruptEvents_t *events)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_ALL_INT_EVENT_REG, 1, (uint8_t *) events);
-}
+int8_t ITDS_getAllInterruptEvents(WE_sensorInterface_t* sensorInterface, ITDS_allInterruptEvents_t* events) { return ITDS_ReadReg(sensorInterface, ITDS_ALL_INT_EVENT_REG, 1, (uint8_t*)events); }
 
 /**
  * @brief Read the sleep change interrupt event state
@@ -3791,20 +3683,19 @@ int8_t ITDS_getAllInterruptEvents(WE_sensorInterface_t* sensorInterface, ITDS_al
  * @param[out] sleep The returned sleep change interrupt event state
  * @retval Error code
  */
-int8_t ITDS_isSleepChangeEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t *sleep)
+int8_t ITDS_isSleepChangeEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleep)
 {
-  ITDS_allInterruptEvents_t allInterrupts;
+    ITDS_allInterruptEvents_t allInterrupts;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_ALL_INT_EVENT_REG, 1, (uint8_t *) &allInterrupts))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_ALL_INT_EVENT_REG, 1, (uint8_t*)&allInterrupts))
+    {
+        return WE_FAIL;
+    }
 
-  *sleep = (ITDS_state_t) allInterrupts.sleepChangeState;
+    *sleep = (ITDS_state_t)allInterrupts.sleepChangeState;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
-
 
 /* X_Y_Z_OFS_USR */
 
@@ -3814,10 +3705,7 @@ int8_t ITDS_isSleepChangeEvent(WE_sensorInterface_t* sensorInterface, ITDS_state
  * @param[in] offsetValueXAxis User offset for axis X
  * @retval Error code
  */
-int8_t ITDS_setOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t offsetValueXAxis)
-{
-  return ITDS_WriteReg(sensorInterface, ITDS_X_OFS_USR_REG, 1, (uint8_t *) &offsetValueXAxis);
-}
+int8_t ITDS_setOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t offsetValueXAxis) { return ITDS_WriteReg(sensorInterface, ITDS_X_OFS_USR_REG, 1, (uint8_t*)&offsetValueXAxis); }
 
 /**
  * @brief Read the user offset for axis X (for output data and/or wake-up)
@@ -3825,10 +3713,7 @@ int8_t ITDS_setOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t offset
  * @param[out] offsetvalueXAxis The returned user offset for axis X.
  * @retval Error code
  */
-int8_t ITDS_getOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t *offsetvalueXAxis)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_X_OFS_USR_REG, 1, (uint8_t *) offsetvalueXAxis);
-}
+int8_t ITDS_getOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t* offsetvalueXAxis) { return ITDS_ReadReg(sensorInterface, ITDS_X_OFS_USR_REG, 1, (uint8_t*)offsetvalueXAxis); }
 
 /**
  * @brief Set the user offset for axis Y (for output data and/or wake-up)
@@ -3836,10 +3721,7 @@ int8_t ITDS_getOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t *offse
  * @param[in] offsetValueYAxis User offset for axis Y
  * @retval Error code
  */
-int8_t ITDS_setOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t offsetValueYAxis)
-{
-  return ITDS_WriteReg(sensorInterface, ITDS_Y_OFS_USR_REG, 1, (uint8_t *) &offsetValueYAxis);
-}
+int8_t ITDS_setOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t offsetValueYAxis) { return ITDS_WriteReg(sensorInterface, ITDS_Y_OFS_USR_REG, 1, (uint8_t*)&offsetValueYAxis); }
 
 /**
  * @brief Read the user offset for axis Y (for output data and/or wake-up)
@@ -3847,10 +3729,7 @@ int8_t ITDS_setOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t offset
  * @param[out] offsetValueYAxis The returned user offset for axis Y.
  * @retval Error code
  */
-int8_t ITDS_getOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t *offsetValueYAxis)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_Y_OFS_USR_REG, 1, (uint8_t *) offsetValueYAxis);
-}
+int8_t ITDS_getOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueYAxis) { return ITDS_ReadReg(sensorInterface, ITDS_Y_OFS_USR_REG, 1, (uint8_t*)offsetValueYAxis); }
 
 /**
  * @brief Set the user offset for axis Z (for output data and/or wake-up)
@@ -3858,10 +3737,7 @@ int8_t ITDS_getOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t *offse
  * @param[in] offsetvalueZAxis The user offset for axis Z
  * @retval Error code
  */
-int8_t ITDS_setOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t offsetvalueZAxis)
-{
-  return ITDS_WriteReg(sensorInterface, ITDS_Z_OFS_USR_REG, 1, (uint8_t *) &offsetvalueZAxis);
-}
+int8_t ITDS_setOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t offsetvalueZAxis) { return ITDS_WriteReg(sensorInterface, ITDS_Z_OFS_USR_REG, 1, (uint8_t*)&offsetvalueZAxis); }
 
 /**
  * @brief Read the user offset for axis Z (for output data and/or wake-up)
@@ -3869,11 +3745,7 @@ int8_t ITDS_setOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t offset
  * @param[out] offsetValueZAxis The returned user offset for axis Z.
  * @retval Error code
  */
-int8_t ITDS_getOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t *offsetValueZAxis)
-{
-  return ITDS_ReadReg(sensorInterface, ITDS_Z_OFS_USR_REG, 1, (uint8_t *) offsetValueZAxis);
-}
-
+int8_t ITDS_getOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueZAxis) { return ITDS_ReadReg(sensorInterface, ITDS_Z_OFS_USR_REG, 1, (uint8_t*)offsetValueZAxis); }
 
 /* CTRL_7 */
 
@@ -3885,16 +3757,16 @@ int8_t ITDS_getOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t *offse
  */
 int8_t ITDS_setDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t drdyPulsed)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.drdyPulse = drdyPulsed;
+    ctrl7.drdyPulse = drdyPulsed;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -3903,18 +3775,18 @@ int8_t ITDS_setDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyP
  * @param[out] drdyPulsed The returned data ready interrupt mode
  * @retval Error code
  */
-int8_t ITDS_isDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t *drdyPulsed)
+int8_t ITDS_isDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t* drdyPulsed)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *drdyPulsed = (ITDS_drdyPulse_t) ctrl7.drdyPulse;
+    *drdyPulsed = (ITDS_drdyPulse_t)ctrl7.drdyPulse;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3925,16 +3797,16 @@ int8_t ITDS_isDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPu
  */
 int8_t ITDS_setInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1OnInt0)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.INT1toINT0 = int1OnInt0;
+    ctrl7.INT1toINT0 = int1OnInt0;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -3943,18 +3815,18 @@ int8_t ITDS_setInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t in
  * @param[out] int1OnInt0 The returned routing enable state.
  * @retval Error code
  */
-int8_t ITDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t *int1OnInt0)
+int8_t ITDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1OnInt0)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *int1OnInt0 = (ITDS_state_t) ctrl7.INT1toINT0;
+    *int1OnInt0 = (ITDS_state_t)ctrl7.INT1toINT0;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -3965,16 +3837,16 @@ int8_t ITDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t *i
  */
 int8_t ITDS_enableInterrupts(WE_sensorInterface_t* sensorInterface, ITDS_state_t interrupts)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.enInterrupts = interrupts;
+    ctrl7.enInterrupts = interrupts;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -3983,18 +3855,18 @@ int8_t ITDS_enableInterrupts(WE_sensorInterface_t* sensorInterface, ITDS_state_t
  * @param[out] interrupts The returned interrupts enable state.
  * @retval Error code
  */
-int8_t ITDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *interrupts)
+int8_t ITDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* interrupts)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *interrupts = (ITDS_state_t) ctrl7.enInterrupts;
+    *interrupts = (ITDS_state_t)ctrl7.enInterrupts;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -4005,16 +3877,16 @@ int8_t ITDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ITDS_sta
  */
 int8_t ITDS_enableApplyOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.applyOffset = applyOffset;
+    ctrl7.applyOffset = applyOffset;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -4023,18 +3895,18 @@ int8_t ITDS_enableApplyOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] applyOffset Returned enable state.
  * @retval Error code
  */
-int8_t ITDS_isApplyOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *applyOffset)
+int8_t ITDS_isApplyOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *applyOffset = (ITDS_state_t) ctrl7.applyOffset;
+    *applyOffset = (ITDS_state_t)ctrl7.applyOffset;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -4045,16 +3917,16 @@ int8_t ITDS_isApplyOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_sta
  */
 int8_t ITDS_enableApplyWakeUpOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.applyWakeUpOffset = applyOffset;
+    ctrl7.applyWakeUpOffset = applyOffset;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -4063,18 +3935,18 @@ int8_t ITDS_enableApplyWakeUpOffset(WE_sensorInterface_t* sensorInterface, ITDS_
  * @param[out] applyOffset The returned enable state
  * @retval Error code
  */
-int8_t ITDS_isApplyWakeUpOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *applyOffset)
+int8_t ITDS_isApplyWakeUpOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *applyOffset = (ITDS_state_t) ctrl7.applyWakeUpOffset;
+    *applyOffset = (ITDS_state_t)ctrl7.applyWakeUpOffset;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -4085,16 +3957,16 @@ int8_t ITDS_isApplyWakeUpOffsetEnabled(WE_sensorInterface_t* sensorInterface, IT
  */
 int8_t ITDS_setOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t offsetWeight)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.userOffset = offsetWeight;
+    ctrl7.userOffset = offsetWeight;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -4103,18 +3975,18 @@ int8_t ITDS_setOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  * @param[out] offsetWeight The returned offset weight.
  * @retval Error code
  */
-int8_t ITDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t *offsetWeight)
+int8_t ITDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t* offsetWeight)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *offsetWeight = (ITDS_state_t) ctrl7.userOffset;
+    *offsetWeight = (ITDS_state_t)ctrl7.userOffset;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -4125,16 +3997,16 @@ int8_t ITDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t 
  */
 int8_t ITDS_enableHighPassRefMode(WE_sensorInterface_t* sensorInterface, ITDS_state_t refMode)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.highPassRefMode = refMode;
+    ctrl7.highPassRefMode = refMode;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -4143,18 +4015,18 @@ int8_t ITDS_enableHighPassRefMode(WE_sensorInterface_t* sensorInterface, ITDS_st
  * @param[out] refMode The returned reference mode state
  * @retval Error code
  */
-int8_t ITDS_isHighPassRefModeEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *refMode)
+int8_t ITDS_isHighPassRefModeEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* refMode)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *refMode = (ITDS_state_t) ctrl7.highPassRefMode;
+    *refMode = (ITDS_state_t)ctrl7.highPassRefMode;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }
 
 /**
@@ -4165,16 +4037,16 @@ int8_t ITDS_isHighPassRefModeEnabled(WE_sensorInterface_t* sensorInterface, ITDS
  */
 int8_t ITDS_enableLowPassOn6D(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowPassOn6D)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  ctrl7.lowPassOn6D = lowPassOn6D;
+    ctrl7.lowPassOn6D = lowPassOn6D;
 
-  return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7);
+    return ITDS_WriteReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7);
 }
 
 /**
@@ -4183,16 +4055,16 @@ int8_t ITDS_enableLowPassOn6D(WE_sensorInterface_t* sensorInterface, ITDS_state_
  * @param[out] lowPassOn6D The returned low pass filter enable state
  * @retval Error code
  */
-int8_t ITDS_isLowPassOn6DEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t *lowPassOn6D)
+int8_t ITDS_isLowPassOn6DEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowPassOn6D)
 {
-  ITDS_ctrl7_t ctrl7;
+    ITDS_ctrl7_t ctrl7;
 
-  if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t *) &ctrl7))
-  {
-    return WE_FAIL;
-  }
+    if (WE_FAIL == ITDS_ReadReg(sensorInterface, ITDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    {
+        return WE_FAIL;
+    }
 
-  *lowPassOn6D = (ITDS_state_t) ctrl7.lowPassOn6D;
+    *lowPassOn6D = (ITDS_state_t)ctrl7.lowPassOn6D;
 
-  return WE_SUCCESS;
+    return WE_SUCCESS;
 }

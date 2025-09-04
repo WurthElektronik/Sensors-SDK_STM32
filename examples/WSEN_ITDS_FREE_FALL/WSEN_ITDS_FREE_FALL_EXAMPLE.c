@@ -29,22 +29,16 @@
  *
  * Example for the ITDS accelerometer demonstrating usage of the sensor's free-fall detection functionality.
  */
-
 #include "WSEN_ITDS_FREE_FALL_EXAMPLE.h"
-
+#include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
+#include "gpio.h"
+#include "i2c.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "i2c.h"
-#include "usart.h"
-#include "gpio.h"
-
-#include <platform.h>
-
-#include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t itds;
@@ -63,35 +57,32 @@ static ITDS_state_t lastFreeFallEventOccurredState = ITDS_disable;
 /* Sensor initialization function */
 static bool ITDS_init(void);
 
-/* Debug output functions */
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
-
 /**
  * @brief Example initialization.
  * Call this function after HAL initialization.
  */
 void WE_itdsFreeFallExampleInit()
 {
-  char bufferMajor[4];
-  char bufferMinor[4];
-  sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
-  sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
-  debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
-  debugPrint(bufferMajor);
-  debugPrint(".");
-  debugPrintln(bufferMinor);
-  debugPrintln("This is the \"free-fall\" example program for the ITDS sensor.");
-  debugPrintln("Note that for this example to work, the following pin/interrupt configuration is required:");
-  debugPrintln("* INT_0 to PA0, rising and falling edge");
+    char bufferMajor[4];
+    char bufferMinor[4];
+    sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
+    sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
+    debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
+    debugPrint(bufferMajor);
+    debugPrint(".");
+    debugPrintln(bufferMinor);
+    debugPrintln("This is the \"free-fall\" example program for the ITDS sensor.");
+    debugPrintln("Note that for this example to work, the following pin/interrupt configuration is required:");
+    debugPrintln("* INT_0 to PA0, rising and falling edge");
 
-  /* init ITDS */
-  if (false == ITDS_init())
-  {
-    debugPrintln("**** ITDS_Init() error. STOP ****");
-    HAL_Delay(5);
-    while(1);
-  }
+    /* init ITDS */
+    if (false == ITDS_init())
+    {
+        debugPrintln("**** ITDS_Init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
 }
 
 /**
@@ -100,51 +91,51 @@ void WE_itdsFreeFallExampleInit()
  */
 void WE_itdsFreeFallExampleLoop()
 {
-  if (freeFallSignalTriggered != 0)
-  {
-    freeFallSignalTriggered = false;
-
-    debugPrintln("Free-fall started (interrupt)!");
-  }
-
-  if (freeFallSignalRevoked != 0)
-  {
-    freeFallSignalRevoked = false;
-
-    uint32_t fallDuration = 0;
-    if (freeFallEndTime > freeFallStartTime)
+    if (freeFallSignalTriggered != 0)
     {
-      fallDuration = freeFallEndTime - freeFallStartTime;
+        freeFallSignalTriggered = false;
+
+        debugPrintln("Free-fall started (interrupt)!");
     }
-    freeFallStartTime = 0;
-    freeFallEndTime = 0;
 
-    char buffer[6];
-    sprintf(buffer, "%ld", fallDuration);
-
-    debugPrint("Free-fall ended after ");
-    debugPrint(buffer);
-    debugPrintln(" ms (interrupt)!");
-  }
-
-  ITDS_state_t freeFallEventOccurred;
-  ITDS_isFreeFallEvent(&itds, &freeFallEventOccurred);
-  if (freeFallEventOccurred != lastFreeFallEventOccurredState)
-  {
-    if (freeFallEventOccurred == ITDS_enable)
+    if (freeFallSignalRevoked != 0)
     {
-      debugPrintln("Free-fall detected (register)!");
-    }
-    lastFreeFallEventOccurredState = freeFallEventOccurred;
-  }
+        freeFallSignalRevoked = false;
 
-  /* The following code can be used to manually reset the free-fall interrupt if latched mode is enabled. */
-//      ITDS_allInterruptEvents_t events;
-//      ITDS_getAllInterruptEvents(&itds, &events);
-//      if (events.freeFallState != 0)
-//      {
-//        debugPrintln("Free-fall detected (register)!");
-//      }
+        uint32_t fallDuration = 0;
+        if (freeFallEndTime > freeFallStartTime)
+        {
+            fallDuration = freeFallEndTime - freeFallStartTime;
+        }
+        freeFallStartTime = 0;
+        freeFallEndTime = 0;
+
+        char buffer[6];
+        sprintf(buffer, "%ld", fallDuration);
+
+        debugPrint("Free-fall ended after ");
+        debugPrint(buffer);
+        debugPrintln(" ms (interrupt)!");
+    }
+
+    ITDS_state_t freeFallEventOccurred;
+    ITDS_isFreeFallEvent(&itds, &freeFallEventOccurred);
+    if (freeFallEventOccurred != lastFreeFallEventOccurredState)
+    {
+        if (freeFallEventOccurred == ITDS_enable)
+        {
+            debugPrintln("Free-fall detected (register)!");
+        }
+        lastFreeFallEventOccurredState = freeFallEventOccurred;
+    }
+
+    /* The following code can be used to manually reset the free-fall interrupt if latched mode is enabled. */
+    //      ITDS_allInterruptEvents_t events;
+    //      ITDS_getAllInterruptEvents(&itds, &events);
+    //      if (events.freeFallState != 0)
+    //      {
+    //        debugPrintln("Free-fall detected (register)!");
+    //      }
 }
 
 /**
@@ -152,93 +143,93 @@ void WE_itdsFreeFallExampleLoop()
  */
 static bool ITDS_init(void)
 {
-  /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
-  ITDS_getDefaultInterface(&itds);
-  itds.interfaceType = WE_i2c;
-  itds.options.i2c.burstMode = 1;
-  itds.handle = &hi2c1;
+    /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
+    ITDS_getDefaultInterface(&itds);
+    itds.interfaceType = WE_i2c;
+    itds.options.i2c.burstMode = 1;
+    itds.handle = &hi2c1;
 
-  /* Wait for boot */
-  HAL_Delay(50);
-  while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
-  {
-  }
-  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
-
-  HAL_Delay(5);
-
-  /* First communication test */
-  uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-  {
-    if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    /* Wait for boot */
+    HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&itds))
     {
-      debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+
+    HAL_Delay(5);
+
+    /* First communication test */
+    uint8_t deviceIdValue = 0;
+    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
+    {
+        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+        {
+            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
+        }
+        else
+        {
+            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
+            return false;
+        }
     }
     else
     {
-      debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-      return false;
+        debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
     }
-  }
-  else
-  {
-    debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
-    return false;
-  }
 
-  /* Perform soft reset of the sensor */
-  ITDS_softReset(&itds, ITDS_enable);
-  ITDS_state_t swReset;
-  do
-  {
-    ITDS_getSoftResetState(&itds, &swReset);
-  } while (swReset);
-  debugPrintln("**** ITDS reset complete ****");
+    /* Perform soft reset of the sensor */
+    ITDS_softReset(&itds, ITDS_enable);
+    ITDS_state_t swReset;
+    do
+    {
+        ITDS_getSoftResetState(&itds, &swReset);
+    } while (swReset);
+    debugPrintln("**** ITDS reset complete ****");
 
-  /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
-  ITDS_reboot(&itds, ITDS_enable);
-  ITDS_state_t boot;
-  do
-  {
-    ITDS_isRebooting(&itds, &boot);
-  } while (boot);
-  debugPrintln("**** ITDS reboot complete ****");
+    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    ITDS_reboot(&itds, ITDS_enable);
+    ITDS_state_t boot;
+    do
+    {
+        ITDS_isRebooting(&itds, &boot);
+    } while (boot);
+    debugPrintln("**** ITDS reboot complete ****");
 
-  /* Turn on accelerometer (high performance, 200Hz) */
-  ITDS_setOperatingMode(&itds, ITDS_highPerformance);
-  ITDS_setOutputDataRate(&itds, ITDS_odr6);
+    /* Turn on accelerometer (high performance, 200Hz) */
+    ITDS_setOperatingMode(&itds, ITDS_highPerformance);
+    ITDS_setOutputDataRate(&itds, ITDS_odr6);
 
-  /* Low noise mode */
-  ITDS_enableLowNoise(&itds, ITDS_enable);
+    /* Low noise mode */
+    ITDS_enableLowNoise(&itds, ITDS_enable);
 
-  /* 2g range */
-  ITDS_setFullScale(&itds, ITDS_twoG);
+    /* 2g range */
+    ITDS_setFullScale(&itds, ITDS_twoG);
 
-  /* Set minimum fall duration (1 bit = 1 * 1 / ODR) */
-  /* Corresponds to 6 / 200 = 30 ms */
-  ITDS_setFreeFallDuration(&itds, 6);
+    /* Set minimum fall duration (1 bit = 1 * 1 / ODR) */
+    /* Corresponds to 6 / 200 = 30 ms */
+    ITDS_setFreeFallDuration(&itds, 6);
 
-  /* Set free-fall threshold (value is encoded - see documentation of FREE_FALL_REG for details) */
-  /* Corresponds to 10 * 31.25mg = 312.5mg */
-  ITDS_setFreeFallThreshold(&itds, 3);
+    /* Set free-fall threshold (value is encoded - see documentation of FREE_FALL_REG for details) */
+    /* Corresponds to 10 * 31.25mg = 312.5mg */
+    ITDS_setFreeFallThreshold(&itds, 3);
 
-  /* Interrupts are active high */
-  ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
+    /* Interrupts are active high */
+    ITDS_setInterruptActiveLevel(&itds, ITDS_activeHigh);
 
-  /* Interrupts are push-pull */
-  ITDS_setInterruptPinType(&itds, ITDS_pushPull);
+    /* Interrupts are push-pull */
+    ITDS_setInterruptPinType(&itds, ITDS_pushPull);
 
-  /* Latched mode disabled (interrupt signal is automatically reset) */
-  ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
+    /* Latched mode disabled (interrupt signal is automatically reset) */
+    ITDS_enableLatchedInterrupt(&itds, ITDS_disable);
 
-  /* Enable interrupts */
-  ITDS_enableInterrupts(&itds, ITDS_enable);
+    /* Enable interrupts */
+    ITDS_enableInterrupts(&itds, ITDS_enable);
 
-  /* Enable free-fall interrupt on INT_0 */
-  ITDS_enableFreeFallINT0(&itds, ITDS_enable);
+    /* Enable free-fall interrupt on INT_0 */
+    ITDS_enableFreeFallINT0(&itds, ITDS_enable);
 
-  return true;
+    return true;
 }
 
 #if defined(STM32L432xx)
@@ -246,53 +237,41 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin);
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin);
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (HAL_GPIO_ReadPin(GPIOA, GPIO_Pin) == GPIO_PIN_SET)
-  {
-    HAL_GPIO_EXTI_Rising_Callback(GPIO_Pin);
-  }
-  else
-  {
-    HAL_GPIO_EXTI_Falling_Callback(GPIO_Pin);
-  }
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_Pin) == GPIO_PIN_SET)
+    {
+        HAL_GPIO_EXTI_Rising_Callback(GPIO_Pin);
+    }
+    else
+    {
+        HAL_GPIO_EXTI_Falling_Callback(GPIO_Pin);
+    }
 }
 #endif
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == GPIO_PIN_0)
-  {
-    /* Free-fall interrupt */
-    /* Rising edge */
-    freeFallSignalTriggered = true;
-    freeFallStartTime = HAL_GetTick();
+    if (GPIO_Pin == GPIO_PIN_0)
+    {
+        /* Free-fall interrupt */
+        /* Rising edge */
+        freeFallSignalTriggered = true;
+        freeFallStartTime = HAL_GetTick();
 
-    /* Turn LED on while falling */
-    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  }
+        /* Turn LED on while falling */
+        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+    }
 }
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == GPIO_PIN_0)
-  {
-    /* Free-fall interrupt */
-    /* Falling edge */
-    freeFallSignalRevoked = true;
-    freeFallEndTime = HAL_GetTick();
+    if (GPIO_Pin == GPIO_PIN_0)
+    {
+        /* Free-fall interrupt */
+        /* Falling edge */
+        freeFallSignalRevoked = true;
+        freeFallEndTime = HAL_GetTick();
 
-    /* Turn LED on while falling */
-    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-  }
-}
-
-static void debugPrint(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-  char newline[2] = "\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
+        /* Turn LED on while falling */
+        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+    }
 }

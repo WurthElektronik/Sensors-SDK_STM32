@@ -29,22 +29,16 @@
  *
  * Demonstrates basic usage of the PADS absolute pressure sensor connected via I2C.
  */
-
 #include "WSEN_PADS_EXAMPLE.h"
-
+#include "../SensorsSDK/WSEN_PADS_2511020213301/WSEN_PADS_2511020213301.h"
+#include "gpio.h"
+#include "i2c.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "i2c.h"
-#include "usart.h"
-#include "gpio.h"
-
-#include <platform.h>
-
-#include "../SensorsSDK/WSEN_PADS_2511020213301/WSEN_PADS_2511020213301.h"
 
 /* Comment/uncomment the following lines to disable/enable the examples for
  * each data type (see WE_padsExampleLoop() function). */
@@ -62,10 +56,6 @@ static bool PADS_init(void);
 void PADS_singleConversionModeExample(void);
 void PADS_continuousModeExample(void);
 
-/* Debug output functions */
-static void debugPrint(char _out[]);
-static void debugPrintln(char _out[]);
-
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
 static void debugPrintPressure_float(float pressureKPa);
 static void debugPrintTemperature_float(float temperature);
@@ -82,27 +72,28 @@ static void debugPrintTemperature_int(int16_t temperature);
  */
 void WE_padsExampleInit()
 {
-  char bufferMajor[4];
-  char bufferMinor[4];
-  sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
-  sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
-  debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
-  debugPrint(bufferMajor);
-  debugPrint(".");
-  debugPrintln(bufferMinor);
-  debugPrintln("This is the example program for the PADS sensor.");
+    char bufferMajor[4];
+    char bufferMinor[4];
+    sprintf(bufferMajor, "%d", WE_SENSOR_SDK_MAJOR_VERSION);
+    sprintf(bufferMinor, "%d", WE_SENSOR_SDK_MINOR_VERSION);
+    debugPrint("Wuerth Elektronik eiSos Sensors SDK version ");
+    debugPrint(bufferMajor);
+    debugPrint(".");
+    debugPrintln(bufferMinor);
+    debugPrintln("This is the example program for the PADS sensor.");
 
-  /* init PADS */
-  if (false == PADS_init())
-  {
-    debugPrintln("**** PADS_Init() error. STOP ****");
+    /* init PADS */
+    if (false == PADS_init())
+    {
+        debugPrintln("**** PADS_Init() error. STOP ****");
+        HAL_Delay(5);
+        while (1)
+            ;
+    }
+
+    /* LED on */
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
     HAL_Delay(5);
-    while(1);
-  }
-
-  /* LED on */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  HAL_Delay(5);
 }
 
 /**
@@ -111,9 +102,9 @@ void WE_padsExampleInit()
  */
 void WE_padsExampleLoop()
 {
-  /* Comment/uncomment the following lines to switch between example modes. */
-  PADS_singleConversionModeExample();
-//  PADS_continuousModeExample();
+    /* Comment/uncomment the following lines to switch between example modes. */
+    PADS_singleConversionModeExample();
+    //  PADS_continuousModeExample();
 }
 
 /**
@@ -121,50 +112,50 @@ void WE_padsExampleLoop()
  */
 static bool PADS_init(void)
 {
-  /* Initialize sensor interface (i2c with PADS address, burst mode deactivated) */
-  PADS_getDefaultInterface(&pads);
-  pads.interfaceType = WE_i2c;
-  pads.handle = &hi2c1;
+    /* Initialize sensor interface (i2c with PADS address, burst mode deactivated) */
+    PADS_getDefaultInterface(&pads);
+    pads.interfaceType = WE_i2c;
+    pads.handle = &hi2c1;
 
-  /* Wait for boot */
-  HAL_Delay(50);
-  while (WE_SUCCESS != WE_isSensorInterfaceReady(&pads))
-  {
-  }
-  debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
-
-  HAL_Delay(5);
-
-  /* First communication test */
-  uint8_t deviceIdValue = 0;
-  if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
-  {
-    if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+    /* Wait for boot */
+    HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&pads))
     {
-      debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+
+    HAL_Delay(5);
+
+    /* First communication test */
+    uint8_t deviceIdValue = 0;
+    if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
+    {
+        if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+        {
+            debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
+        }
+        else
+        {
+            debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
+            return false;
+        }
     }
     else
     {
-      debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
-      return false;
+        debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
+        return false;
     }
-  }
-  else
-  {
-    debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
-    return false;
-  }
 
-  /* Perform soft reset of the sensor */
-  PADS_softReset(&pads, PADS_enable);
-  PADS_state_t swReset;
-  do
-  {
-    PADS_getSoftResetState(&pads, &swReset);
-  } while (swReset);
-  debugPrintln("**** PADS reset complete ****");
+    /* Perform soft reset of the sensor */
+    PADS_softReset(&pads, PADS_enable);
+    PADS_state_t swReset;
+    do
+    {
+        PADS_getSoftResetState(&pads, &swReset);
+    } while (swReset);
+    debugPrintln("**** PADS reset complete ****");
 
-  return true;
+    return true;
 }
 
 /**
@@ -175,76 +166,75 @@ static bool PADS_init(void)
  */
 void PADS_singleConversionModeExample()
 {
-  debugPrintln("Starting single conversion mode...");
+    debugPrintln("Starting single conversion mode...");
 
-  /* Automatic increment register address */
-  PADS_enableAutoIncrement(&pads, PADS_enable);
+    /* Automatic increment register address */
+    PADS_enableAutoIncrement(&pads, PADS_enable);
 
-  /* Enable block data update */
-  PADS_enableBlockDataUpdate(&pads, PADS_enable);
+    /* Enable block data update */
+    PADS_enableBlockDataUpdate(&pads, PADS_enable);
 
-  while (1)
-  {
-    /* Start a conversion (one shot) */
-    PADS_enableOneShot(&pads, PADS_enable);
-
-    /* Wait until the value is ready to read */
-    PADS_state_t presStatus;
-    do
+    while (1)
     {
-      PADS_isPressureDataAvailable(&pads, &presStatus);
-    } while (presStatus != PADS_enable);
+        /* Start a conversion (one shot) */
+        PADS_enableOneShot(&pads, PADS_enable);
 
-    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+        /* Wait until the value is ready to read */
+        PADS_state_t presStatus;
+        do
+        {
+            PADS_isPressureDataAvailable(&pads, &presStatus);
+        } while (presStatus != PADS_enable);
 
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
-    float pressureFloat = 0;
-    if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
-    {
-      debugPrintPressure_float(pressureFloat);
-    }
-    else
-    {
-      debugPrintln("**** PADS_getPressure_float(): NOT OK ****");
-    }
+        float pressureFloat = 0;
+        if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
+        {
+            debugPrintPressure_float(pressureFloat);
+        }
+        else
+        {
+            debugPrintln("**** PADS_getPressure_float(): NOT OK ****");
+        }
 
-    float temperatureFloat = 0;
-    if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
-    {
-      debugPrintTemperature_float(temperatureFloat);
-    }
-    else
-    {
-      debugPrintln("**** PADS_getTemperature_float(): NOT OK ****");
-    }
+        float temperatureFloat = 0;
+        if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
+        {
+            debugPrintTemperature_float(temperatureFloat);
+        }
+        else
+        {
+            debugPrintln("**** PADS_getTemperature_float(): NOT OK ****");
+        }
 #endif /* PADS_EXAMPLE_ENABLE_FLOAT */
 
 #ifdef PADS_EXAMPLE_ENABLE_INT
-    int32_t pressureInt = 0;
-    if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
-    {
-      debugPrintPressure_int(pressureInt);
-    }
-    else
-    {
-      debugPrintln("**** PADS_getPressure_int(): NOT OK ****");
-    }
+        int32_t pressureInt = 0;
+        if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
+        {
+            debugPrintPressure_int(pressureInt);
+        }
+        else
+        {
+            debugPrintln("**** PADS_getPressure_int(): NOT OK ****");
+        }
 
-    int16_t tempInt = 0;
-    if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
-    {
-      debugPrintTemperature_int(tempInt);
-    }
-    else
-    {
-      debugPrintln("**** PADS_getTemperature_int(): NOT OK ****");
-    }
+        int16_t tempInt = 0;
+        if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
+        {
+            debugPrintTemperature_int(tempInt);
+        }
+        else
+        {
+            debugPrintln("**** PADS_getTemperature_int(): NOT OK ****");
+        }
 #endif /* PADS_EXAMPLE_ENABLE_INT */
 
-    /* Wait 1s */
-    HAL_Delay(1000);
-  }
+        /* Wait 1s */
+        HAL_Delay(1000);
+    }
 }
 
 /**
@@ -255,111 +245,98 @@ void PADS_singleConversionModeExample()
  */
 void PADS_continuousModeExample(void)
 {
-  debugPrintln("Starting continuous mode...");
+    debugPrintln("Starting continuous mode...");
 
-  /* Enable low-noise configuration */
-  PADS_setPowerMode(&pads, PADS_lowNoise);
+    /* Enable low-noise configuration */
+    PADS_setPowerMode(&pads, PADS_lowNoise);
 
-  /* Automatic increment register address */
-  PADS_enableAutoIncrement(&pads, PADS_enable);
+    /* Automatic increment register address */
+    PADS_enableAutoIncrement(&pads, PADS_enable);
 
-  /* Enable additional low pass filter */
-  PADS_enableLowPassFilter(&pads, PADS_enable);
+    /* Enable additional low pass filter */
+    PADS_enableLowPassFilter(&pads, PADS_enable);
 
-  /* Set filter bandwidth of ODR/20 */
-  PADS_setLowPassFilterConfig(&pads, PADS_lpFilterBW2);
+    /* Set filter bandwidth of ODR/20 */
+    PADS_setLowPassFilterConfig(&pads, PADS_lpFilterBW2);
 
-  /* Enable block data update */
-  PADS_enableBlockDataUpdate(&pads, PADS_enable);
+    /* Enable block data update */
+    PADS_enableBlockDataUpdate(&pads, PADS_enable);
 
-  /* Enable continuous operation with an update rate of 50 Hz */
-  PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
+    /* Enable continuous operation with an update rate of 50 Hz */
+    PADS_setOutputDataRate(&pads, PADS_outputDataRate50Hz);
 
-
-  uint16_t counter = 0;
-  while (1)
-  {
-    HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-
-    /* Print at 1 Hz */
-    counter++;
-    bool printNow = counter >= 50;
-    if (printNow)
+    uint16_t counter = 0;
+    while (1)
     {
-      counter = 0;
-    }
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+
+        /* Print at 1 Hz */
+        counter++;
+        bool printNow = counter >= 50;
+        if (printNow)
+        {
+            counter = 0;
+        }
 
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
-    float pressureFloat = 0;
-    if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
-    {
-      if (printNow)
-      {
-        debugPrintPressure_float(pressureFloat);
-      }
-    }
-    else
-    {
-      debugPrintln("**** PADS_getPressure_float(): NOT OK ****");
-    }
+        float pressureFloat = 0;
+        if (WE_SUCCESS == PADS_getPressure_float(&pads, &pressureFloat))
+        {
+            if (printNow)
+            {
+                debugPrintPressure_float(pressureFloat);
+            }
+        }
+        else
+        {
+            debugPrintln("**** PADS_getPressure_float(): NOT OK ****");
+        }
 
-    float temperatureFloat = 0;
-    if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
-    {
-      if (printNow)
-      {
-        debugPrintTemperature_float(temperatureFloat);
-      }
-    }
-    else
-    {
-      debugPrintln("**** PADS_getTemperature_float(): NOT OK ****");
-    }
+        float temperatureFloat = 0;
+        if (WE_SUCCESS == PADS_getTemperature_float(&pads, &temperatureFloat))
+        {
+            if (printNow)
+            {
+                debugPrintTemperature_float(temperatureFloat);
+            }
+        }
+        else
+        {
+            debugPrintln("**** PADS_getTemperature_float(): NOT OK ****");
+        }
 #endif /* PADS_EXAMPLE_ENABLE_FLOAT */
 
 #ifdef PADS_EXAMPLE_ENABLE_INT
-    int32_t pressureInt = 0;
-    if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
-    {
-      if (printNow)
-      {
-        debugPrintPressure_int(pressureInt);
-      }
-    }
-    else
-    {
-      debugPrintln("**** PADS_getPressure_int(): NOT OK ****");
-    }
+        int32_t pressureInt = 0;
+        if (WE_SUCCESS == PADS_getPressure_int(&pads, &pressureInt))
+        {
+            if (printNow)
+            {
+                debugPrintPressure_int(pressureInt);
+            }
+        }
+        else
+        {
+            debugPrintln("**** PADS_getPressure_int(): NOT OK ****");
+        }
 
-    int16_t tempInt = 0;
-    if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
-    {
-      if (printNow)
-      {
-        debugPrintTemperature_int(tempInt);
-      }
-    }
-    else
-    {
-      debugPrintln("**** PADS_getTemperature_int(): NOT OK ****");
-    }
+        int16_t tempInt = 0;
+        if (WE_SUCCESS == PADS_getTemperature_int(&pads, &tempInt))
+        {
+            if (printNow)
+            {
+                debugPrintTemperature_int(tempInt);
+            }
+        }
+        else
+        {
+            debugPrintln("**** PADS_getTemperature_int(): NOT OK ****");
+        }
 #endif /* PADS_EXAMPLE_ENABLE_INT */
 
-    /* Wait 1/ODR */
-    HAL_Delay(1000 / 50);
-  }
-}
-
-static void debugPrint(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-}
-
-static void debugPrintln(char _out[])
-{
-  HAL_UART_Transmit(&huart2, (uint8_t *) _out, strlen(_out), 10);
-  char newline[2] = "\r\n";
-  HAL_UART_Transmit(&huart2, (uint8_t *) newline, 2, 10);
+        /* Wait 1/ODR */
+        HAL_Delay(1000 / 50);
+    }
 }
 
 #ifdef PADS_EXAMPLE_ENABLE_FLOAT
@@ -370,24 +347,24 @@ static void debugPrintln(char _out[])
  */
 static void debugPrintPressure_float(float pressureKPa)
 {
-  float pressureAbs = fabs(pressureKPa);
-  uint16_t full = (uint16_t) pressureAbs;
-  uint16_t decimals = (uint16_t) (((uint32_t) (pressureAbs * 10000)) % 10000); /* 4 decimal places */
+    float pressureAbs = fabs(pressureKPa);
+    uint16_t full = (uint16_t)pressureAbs;
+    uint16_t decimals = (uint16_t)(((uint32_t)(pressureAbs * 10000)) % 10000); /* 4 decimal places */
 
-  char bufferFull[4]; /* max 3 pre-decimal point positions (26 to 126 kPa) */
-  char bufferDecimals[5]; /* 4 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%04u", decimals);
+    char bufferFull[4];     /* max 3 pre-decimal point positions (26 to 126 kPa) */
+    char bufferDecimals[5]; /* 4 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%04u", decimals);
 
-  debugPrint("PADS pressure (float) = ");
-  if (pressureKPa < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" kPa");
+    debugPrint("PADS pressure (float) = ");
+    if (pressureKPa < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" kPa");
 }
 
 /**
@@ -396,24 +373,24 @@ static void debugPrintPressure_float(float pressureKPa)
  */
 static void debugPrintTemperature_float(float tempDegC)
 {
-  float tempAbs = fabs(tempDegC);
-  uint16_t full = (uint16_t) tempAbs;
-  uint16_t decimals = ((uint16_t) (tempAbs * 100)) % 100; /* 2 decimal places */
+    float tempAbs = fabs(tempDegC);
+    uint16_t full = (uint16_t)tempAbs;
+    uint16_t decimals = ((uint16_t)(tempAbs * 100)) % 100; /* 2 decimal places */
 
-  char bufferFull[4]; /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
-  char bufferDecimals[3]; /* 2 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%02u", decimals);
+    char bufferFull[4];     /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
+    char bufferDecimals[3]; /* 2 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%02u", decimals);
 
-  debugPrint("PADS temperature (float) = ");
-  if (tempDegC < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" degrees Celsius");
+    debugPrint("PADS temperature (float) = ");
+    if (tempDegC < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" degrees Celsius");
 }
 
 #endif /* PADS_EXAMPLE_ENABLE_FLOAT */
@@ -426,23 +403,23 @@ static void debugPrintTemperature_float(float tempDegC)
  */
 static void debugPrintPressure_int(int32_t pressurePa)
 {
-  uint16_t full = (uint16_t) (abs(pressurePa) / 1000);
-  uint16_t decimals = (uint16_t) (abs(pressurePa) % 1000); /* 3 decimal places */
+    uint16_t full = (uint16_t)(abs(pressurePa) / 1000);
+    uint16_t decimals = (uint16_t)(abs(pressurePa) % 1000); /* 3 decimal places */
 
-  char bufferFull[4]; /* max 3 pre-decimal point positions */
-  char bufferDecimals[4]; /* 3 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%03u", decimals);
+    char bufferFull[4];     /* max 3 pre-decimal point positions */
+    char bufferDecimals[4]; /* 3 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%03u", decimals);
 
-  debugPrint("PADS pressure (int) = ");
-  if (pressurePa < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" kPa");
+    debugPrint("PADS pressure (int) = ");
+    if (pressurePa < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" kPa");
 }
 
 /**
@@ -451,23 +428,23 @@ static void debugPrintPressure_int(int32_t pressurePa)
  */
 static void debugPrintTemperature_int(int16_t temperature)
 {
-  uint16_t full = ((uint16_t) abs(temperature)) / 100;
-  uint16_t decimals = (uint16_t) (abs(temperature) % 100); /* 2 decimal places */
+    uint16_t full = ((uint16_t)abs(temperature)) / 100;
+    uint16_t decimals = (uint16_t)(abs(temperature) % 100); /* 2 decimal places */
 
-  char bufferFull[4]; /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
-  char bufferDecimals[3]; /* 2 decimal places */
-  sprintf(bufferFull, "%u", full);
-  sprintf(bufferDecimals, "%02u", decimals);
+    char bufferFull[4];     /* 3 pre-decimal point positions (from -40 to 85 degrees Celsius) */
+    char bufferDecimals[3]; /* 2 decimal places */
+    sprintf(bufferFull, "%u", full);
+    sprintf(bufferDecimals, "%02u", decimals);
 
-  debugPrint("PADS temperature (int) = ");
-  if (temperature < 0)
-  {
-    debugPrint("-");
-  }
-  debugPrint(bufferFull);
-  debugPrint(".");
-  debugPrint(bufferDecimals);
-  debugPrintln(" degrees Celsius");
+    debugPrint("PADS temperature (int) = ");
+    if (temperature < 0)
+    {
+        debugPrint("-");
+    }
+    debugPrint(bufferFull);
+    debugPrint(".");
+    debugPrint(bufferDecimals);
+    debugPrintln(" degrees Celsius");
 }
 
 #endif /* PADS_EXAMPLE_ENABLE_INT */

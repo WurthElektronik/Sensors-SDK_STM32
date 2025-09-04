@@ -55,6 +55,9 @@ There are example projects for the STM32G031xx and STM32L432xx MCUs. The example
 | WSEN_PADS_ADVANCED | Advanced usage of the PADS absolute pressure sensor connected via I2C (data-ready interrupt, AUTOZERO mode, usage of the FIFO buffer). |
 | WSEN_PDUS | Basic usage of the PDUS differential pressure sensor connected via I2C. |
 | WSEN_TIDS | Basic usage of the TIDS temperature sensor connected via I2C. |
+| WSEN_GCDS_2526101040301 | Basic usage of the GCDS co2 sensor connected via I2C. |
+| WSEN_PDMS_25131308XXX05 | Basic usage of the PDMS differential sensor connected via I2C. |
+| WSEN_PDMS_25131308XXX05_SPI | Basic usage of the PDMS differential sensor connected via SPI. |
 
 
 # First steps
@@ -73,3 +76,53 @@ First steps using STM32CubeIDE:
 - Connect sensor to PC via USB
 - Connect terminal program to STM32 (Baud rate 115200)
 - Compile, flash and run either via "Debug (F5)" or "Run (Ctrl+F5)"
+
+# Pin Setup Nucleo - Sensor
+```
+ _____________________           ______________________
+|        STM32G031    |         |        Sensor (I2C)  |
+|                     |         |                      |
+|                     |         |                      |
+|     I2C1_SDA (PA10) |-------->| SDA                  |
+|                     |         |                      |
+|      I2C1_SCL (PA9) |<--------| SCL                  |
+|                     |         |                      |
+|_____________________|         |______________________|
+```
+```
+_____________________           ______________________
+|        STM32G031    |         |        Sensor (SPI)  |
+|                     |         |                      |
+|      SPI1_CS0 (PA0) |-------->| CS                   |
+|                     |         |                      |
+|     SPI1_MOSI (PA7) |<--------| MOSI                 |
+|                     |         |                      |
+|     SPI1_MISO (PA6) |-------->| MISO                 |
+|                     |         |                      |
+|      SPI1_SCK (PA1) |<--------| SCK                  |
+|_____________________|         |______________________|
+```
+```
+ _____________________           ______________________
+|        STM32L432    |         |        Sensor (I2C)  |
+|                     |         |                      |
+|                     |         |                      |
+|     I2C1_SDA (PA10) |-------->| SDA                  |
+|                     |         |                      |
+|      I2C1_SCL (PA9) |<--------| SCL                  |
+|                     |         |                      |
+|_____________________|         |______________________|
+```
+```
+ _____________________           ______________________
+|        STM32L432    |         |        Sensor (SPI)  |
+|                     |         |                      |
+|      SPI1_CS0 (PA0) |-------->| CS                   |
+|                     |         |                      |
+|     SPI1_MOSI (PA7) |<--------| MOSI                 |
+|                     |         |                      |
+|     SPI1_MISO (PA6) |-------->| MISO                 |
+|                     |         |                      |
+|      SPI1_SCK (PA1) |<--------| SCK                  |
+|_____________________|         |______________________|
+```
