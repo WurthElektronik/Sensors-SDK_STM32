@@ -48,7 +48,7 @@ static WE_sensorInterface_t isds;
 static bool tapOccurred = false;
 
 /* Sensor initialization function */
-static bool ISDS_init(void);
+static bool WE_isdsInit(void);
 
 /**
  * @brief Example initialization.
@@ -69,7 +69,7 @@ void WE_isdsTapExampleInit()
     debugPrintln("* INT_0 to PA0, rising edge only");
 
     /* init ISDS */
-    if (false == ISDS_init())
+    if (false == WE_isdsInit())
     {
         debugPrintln("**** ISDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -87,7 +87,7 @@ void WE_isdsTapExampleLoop()
     /* Tap events can be detected via the interrupt pin or by reading the status register. */
     /* Here, the status register is checked after a tap interrupt has occurred. */
     /* See HAL_GPIO_EXTI_Rising_Callback() for the corresponding ISR callback. */
-    if (tapOccurred == true)
+    if (true == tapOccurred)
     {
         tapOccurred = false;
 
@@ -133,14 +133,14 @@ void WE_isdsTapExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ISDS_init(void)
+static bool WE_isdsInit(void)
 {
     /* Initialize sensor interface (i2c with ISDS address, burst mode activated) */
     ISDS_getDefaultInterface(&isds);
     isds.interfaceType = WE_i2c;
     isds.options.i2c.burstMode = 1;
     isds.options.i2c.address = ISDS_ADDRESS_I2C_1;
-#warning "Please use correct i2c address here"
+#pragma message("Please use correct i2c address here")
     isds.handle = &hi2c1;
 
     /* Wait for boot */
@@ -154,21 +154,14 @@ static bool ISDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ISDS_getDeviceID(&isds, &deviceIdValue))
-    {
-        if (deviceIdValue == ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ISDS_getDeviceID(&isds, &deviceIdValue))
     {
         debugPrintln("**** ISDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
+    {
+        debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -181,7 +174,7 @@ static bool ISDS_init(void)
     } while (swReset);
     debugPrintln("**** ISDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ISDS_reboot(&isds, ISDS_enable);
     HAL_Delay(15);
     debugPrintln("**** ISDS reboot complete ****");

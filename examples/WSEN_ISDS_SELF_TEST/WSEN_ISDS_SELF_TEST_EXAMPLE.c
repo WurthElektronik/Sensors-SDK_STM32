@@ -53,7 +53,7 @@
 static WE_sensorInterface_t isds;
 
 /* Sensor initialization function */
-static bool ISDS_init(void);
+static bool WE_isdsInit(void);
 
 static bool ISDS_selfTestAcc(void);
 static bool ISDS_selfTestGyro(void);
@@ -79,7 +79,7 @@ void WE_isdsSelfTestExampleInit()
     debugPrintln("This is the \"self-test\" example program for the ISDS sensor.");
 
     /* init ISDS */
-    if (false == ISDS_init())
+    if (false == WE_isdsInit())
     {
         debugPrintln("**** ISDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -98,8 +98,7 @@ void WE_isdsSelfTestExampleInit()
  */
 void WE_isdsSelfTestExampleLoop()
 {
-    bool ok = ISDS_selfTestAcc();
-    if (ok)
+    if (ISDS_selfTestAcc())
     {
         debugPrintln("Accelerometer self-test completed successfully.");
     }
@@ -111,8 +110,7 @@ void WE_isdsSelfTestExampleLoop()
 
     HAL_Delay(1000);
 
-    ok = ISDS_selfTestGyro();
-    if (ok)
+    if (ISDS_selfTestGyro())
     {
         debugPrintln("Gyroscope self-test completed successfully.");
     }
@@ -128,14 +126,14 @@ void WE_isdsSelfTestExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ISDS_init(void)
+static bool WE_isdsInit(void)
 {
     /* Initialize sensor interface (i2c with ISDS address, burst mode activated) */
     ISDS_getDefaultInterface(&isds);
     isds.interfaceType = WE_i2c;
     isds.options.i2c.burstMode = 1;
     isds.options.i2c.address = ISDS_ADDRESS_I2C_1;
-#warning "Please use correct i2c address here"
+#pragma message("Please use correct i2c address here")
     isds.handle = &hi2c1;
 
     /* Wait for boot */
@@ -149,21 +147,14 @@ static bool ISDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ISDS_getDeviceID(&isds, &deviceIdValue))
-    {
-        if (deviceIdValue == ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ISDS_getDeviceID(&isds, &deviceIdValue))
     {
         debugPrintln("**** ISDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
+    {
+        debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

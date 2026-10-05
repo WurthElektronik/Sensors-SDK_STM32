@@ -55,7 +55,7 @@ static bool interrupt0Triggered = false;
 static bool interrupt1Triggered = false;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 
 /* Functions containing main loops for the available example modes. */
 void ITDS_startFifoMode();
@@ -85,7 +85,7 @@ void WE_itdsFifoExampleInit()
     debugPrintln("* INT_1 to PA1, rising edge interrupt only");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -131,7 +131,7 @@ void WE_itdsFifoExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -150,21 +150,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -177,7 +170,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do
@@ -247,12 +240,12 @@ void ITDS_startFifoMode()
     uint32_t nextPrintTime = 0;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             interrupt0Triggered = false;
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             interrupt1Triggered = false;
 
@@ -329,7 +322,7 @@ void ITDS_startContinuousMode()
     uint32_t nextPrintTime = 0;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* FIFO buffer is filled up to threshold */
             interrupt0Triggered = false;
@@ -364,7 +357,7 @@ void ITDS_startContinuousMode()
             debugPrint(".");
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* FIFO buffer full or overrun - this shouldn't happen, if samples are read fast enough */
 
@@ -444,7 +437,7 @@ void ITDS_startContinuousToFifoMode()
     bool orientationChanged = false;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* In this example, interrupt 0 is triggered when the device's 6D orientation has changed */
 
@@ -456,7 +449,7 @@ void ITDS_startContinuousToFifoMode()
             orientationChanged = true;
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* In this example, interrupt 1 is triggered if the FIFO buffer is either
        * filled up to threshold or in case of an overrun */
@@ -469,7 +462,7 @@ void ITDS_startContinuousToFifoMode()
                 debugPrintln("FIFO overrun");
             }
 
-            if (orientationChanged == true)
+            if (true == orientationChanged)
             {
                 // 6D orientation change event has been triggered - wait for FIFO buffer to be full
                 if (fifoSamplesStatus.fifoFillLevel >= 32)
@@ -563,7 +556,7 @@ void ITDS_startBypassToContinuousMode()
     uint32_t timeToSleep = 0;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* In this example, interrupt 0 is triggered when the device has woken up */
 
@@ -576,7 +569,7 @@ void ITDS_startBypassToContinuousMode()
             timeToSleep = HAL_GetTick() + 500;
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* In this example, interrupt 1 is triggered if the FIFO buffer is
        * filled up to the configured threshold */

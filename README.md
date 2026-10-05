@@ -58,9 +58,14 @@ There are example projects for the STM32G031xx and STM32L432xx MCUs. The example
 | WSEN_GCDS_2526101040301 | Basic usage of the GCDS co2 sensor connected via I2C. |
 | WSEN_PDMS_25131308XXX05 | Basic usage of the PDMS differential sensor connected via I2C. |
 | WSEN_PDMS_25131308XXX05_SPI | Basic usage of the PDMS differential sensor connected via SPI. |
+| WSEN_PDDS_25131310XXX01 | Basic usage of the PDDS differential sensor connected via I2C. |
+| WSEN_PDDS_25131310XXX01_SPI | Basic usage of the PDDS differential sensor connected via SPI. |
 
 
 # First steps
+
+> [!IMPORTANT]
+>  I2C SDA/SCL are configured as open-drain with GPIO_NOPULL. External pull-up resistors on SDA and SCL are required — without them the bus will float and I2C communication will fail. The external I2C pull-up resistor values shall be adopted to your hardware setup and design. The STM Nucleo-32 formfactor has, due to it's size contraints, relatively high parasitic capacitances. This means lower pull-up resistor values than recommended by the sensor's usermanual should be considered to improve signal quality.
 
 First steps using STM32CubeIDE:
 

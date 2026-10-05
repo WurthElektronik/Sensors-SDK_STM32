@@ -44,19 +44,24 @@ static WE_sensorInterface_t isdsDefaultSensorInterface = {.sensorType = WE_ISDS,
 
 /**
  * @brief Stores the current value of the accelerometer full scale parameter.
-
- * The value is updated when calling ISDS_setAccFullScale() or
- * ISDS_getAccFullScale().
  *
+ * The value is updated when calling ISDS_setAccFullScale() or ISDS_getAccFullScale().
+ *
+ * WARNING: This is a module-level global. If multiple ISDS sensor instances are used
+ * simultaneously (e.g. two sensors on different I2C addresses), this value only reflects
+ * the last sensor configured. Always call ISDS_setAccFullScale() or ISDS_getAccFullScale()
+ * before using any acceleration conversion functions.
  */
 static ISDS_accFullScale_t currentAccFullScale = ISDS_accFullScaleTwoG;
 
 /**
  * @brief Stores the current value of the gyroscope full scale parameter.
-
- * The value is updated when calling ISDS_setGyroFullScale() or
- * ISDS_getGyroFullScale().
  *
+ * The value is updated when calling ISDS_setGyroFullScale() or ISDS_getGyroFullScale().
+ *
+ * WARNING: Same multi-instance limitation as currentAccFullScale above.
+ * Always call ISDS_setGyroFullScale() or ISDS_getGyroFullScale() before using
+ * any angular rate conversion functions.
  */
 static ISDS_gyroFullScale_t currentGyroFullScale = ISDS_gyroFullScale250dps;
 
@@ -89,6 +94,10 @@ static inline int8_t ISDS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t ISDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
     *sensorInterface = isdsDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -102,7 +111,14 @@ int8_t ISDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] deviceID The returned device ID.
  * @retval Error code
  */
-int8_t ISDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID) { return ISDS_ReadReg(sensorInterface, ISDS_DEVICE_ID_REG, 1, deviceID); }
+int8_t ISDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID)
+{
+    if (NULL == deviceID)
+    {
+        return WE_FAIL;
+    }
+    return ISDS_ReadReg(sensorInterface, ISDS_DEVICE_ID_REG, 1, deviceID);
+}
 
 /* ISDS_FIFO_CTRL_1_REG */
 /* ISDS_FIFO_CTRL_2_REG */
@@ -118,7 +134,12 @@ int8_t ISDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint16_t thr
     ISDS_fifoCtrl1_t fifoCtrl1;
     ISDS_fifoCtrl2_t fifoCtrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
+    /* Read both registers first to preserve existing bits (Read-Modify-Write) */
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_1_REG, 1, (uint8_t*)&fifoCtrl1))
+    {
+        return WE_FAIL;
+    }
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
     {
         return WE_FAIL;
     }
@@ -126,7 +147,7 @@ int8_t ISDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint16_t thr
     fifoCtrl1.fifoThresholdLsb = (uint8_t)(threshold & 0xFF);
     fifoCtrl2.fifoThresholdMsb = (uint8_t)((threshold >> 8) & 0x07);
 
-    if (WE_FAIL == ISDS_WriteReg(sensorInterface, ISDS_FIFO_CTRL_1_REG, 1, (uint8_t*)&fifoCtrl1))
+    if (WE_SUCCESS != ISDS_WriteReg(sensorInterface, ISDS_FIFO_CTRL_1_REG, 1, (uint8_t*)&fifoCtrl1))
     {
         return WE_FAIL;
     }
@@ -141,14 +162,18 @@ int8_t ISDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint16_t thr
  */
 int8_t ISDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint16_t* threshold)
 {
-    ISDS_fifoCtrl1_t fifoCtrl1;
-    ISDS_fifoCtrl2_t fifoCtrl2;
-
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_1_REG, 1, (uint8_t*)&fifoCtrl1))
+    if (NULL == threshold)
     {
         return WE_FAIL;
     }
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
+    ISDS_fifoCtrl1_t fifoCtrl1;
+    ISDS_fifoCtrl2_t fifoCtrl2;
+
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_1_REG, 1, (uint8_t*)&fifoCtrl1))
+    {
+        return WE_FAIL;
+    }
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
     {
         return WE_FAIL;
     }
@@ -168,7 +193,7 @@ int8_t ISDS_enableFifoTemperature(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_fifoCtrl2_t fifoCtrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
     {
         return WE_FAIL;
     }
@@ -186,9 +211,13 @@ int8_t ISDS_enableFifoTemperature(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isFifoTemperatureEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* fifoTemp)
 {
+    if (NULL == fifoTemp)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl2_t fifoCtrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_2_REG, 1, (uint8_t*)&fifoCtrl2))
     {
         return WE_FAIL;
     }
@@ -210,7 +239,7 @@ int8_t ISDS_setFifoAccDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fif
 {
     ISDS_fifoCtrl3_t fifoCtrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
     {
         return WE_FAIL;
     }
@@ -228,9 +257,13 @@ int8_t ISDS_setFifoAccDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fif
  */
 int8_t ISDS_getFifoAccDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fifoDecimation_t* decimation)
 {
+    if (NULL == decimation)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl3_t fifoCtrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
     {
         return WE_FAIL;
     }
@@ -250,7 +283,7 @@ int8_t ISDS_setFifoGyroDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fi
 {
     ISDS_fifoCtrl3_t fifoCtrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
     {
         return WE_FAIL;
     }
@@ -268,9 +301,13 @@ int8_t ISDS_setFifoGyroDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fi
  */
 int8_t ISDS_getFifoGyroDecimation(WE_sensorInterface_t* sensorInterface, ISDS_fifoDecimation_t* decimation)
 {
+    if (NULL == decimation)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl3_t fifoCtrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_3_REG, 1, (uint8_t*)&fifoCtrl3))
     {
         return WE_FAIL;
     }
@@ -292,7 +329,7 @@ int8_t ISDS_setFifoDataset3Decimation(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -310,9 +347,13 @@ int8_t ISDS_setFifoDataset3Decimation(WE_sensorInterface_t* sensorInterface, ISD
  */
 int8_t ISDS_getFifoDataset3Decimation(WE_sensorInterface_t* sensorInterface, ISDS_fifoDecimation_t* decimation)
 {
+    if (NULL == decimation)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -332,7 +373,7 @@ int8_t ISDS_setFifoDataset4Decimation(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -350,9 +391,13 @@ int8_t ISDS_setFifoDataset4Decimation(WE_sensorInterface_t* sensorInterface, ISD
  */
 int8_t ISDS_getFifoDataset4Decimation(WE_sensorInterface_t* sensorInterface, ISDS_fifoDecimation_t* decimation)
 {
+    if (NULL == decimation)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -372,7 +417,7 @@ int8_t ISDS_enableFifoOnlyHighData(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -392,7 +437,7 @@ int8_t ISDS_isFifoOnlyHighDataEnabled(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -412,7 +457,7 @@ int8_t ISDS_enableFifoStopOnThreshold(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -432,7 +477,7 @@ int8_t ISDS_isFifoStopOnThresholdEnabled(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_fifoCtrl4_t fifoCtrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_4_REG, 1, (uint8_t*)&fifoCtrl4))
     {
         return WE_FAIL;
     }
@@ -454,7 +499,7 @@ int8_t ISDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ISDS_fifoMode_t f
 {
     ISDS_fifoCtrl5_t fifoCtrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
     {
         return WE_FAIL;
     }
@@ -472,9 +517,13 @@ int8_t ISDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ISDS_fifoMode_t f
  */
 int8_t ISDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ISDS_fifoMode_t* fifoMode)
 {
+    if (NULL == fifoMode)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl5_t fifoCtrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
     {
         return WE_FAIL;
     }
@@ -494,7 +543,7 @@ int8_t ISDS_setFifoOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_fi
 {
     ISDS_fifoCtrl5_t fifoCtrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
     {
         return WE_FAIL;
     }
@@ -512,9 +561,13 @@ int8_t ISDS_setFifoOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_fi
  */
 int8_t ISDS_getFifoOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_fifoOutputDataRate_t* fifoOdr)
 {
+    if (NULL == fifoOdr)
+    {
+        return WE_FAIL;
+    }
     ISDS_fifoCtrl5_t fifoCtrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_CTRL_5_REG, 1, (uint8_t*)&fifoCtrl5))
     {
         return WE_FAIL;
     }
@@ -536,7 +589,7 @@ int8_t ISDS_enableDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_dataReadyPulseCfg_t dataReadyPulseCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_DRDY_PULSE_CFG_REG, 1, (uint8_t*)&dataReadyPulseCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_DRDY_PULSE_CFG_REG, 1, (uint8_t*)&dataReadyPulseCfg))
     {
         return WE_FAIL;
     }
@@ -554,9 +607,13 @@ int8_t ISDS_enableDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isDataReadyPulsedEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* dataReadyPulsed)
 {
+    if (NULL == dataReadyPulsed)
+    {
+        return WE_FAIL;
+    }
     ISDS_dataReadyPulseCfg_t dataReadyPulseCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_DRDY_PULSE_CFG_REG, 1, (uint8_t*)&dataReadyPulseCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_DRDY_PULSE_CFG_REG, 1, (uint8_t*)&dataReadyPulseCfg))
     {
         return WE_FAIL;
     }
@@ -578,7 +635,7 @@ int8_t ISDS_enableAccDataReadyINT0(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -596,9 +653,13 @@ int8_t ISDS_enableAccDataReadyINT0(WE_sensorInterface_t* sensorInterface, ISDS_s
  */
 int8_t ISDS_isAccDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0AccDataReady)
 {
+    if (NULL == int0AccDataReady)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -618,7 +679,7 @@ int8_t ISDS_enableGyroDataReadyINT0(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -636,9 +697,13 @@ int8_t ISDS_enableGyroDataReadyINT0(WE_sensorInterface_t* sensorInterface, ISDS_
  */
 int8_t ISDS_isGyroDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0GyroDataReady)
 {
+    if (NULL == int0GyroDataReady)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -658,7 +723,7 @@ int8_t ISDS_enableBootStatusINT0(WE_sensorInterface_t* sensorInterface, ISDS_sta
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -676,9 +741,13 @@ int8_t ISDS_enableBootStatusINT0(WE_sensorInterface_t* sensorInterface, ISDS_sta
  */
 int8_t ISDS_isBootStatusINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0BootStatus)
 {
+    if (NULL == int0BootStatus)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -698,7 +767,7 @@ int8_t ISDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -716,9 +785,13 @@ int8_t ISDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ISDS_
  */
 int8_t ISDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0FifoThreshold)
 {
+    if (NULL == int0FifoThreshold)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -738,7 +811,7 @@ int8_t ISDS_enableFifoOverrunINT0(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -756,9 +829,13 @@ int8_t ISDS_enableFifoOverrunINT0(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isFifoOverrunINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0FifoOverrun)
 {
+    if (NULL == int0FifoOverrun)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -778,7 +855,7 @@ int8_t ISDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ISDS_state
 {
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -796,9 +873,13 @@ int8_t ISDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ISDS_state
  */
 int8_t ISDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int0FifoFull)
 {
+    if (NULL == int0FifoFull)
+    {
+        return WE_FAIL;
+    }
     ISDS_int0Ctrl_t int0Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT0_CTRL_REG, 1, (uint8_t*)&int0Ctrl))
     {
         return WE_FAIL;
     }
@@ -820,7 +901,7 @@ int8_t ISDS_enableAccDataReadyINT1(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -838,9 +919,13 @@ int8_t ISDS_enableAccDataReadyINT1(WE_sensorInterface_t* sensorInterface, ISDS_s
  */
 int8_t ISDS_isAccDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1AccDataReady)
 {
+    if (NULL == int1AccDataReady)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -860,7 +945,7 @@ int8_t ISDS_enableGyroDataReadyINT1(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -878,9 +963,13 @@ int8_t ISDS_enableGyroDataReadyINT1(WE_sensorInterface_t* sensorInterface, ISDS_
  */
 int8_t ISDS_isGyroDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1GyroDataReady)
 {
+    if (NULL == int1GyroDataReady)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -900,7 +989,7 @@ int8_t ISDS_enableTemperatureDataReadyINT1(WE_sensorInterface_t* sensorInterface
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -918,9 +1007,13 @@ int8_t ISDS_enableTemperatureDataReadyINT1(WE_sensorInterface_t* sensorInterface
  */
 int8_t ISDS_isTemperatureDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1TempDataReady)
 {
+    if (NULL == int1TempDataReady)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -940,7 +1033,7 @@ int8_t ISDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -958,9 +1051,13 @@ int8_t ISDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ISDS_
  */
 int8_t ISDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1FifoThreshold)
 {
+    if (NULL == int1FifoThreshold)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -980,7 +1077,7 @@ int8_t ISDS_enableFifoOverrunINT1(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -998,9 +1095,13 @@ int8_t ISDS_enableFifoOverrunINT1(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isFifoOverrunINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1FifoOverrun)
 {
+    if (NULL == int1FifoOverrun)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -1020,7 +1121,7 @@ int8_t ISDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ISDS_state
 {
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -1038,9 +1139,13 @@ int8_t ISDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ISDS_state
  */
 int8_t ISDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* int1FifoFull)
 {
+    if (NULL == int1FifoFull)
+    {
+        return WE_FAIL;
+    }
     ISDS_int1Ctrl_t int1Ctrl;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT1_CTRL_REG, 1, (uint8_t*)&int1Ctrl))
     {
         return WE_FAIL;
     }
@@ -1064,7 +1169,7 @@ int8_t ISDS_setAccAnalogChainBandwidth(WE_sensorInterface_t* sensorInterface, IS
 {
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1082,9 +1187,13 @@ int8_t ISDS_setAccAnalogChainBandwidth(WE_sensorInterface_t* sensorInterface, IS
  */
 int8_t ISDS_getAccAnalogChainBandwidth(WE_sensorInterface_t* sensorInterface, ISDS_accAnalogChainBandwidth_t* bandwidth)
 {
+    if (NULL == bandwidth)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1104,7 +1213,7 @@ int8_t ISDS_setAccDigitalLpfBandwidth(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1122,9 +1231,13 @@ int8_t ISDS_setAccDigitalLpfBandwidth(WE_sensorInterface_t* sensorInterface, ISD
  */
 int8_t ISDS_getAccDigitalLpfBandwidth(WE_sensorInterface_t* sensorInterface, ISDS_accDigitalLpfBandwidth_t* bandwidth)
 {
+    if (NULL == bandwidth)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1144,7 +1257,7 @@ int8_t ISDS_setAccFullScale(WE_sensorInterface_t* sensorInterface, ISDS_accFullS
 {
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1170,9 +1283,13 @@ int8_t ISDS_setAccFullScale(WE_sensorInterface_t* sensorInterface, ISDS_accFullS
  */
 int8_t ISDS_getAccFullScale(WE_sensorInterface_t* sensorInterface, ISDS_accFullScale_t* fullScale)
 {
+    if (NULL == fullScale)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1195,7 +1312,7 @@ int8_t ISDS_setAccOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_acc
 {
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1213,9 +1330,13 @@ int8_t ISDS_setAccOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_acc
  */
 int8_t ISDS_getAccOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_accOutputDataRate_t* odr)
 {
+    if (NULL == odr)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl1_t ctrl1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
     {
         return WE_FAIL;
     }
@@ -1237,7 +1358,7 @@ int8_t ISDS_setGyroFullScale(WE_sensorInterface_t* sensorInterface, ISDS_gyroFul
 {
     ISDS_ctrl2_t ctrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
     {
         return WE_FAIL;
     }
@@ -1263,9 +1384,13 @@ int8_t ISDS_setGyroFullScale(WE_sensorInterface_t* sensorInterface, ISDS_gyroFul
  */
 int8_t ISDS_getGyroFullScale(WE_sensorInterface_t* sensorInterface, ISDS_gyroFullScale_t* fullScale)
 {
+    if (NULL == fullScale)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl2_t ctrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
     {
         return WE_FAIL;
     }
@@ -1288,7 +1413,7 @@ int8_t ISDS_setGyroOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_gy
 {
     ISDS_ctrl2_t ctrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
     {
         return WE_FAIL;
     }
@@ -1306,9 +1431,13 @@ int8_t ISDS_setGyroOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_gy
  */
 int8_t ISDS_getGyroOutputDataRate(WE_sensorInterface_t* sensorInterface, ISDS_gyroOutputDataRate_t* odr)
 {
+    if (NULL == odr)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl2_t ctrl2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
     {
         return WE_FAIL;
     }
@@ -1330,7 +1459,7 @@ int8_t ISDS_softReset(WE_sensorInterface_t* sensorInterface, ISDS_state_t swRese
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1350,7 +1479,7 @@ int8_t ISDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1370,7 +1499,7 @@ int8_t ISDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1390,7 +1519,7 @@ int8_t ISDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1410,7 +1539,7 @@ int8_t ISDS_setSpiMode(WE_sensorInterface_t* sensorInterface, ISDS_spiMode_t spi
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1428,9 +1557,13 @@ int8_t ISDS_setSpiMode(WE_sensorInterface_t* sensorInterface, ISDS_spiMode_t spi
  */
 int8_t ISDS_getSpiMode(WE_sensorInterface_t* sensorInterface, ISDS_spiMode_t* spiMode)
 {
+    if (NULL == spiMode)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1450,7 +1583,7 @@ int8_t ISDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ISDS_inte
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1468,9 +1601,13 @@ int8_t ISDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ISDS_inte
  */
 int8_t ISDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ISDS_interruptPinConfig_t* pinType)
 {
+    if (NULL == pinType)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1490,7 +1627,7 @@ int8_t ISDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1508,9 +1645,13 @@ int8_t ISDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ISDS_
  */
 int8_t ISDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ISDS_interruptActiveLevel_t* level)
 {
+    if (NULL == level)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1530,7 +1671,7 @@ int8_t ISDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1548,9 +1689,13 @@ int8_t ISDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* bdu)
 {
+    if (NULL == bdu)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1570,7 +1715,7 @@ int8_t ISDS_reboot(WE_sensorInterface_t* sensorInterface, ISDS_state_t reboot)
 {
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1588,9 +1733,13 @@ int8_t ISDS_reboot(WE_sensorInterface_t* sensorInterface, ISDS_state_t reboot)
  */
 int8_t ISDS_isRebooting(WE_sensorInterface_t* sensorInterface, ISDS_state_t* rebooting)
 {
+    if (NULL == rebooting)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl3_t ctrl3;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
     {
         return WE_FAIL;
     }
@@ -1612,7 +1761,7 @@ int8_t ISDS_enableGyroDigitalLpf1(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1630,9 +1779,13 @@ int8_t ISDS_enableGyroDigitalLpf1(WE_sensorInterface_t* sensorInterface, ISDS_st
  */
 int8_t ISDS_isGyroDigitalLpf1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* enable)
 {
+    if (NULL == enable)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1652,7 +1805,7 @@ int8_t ISDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1670,9 +1823,13 @@ int8_t ISDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ISDS_stat
  */
 int8_t ISDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* i2cDisabled)
 {
+    if (NULL == i2cDisabled)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1693,7 +1850,7 @@ int8_t ISDS_enableDataReadyMask(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1712,9 +1869,13 @@ int8_t ISDS_enableDataReadyMask(WE_sensorInterface_t* sensorInterface, ISDS_stat
  */
 int8_t ISDS_isDataReadyMaskEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* dataReadyMask)
 {
+    if (NULL == dataReadyMask)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1734,7 +1895,7 @@ int8_t ISDS_enableDataEnableDataReadyINT0(WE_sensorInterface_t* sensorInterface,
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1754,7 +1915,7 @@ int8_t ISDS_isDataEnableDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterfa
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1774,7 +1935,7 @@ int8_t ISDS_setInt1OnInt0(WE_sensorInterface_t* sensorInterface, ISDS_state_t in
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1794,7 +1955,7 @@ int8_t ISDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ISDS_state_t* i
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1814,7 +1975,7 @@ int8_t ISDS_enableGyroSleepMode(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1832,9 +1993,13 @@ int8_t ISDS_enableGyroSleepMode(WE_sensorInterface_t* sensorInterface, ISDS_stat
  */
 int8_t ISDS_isGyroSleepModeEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* gyroSleepMode)
 {
+    if (NULL == gyroSleepMode)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1854,7 +2019,7 @@ int8_t ISDS_extendDataEnableToAcc(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1874,7 +2039,7 @@ int8_t ISDS_isDataEnableExtendedToAcc(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_ctrl4_t ctrl4;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_4_REG, 1, (uint8_t*)&ctrl4))
     {
         return WE_FAIL;
     }
@@ -1896,7 +2061,7 @@ int8_t ISDS_setAccSelfTestMode(WE_sensorInterface_t* sensorInterface, ISDS_accSe
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -1916,7 +2081,7 @@ int8_t ISDS_getAccSelfTestMode(WE_sensorInterface_t* sensorInterface, ISDS_accSe
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -1936,7 +2101,7 @@ int8_t ISDS_setGyroSelfTestMode(WE_sensorInterface_t* sensorInterface, ISDS_gyro
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -1956,7 +2121,7 @@ int8_t ISDS_getGyroSelfTestMode(WE_sensorInterface_t* sensorInterface, ISDS_gyro
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -1976,7 +2141,7 @@ int8_t ISDS_setDataEnableActiveHigh(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -1996,7 +2161,7 @@ int8_t ISDS_isDataEnableActiveHigh(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -2016,7 +2181,7 @@ int8_t ISDS_setRoundingPattern(WE_sensorInterface_t* sensorInterface, ISDS_round
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -2036,7 +2201,7 @@ int8_t ISDS_getRoundingPattern(WE_sensorInterface_t* sensorInterface, ISDS_round
 {
     ISDS_ctrl5_t ctrl5;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_5_REG, 1, (uint8_t*)&ctrl5))
     {
         return WE_FAIL;
     }
@@ -2058,7 +2223,7 @@ int8_t ISDS_setGyroLowPassFilterBandwidth(WE_sensorInterface_t* sensorInterface,
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2076,9 +2241,13 @@ int8_t ISDS_setGyroLowPassFilterBandwidth(WE_sensorInterface_t* sensorInterface,
  */
 int8_t ISDS_getGyroLowPassFilterBandwidth(WE_sensorInterface_t* sensorInterface, ISDS_gyroLPF_t* bandwidth)
 {
+    if (NULL == bandwidth)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2098,7 +2267,7 @@ int8_t ISDS_setOffsetWeight(WE_sensorInterface_t* sensorInterface, ISDS_state_t 
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2118,7 +2287,7 @@ int8_t ISDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2138,7 +2307,7 @@ int8_t ISDS_disableAccHighPerformanceMode(WE_sensorInterface_t* sensorInterface,
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2158,7 +2327,7 @@ int8_t ISDS_isAccHighPerformanceModeDisabled(WE_sensorInterface_t* sensorInterfa
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2178,7 +2347,7 @@ int8_t ISDS_setDataEnableTriggerMode(WE_sensorInterface_t* sensorInterface, ISDS
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2198,7 +2367,7 @@ int8_t ISDS_getDataEnableTriggerMode(WE_sensorInterface_t* sensorInterface, ISDS
 {
     ISDS_ctrl6_t ctrl6;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_6_REG, 1, (uint8_t*)&ctrl6))
     {
         return WE_FAIL;
     }
@@ -2220,7 +2389,7 @@ int8_t ISDS_enableRounding(WE_sensorInterface_t* sensorInterface, ISDS_state_t r
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2240,7 +2409,7 @@ int8_t ISDS_isRoundingEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2260,7 +2429,7 @@ int8_t ISDS_setGyroDigitalHighPassCutoff(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2280,7 +2449,7 @@ int8_t ISDS_getGyroDigitalHighPassCutoff(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2300,7 +2469,7 @@ int8_t ISDS_enableGyroDigitalHighPass(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2320,7 +2489,7 @@ int8_t ISDS_isGyroDigitalHighPassEnabled(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2340,7 +2509,7 @@ int8_t ISDS_disableGyroHighPerformanceMode(WE_sensorInterface_t* sensorInterface
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2360,7 +2529,7 @@ int8_t ISDS_isGyroHighPerformanceModeDisabled(WE_sensorInterface_t* sensorInterf
 {
     ISDS_ctrl7_t ctrl7;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_7_REG, 1, (uint8_t*)&ctrl7))
     {
         return WE_FAIL;
     }
@@ -2382,7 +2551,7 @@ int8_t ISDS_enable6dLowPass(WE_sensorInterface_t* sensorInterface, ISDS_state_t 
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2402,7 +2571,7 @@ int8_t ISDS_is6dLowPassEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2423,7 +2592,7 @@ int8_t ISDS_enableAccHighPassSlopeFilter(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2443,7 +2612,7 @@ int8_t ISDS_isAccHighPassSlopeFilterEnabled(WE_sensorInterface_t* sensorInterfac
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2463,7 +2632,7 @@ int8_t ISDS_setInputCompositeFilter(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2483,7 +2652,7 @@ int8_t ISDS_getInputCompositeFilter(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2510,7 +2679,7 @@ int8_t ISDS_enableHighPassFilterRefMode(WE_sensorInterface_t* sensorInterface, I
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2530,7 +2699,7 @@ int8_t ISDS_isHighPassFilterRefModeEnabled(WE_sensorInterface_t* sensorInterface
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2550,7 +2719,7 @@ int8_t ISDS_setAccFilterConfig(WE_sensorInterface_t* sensorInterface, ISDS_accFi
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2570,7 +2739,7 @@ int8_t ISDS_getAccFilterConfig(WE_sensorInterface_t* sensorInterface, ISDS_accFi
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2590,7 +2759,7 @@ int8_t ISDS_enableAccLowPass(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2610,7 +2779,7 @@ int8_t ISDS_isAccLowPassEnabled(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_ctrl8_t ctrl8;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_8_REG, 1, (uint8_t*)&ctrl8))
     {
         return WE_FAIL;
     }
@@ -2632,7 +2801,7 @@ int8_t ISDS_setDataEnableStampingSensor(WE_sensorInterface_t* sensorInterface, I
 {
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2652,7 +2821,7 @@ int8_t ISDS_getDataEnableStampingSensor(WE_sensorInterface_t* sensorInterface, I
 {
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2672,7 +2841,7 @@ int8_t ISDS_storeDataEnableValueInZAxisLSB(WE_sensorInterface_t* sensorInterface
 {
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2690,9 +2859,13 @@ int8_t ISDS_storeDataEnableValueInZAxisLSB(WE_sensorInterface_t* sensorInterface
  */
 int8_t ISDS_isStoreDataEnableValueInZAxisLSB(WE_sensorInterface_t* sensorInterface, ISDS_state_t* enable)
 {
+    if (NULL == enable)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2712,7 +2885,7 @@ int8_t ISDS_storeDataEnableValueInYAxisLSB(WE_sensorInterface_t* sensorInterface
 {
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2730,9 +2903,13 @@ int8_t ISDS_storeDataEnableValueInYAxisLSB(WE_sensorInterface_t* sensorInterface
  */
 int8_t ISDS_isStoreDataEnableValueInYAxisLSB(WE_sensorInterface_t* sensorInterface, ISDS_state_t* enable)
 {
+    if (NULL == enable)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2752,7 +2929,7 @@ int8_t ISDS_storeDataEnableValueInXAxisLSB(WE_sensorInterface_t* sensorInterface
 {
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2770,9 +2947,13 @@ int8_t ISDS_storeDataEnableValueInXAxisLSB(WE_sensorInterface_t* sensorInterface
  */
 int8_t ISDS_isStoreDataEnableValueInXAxisLSB(WE_sensorInterface_t* sensorInterface, ISDS_state_t* enable)
 {
+    if (NULL == enable)
+    {
+        return WE_FAIL;
+    }
     ISDS_ctrl9_t ctrl9;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_9_REG, 1, (uint8_t*)&ctrl9))
     {
         return WE_FAIL;
     }
@@ -2794,7 +2975,7 @@ int8_t ISDS_enableEmbeddedFunctionalities(WE_sensorInterface_t* sensorInterface,
 {
     ISDS_ctrl10_t ctrl10;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
     {
         return WE_FAIL;
     }
@@ -2814,7 +2995,7 @@ int8_t ISDS_areEmbeddedFunctionalitiesEnabled(WE_sensorInterface_t* sensorInterf
 {
     ISDS_ctrl10_t ctrl10;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
     {
         return WE_FAIL;
     }
@@ -2834,7 +3015,7 @@ int8_t ISDS_enableTiltCalculation(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_ctrl10_t ctrl10;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
     {
         return WE_FAIL;
     }
@@ -2854,7 +3035,7 @@ int8_t ISDS_isTiltCalculationEnabled(WE_sensorInterface_t* sensorInterface, ISDS
 {
     ISDS_ctrl10_t ctrl10;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_CTRL_10_REG, 1, (uint8_t*)&ctrl10))
     {
         return WE_FAIL;
     }
@@ -2884,7 +3065,7 @@ int8_t ISDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* 
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -2904,7 +3085,7 @@ int8_t ISDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* 
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -2924,7 +3105,7 @@ int8_t ISDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* 
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -2944,7 +3125,7 @@ int8_t ISDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* w
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -2964,7 +3145,7 @@ int8_t ISDS_getSleepState(WE_sensorInterface_t* sensorInterface, ISDS_state_t* s
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -2984,7 +3165,7 @@ int8_t ISDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_wakeUpEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3014,7 +3195,7 @@ int8_t ISDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* tapE
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3034,7 +3215,7 @@ int8_t ISDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3054,7 +3235,7 @@ int8_t ISDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3074,7 +3255,7 @@ int8_t ISDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3094,7 +3275,7 @@ int8_t ISDS_isDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3114,7 +3295,7 @@ int8_t ISDS_isSingleTapEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3134,7 +3315,7 @@ int8_t ISDS_getTapSign(WE_sensorInterface_t* sensorInterface, ISDS_tapSign_t* ta
 {
     ISDS_tapEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3164,7 +3345,7 @@ int8_t ISDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3184,7 +3365,7 @@ int8_t ISDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3204,7 +3385,7 @@ int8_t ISDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3224,7 +3405,7 @@ int8_t ISDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3244,7 +3425,7 @@ int8_t ISDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3264,7 +3445,7 @@ int8_t ISDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3284,7 +3465,7 @@ int8_t ISDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3305,7 +3486,7 @@ int8_t ISDS_isDataEnableDataReady(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_6dEvent_t status;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_6D_EVENT_REG, 1, (uint8_t*)&status))
     {
         return WE_FAIL;
     }
@@ -3335,7 +3516,7 @@ int8_t ISDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_status_t statusRegister;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
     {
         return WE_FAIL;
     }
@@ -3355,7 +3536,7 @@ int8_t ISDS_isGyroscopeDataReady(WE_sensorInterface_t* sensorInterface, ISDS_sta
 {
     ISDS_status_t statusRegister;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
     {
         return WE_FAIL;
     }
@@ -3375,7 +3556,7 @@ int8_t ISDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_status_t statusRegister;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
     {
         return WE_FAIL;
     }
@@ -3397,7 +3578,7 @@ int8_t ISDS_isDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t* tem
 {
     ISDS_status_t statusRegister;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_STATUS_REG, 1, (uint8_t*)&statusRegister))
     {
         return WE_FAIL;
     }
@@ -3437,7 +3618,7 @@ int8_t ISDS_isDataReady(WE_sensorInterface_t* sensorInterface, ISDS_state_t* tem
 int8_t ISDS_getFifoStatus(WE_sensorInterface_t* sensorInterface, ISDS_fifoStatus2_t* status, uint16_t* fillLevel, uint16_t* fifoPattern)
 {
     uint8_t tmp[4];
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_1_REG, 4, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_1_REG, 4, tmp))
     {
         return WE_FAIL;
     }
@@ -3473,7 +3654,7 @@ int8_t ISDS_getFifoStatus2Register(WE_sensorInterface_t* sensorInterface, ISDS_f
 int8_t ISDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint16_t* fillLevel)
 {
     uint8_t tmp[2];
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_1_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_1_REG, 2, tmp))
     {
         return WE_FAIL;
     }
@@ -3496,7 +3677,7 @@ int8_t ISDS_isFifoEmpty(WE_sensorInterface_t* sensorInterface, ISDS_state_t* emp
 {
     ISDS_fifoStatus2_t fifoStatus2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
     {
         return WE_FAIL;
     }
@@ -3516,7 +3697,7 @@ int8_t ISDS_isFifoFull(WE_sensorInterface_t* sensorInterface, ISDS_state_t* full
 {
     ISDS_fifoStatus2_t fifoStatus2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
     {
         return WE_FAIL;
     }
@@ -3536,7 +3717,7 @@ int8_t ISDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_fifoStatus2_t fifoStatus2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
     {
         return WE_FAIL;
     }
@@ -3556,7 +3737,7 @@ int8_t ISDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_fifoStatus2_t fifoStatus2;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_2_REG, 1, (uint8_t*)&fifoStatus2))
     {
         return WE_FAIL;
     }
@@ -3575,7 +3756,7 @@ int8_t ISDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ISDS_s
 int8_t ISDS_getFifoPattern(WE_sensorInterface_t* sensorInterface, uint16_t* fifoPattern)
 {
     uint8_t tmp[2];
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_3_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FIFO_STATUS_3_REG, 2, tmp))
     {
         return WE_FAIL;
     }
@@ -3600,7 +3781,7 @@ int8_t ISDS_isTiltEvent(WE_sensorInterface_t* sensorInterface, ISDS_state_t* til
 {
     ISDS_funcSrc1_t funcSrc1;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FUNC_SRC_1_REG, 1, (uint8_t*)&funcSrc1))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FUNC_SRC_1_REG, 1, (uint8_t*)&funcSrc1))
     {
         return WE_FAIL;
     }
@@ -3622,7 +3803,7 @@ int8_t ISDS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3642,7 +3823,7 @@ int8_t ISDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3662,7 +3843,7 @@ int8_t ISDS_enableTapX(WE_sensorInterface_t* sensorInterface, ISDS_state_t tapX)
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3682,7 +3863,7 @@ int8_t ISDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* t
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3702,7 +3883,7 @@ int8_t ISDS_enableTapY(WE_sensorInterface_t* sensorInterface, ISDS_state_t tapY)
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3722,7 +3903,7 @@ int8_t ISDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* t
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3742,7 +3923,7 @@ int8_t ISDS_enableTapZ(WE_sensorInterface_t* sensorInterface, ISDS_state_t tapZ)
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3762,7 +3943,7 @@ int8_t ISDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t* t
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3782,7 +3963,7 @@ int8_t ISDS_setActivityFilter(WE_sensorInterface_t* sensorInterface, ISDS_activi
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3802,7 +3983,7 @@ int8_t ISDS_getActivityFilter(WE_sensorInterface_t* sensorInterface, ISDS_activi
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3822,7 +4003,7 @@ int8_t ISDS_setInactivityFunction(WE_sensorInterface_t* sensorInterface, ISDS_in
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3842,7 +4023,7 @@ int8_t ISDS_getInactivityFunction(WE_sensorInterface_t* sensorInterface, ISDS_in
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3862,7 +4043,7 @@ int8_t ISDS_enableInterrupts(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3882,7 +4063,7 @@ int8_t ISDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ISDS_sta
 {
     ISDS_tapCfg_t tapCfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_CFG_REG, 1, (uint8_t*)&tapCfg))
     {
         return WE_FAIL;
     }
@@ -3904,7 +4085,7 @@ int8_t ISDS_setTapThreshold(WE_sensorInterface_t* sensorInterface, uint8_t tapTh
 {
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -3924,7 +4105,7 @@ int8_t ISDS_getTapThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* tapT
 {
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -3944,7 +4125,7 @@ int8_t ISDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ISDS_sixDThres
 {
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -3962,9 +4143,13 @@ int8_t ISDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ISDS_sixDThres
  */
 int8_t ISDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ISDS_sixDThreshold_t* threshold6D)
 {
+    if (NULL == threshold6D)
+    {
+        return WE_FAIL;
+    }
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -3984,7 +4169,7 @@ int8_t ISDS_enable4DDetection(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -4004,7 +4189,7 @@ int8_t ISDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ISDS_sta
 {
     ISDS_tapThs6d_t tapThs6d;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_TAP_THS_6D_REG, 1, (uint8_t*)&tapThs6d))
     {
         return WE_FAIL;
     }
@@ -4026,7 +4211,7 @@ int8_t ISDS_setTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t lat
 {
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4046,7 +4231,7 @@ int8_t ISDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t* la
 {
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4066,7 +4251,7 @@ int8_t ISDS_setTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t quiet
 {
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4087,7 +4272,7 @@ int8_t ISDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t* quie
 
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4107,7 +4292,7 @@ int8_t ISDS_setTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t shock
 {
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4127,7 +4312,7 @@ int8_t ISDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t* shoc
 {
     ISDS_intDur2_t intDuration;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_INT_DUR2_REG, 1, (uint8_t*)&intDuration))
     {
         return WE_FAIL;
     }
@@ -4149,7 +4334,7 @@ int8_t ISDS_setWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t th
 {
     ISDS_wakeUpThs_t wakeUpThs;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
     {
         return WE_FAIL;
     }
@@ -4169,7 +4354,7 @@ int8_t ISDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* t
 {
     ISDS_wakeUpThs_t wakeUpThs;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
     {
         return WE_FAIL;
     }
@@ -4189,7 +4374,7 @@ int8_t ISDS_enableDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ISDS_sta
 {
     ISDS_wakeUpThs_t wakeUpThs;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
     {
         return WE_FAIL;
     }
@@ -4209,7 +4394,7 @@ int8_t ISDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ISDS_
 {
     ISDS_wakeUpThs_t wakeUpThs;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_THS_REG, 1, (uint8_t*)&wakeUpThs))
     {
         return WE_FAIL;
     }
@@ -4231,7 +4416,7 @@ int8_t ISDS_setSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t dura
 {
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4251,7 +4436,7 @@ int8_t ISDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t* dur
 {
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4271,7 +4456,7 @@ int8_t ISDS_setWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t dur
 {
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4291,7 +4476,7 @@ int8_t ISDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t* du
 {
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4313,7 +4498,7 @@ int8_t ISDS_setFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ISDS_fre
 {
     ISDS_freeFall_t freeFall;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
     {
         return WE_FAIL;
     }
@@ -4333,7 +4518,7 @@ int8_t ISDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ISDS_fre
 {
     ISDS_freeFall_t freeFall;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
     {
         return WE_FAIL;
     }
@@ -4354,11 +4539,11 @@ int8_t ISDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t d
     ISDS_freeFall_t freeFall;
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
     {
         return WE_FAIL;
     }
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4366,7 +4551,7 @@ int8_t ISDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t d
     freeFall.freeFallDurationLSB = (uint8_t)(duration & 0x1F);
     wakeUpDur.freeFallDurationMSB = (uint8_t)((duration >> 5) & 0x01);
 
-    if (WE_FAIL == ISDS_WriteReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    if (WE_SUCCESS != ISDS_WriteReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
     {
         return WE_FAIL;
     }
@@ -4384,11 +4569,11 @@ int8_t ISDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t* 
     ISDS_freeFall_t freeFall;
     ISDS_wakeUpDur_t wakeUpDur;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_FREE_FALL_REG, 1, (uint8_t*)&freeFall))
     {
         return WE_FAIL;
     }
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_WAKE_UP_DUR_REG, 1, (uint8_t*)&wakeUpDur))
     {
         return WE_FAIL;
     }
@@ -4408,7 +4593,7 @@ int8_t ISDS_enableTiltINT0(WE_sensorInterface_t* sensorInterface, ISDS_state_t i
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4428,7 +4613,7 @@ int8_t ISDS_isTiltINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4448,7 +4633,7 @@ int8_t ISDS_enable6dINT0(WE_sensorInterface_t* sensorInterface, ISDS_state_t int
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4468,7 +4653,7 @@ int8_t ISDS_is6dINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4488,7 +4673,7 @@ int8_t ISDS_enableDoubleTapINT0(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4508,7 +4693,7 @@ int8_t ISDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4528,7 +4713,7 @@ int8_t ISDS_enableFreeFallINT0(WE_sensorInterface_t* sensorInterface, ISDS_state
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4548,7 +4733,7 @@ int8_t ISDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4568,7 +4753,7 @@ int8_t ISDS_enableWakeUpINT0(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4588,7 +4773,7 @@ int8_t ISDS_isWakeUpINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4608,7 +4793,7 @@ int8_t ISDS_enableSingleTapINT0(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4628,7 +4813,7 @@ int8_t ISDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4648,7 +4833,7 @@ int8_t ISDS_enableInactivityStateINT0(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4668,7 +4853,7 @@ int8_t ISDS_isInactivityStateINT0Enabled(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_mde1Cfg_t mde1Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD1_CFG_REG, 1, (uint8_t*)&mde1Cfg))
     {
         return WE_FAIL;
     }
@@ -4690,7 +4875,7 @@ int8_t ISDS_enableTiltINT1(WE_sensorInterface_t* sensorInterface, ISDS_state_t i
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4710,7 +4895,7 @@ int8_t ISDS_isTiltINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4730,7 +4915,7 @@ int8_t ISDS_enable6dINT1(WE_sensorInterface_t* sensorInterface, ISDS_state_t int
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4750,7 +4935,7 @@ int8_t ISDS_is6dINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_state_t*
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4770,7 +4955,7 @@ int8_t ISDS_enableDoubleTapINT1(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4790,7 +4975,7 @@ int8_t ISDS_isDoubleTapINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4810,7 +4995,7 @@ int8_t ISDS_enableFreeFallINT1(WE_sensorInterface_t* sensorInterface, ISDS_state
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4830,7 +5015,7 @@ int8_t ISDS_isFreeFallINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_st
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4850,7 +5035,7 @@ int8_t ISDS_enableWakeUpINT1(WE_sensorInterface_t* sensorInterface, ISDS_state_t
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4870,7 +5055,7 @@ int8_t ISDS_isWakeUpINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4890,7 +5075,7 @@ int8_t ISDS_enableSingleTapINT1(WE_sensorInterface_t* sensorInterface, ISDS_stat
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4910,7 +5095,7 @@ int8_t ISDS_isSingleTapINT1Enabled(WE_sensorInterface_t* sensorInterface, ISDS_s
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4930,7 +5115,7 @@ int8_t ISDS_enableInactivityStateINT1(WE_sensorInterface_t* sensorInterface, ISD
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -4950,7 +5135,7 @@ int8_t ISDS_isInactivityStateINT1Enabled(WE_sensorInterface_t* sensorInterface, 
 {
     ISDS_mde2Cfg_t mde2Cfg;
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_MD2_CFG_REG, 1, (uint8_t*)&mde2Cfg))
     {
         return WE_FAIL;
     }
@@ -5045,8 +5230,12 @@ int8_t ISDS_getFifoData(WE_sensorInterface_t* sensorInterface, uint16_t numSampl
  */
 int8_t ISDS_getAngularRateX_float(WE_sensorInterface_t* sensorInterface, float* xRate)
 {
+    if (NULL == xRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateX(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateX(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5068,8 +5257,12 @@ int8_t ISDS_getAngularRateX_float(WE_sensorInterface_t* sensorInterface, float* 
  */
 int8_t ISDS_getAngularRateY_float(WE_sensorInterface_t* sensorInterface, float* yRate)
 {
+    if (NULL == yRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateY(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateY(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5091,8 +5284,12 @@ int8_t ISDS_getAngularRateY_float(WE_sensorInterface_t* sensorInterface, float* 
  */
 int8_t ISDS_getAngularRateZ_float(WE_sensorInterface_t* sensorInterface, float* zRate)
 {
+    if (NULL == zRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateZ(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateZ(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5116,8 +5313,13 @@ int8_t ISDS_getAngularRateZ_float(WE_sensorInterface_t* sensorInterface, float* 
  */
 int8_t ISDS_getAngularRates_float(WE_sensorInterface_t* sensorInterface, float* xRate, float* yRate, float* zRate)
 {
+    if ((NULL == xRate) || (NULL == yRate) || (NULL == zRate))
+    {
+        return WE_FAIL;
+    }
+
     int16_t xRawRate, yRawRate, zRawRate;
-    if (WE_FAIL == ISDS_getRawAngularRates(sensorInterface, &xRawRate, &yRawRate, &zRawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRates(sensorInterface, &xRawRate, &yRawRate, &zRawRate))
     {
         return WE_FAIL;
     }
@@ -5142,8 +5344,12 @@ int8_t ISDS_getAngularRates_float(WE_sensorInterface_t* sensorInterface, float* 
  */
 int8_t ISDS_getAngularRateX_int(WE_sensorInterface_t* sensorInterface, int32_t* xRate)
 {
+    if (NULL == xRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateX(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateX(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5165,8 +5371,12 @@ int8_t ISDS_getAngularRateX_int(WE_sensorInterface_t* sensorInterface, int32_t* 
  */
 int8_t ISDS_getAngularRateY_int(WE_sensorInterface_t* sensorInterface, int32_t* yRate)
 {
+    if (NULL == yRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateY(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateY(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5188,8 +5398,12 @@ int8_t ISDS_getAngularRateY_int(WE_sensorInterface_t* sensorInterface, int32_t* 
  */
 int8_t ISDS_getAngularRateZ_int(WE_sensorInterface_t* sensorInterface, int32_t* zRate)
 {
+    if (NULL == zRate)
+    {
+        return WE_FAIL;
+    }
     int16_t rawRate;
-    if (WE_FAIL == ISDS_getRawAngularRateZ(sensorInterface, &rawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRateZ(sensorInterface, &rawRate))
     {
         return WE_FAIL;
     }
@@ -5213,8 +5427,13 @@ int8_t ISDS_getAngularRateZ_int(WE_sensorInterface_t* sensorInterface, int32_t* 
  */
 int8_t ISDS_getAngularRates_int(WE_sensorInterface_t* sensorInterface, int32_t* xRate, int32_t* yRate, int32_t* zRate)
 {
+    if ((NULL == xRate) || (NULL == yRate) || (NULL == zRate))
+    {
+        return WE_FAIL;
+    }
+
     int16_t xRawRate, yRawRate, zRawRate;
-    if (WE_FAIL == ISDS_getRawAngularRates(sensorInterface, &xRawRate, &yRawRate, &zRawRate))
+    if (WE_SUCCESS != ISDS_getRawAngularRates(sensorInterface, &xRawRate, &yRawRate, &zRawRate))
     {
         return WE_FAIL;
     }
@@ -5232,15 +5451,19 @@ int8_t ISDS_getAngularRates_int(WE_sensorInterface_t* sensorInterface, int32_t* 
  */
 int8_t ISDS_getRawAngularRateX(WE_sensorInterface_t* sensorInterface, int16_t* xRawRate)
 {
+    if (NULL == xRawRate)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_GYRO_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_GYRO_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *xRawRate = (int16_t)(tmp[1] << 8);
-    *xRawRate |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *xRawRate = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5253,15 +5476,19 @@ int8_t ISDS_getRawAngularRateX(WE_sensorInterface_t* sensorInterface, int16_t* x
  */
 int8_t ISDS_getRawAngularRateY(WE_sensorInterface_t* sensorInterface, int16_t* yRawRate)
 {
+    if (NULL == yRawRate)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_Y_OUT_L_GYRO_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_Y_OUT_L_GYRO_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *yRawRate = (int16_t)(tmp[1] << 8);
-    *yRawRate |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *yRawRate = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5274,15 +5501,19 @@ int8_t ISDS_getRawAngularRateY(WE_sensorInterface_t* sensorInterface, int16_t* y
  */
 int8_t ISDS_getRawAngularRateZ(WE_sensorInterface_t* sensorInterface, int16_t* zRawRate)
 {
+    if (NULL == zRawRate)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_Z_OUT_L_GYRO_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_Z_OUT_L_GYRO_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *zRawRate = (int16_t)(tmp[1] << 8);
-    *zRawRate |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *zRawRate = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5297,15 +5528,20 @@ int8_t ISDS_getRawAngularRateZ(WE_sensorInterface_t* sensorInterface, int16_t* z
  */
 int8_t ISDS_getRawAngularRates(WE_sensorInterface_t* sensorInterface, int16_t* xRawRate, int16_t* yRawRate, int16_t* zRawRate)
 {
-    uint8_t tmp[6] = {0};
-
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_GYRO_REG, 6, tmp))
+    if ((NULL == xRawRate) || (NULL == yRawRate) || (NULL == zRawRate))
     {
         return WE_FAIL;
     }
 
-    *xRawRate = (int16_t)(tmp[1] << 8);
-    *xRawRate |= (int16_t)tmp[0];
+    uint8_t tmp[6] = {0};
+
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_GYRO_REG, 6, tmp))
+    {
+        return WE_FAIL;
+    }
+
+    /* Safe shift: cast to uint16_t before shifting */
+    *xRawRate = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     *yRawRate = (int16_t)(tmp[3] << 8);
     *yRawRate |= (int16_t)tmp[2];
@@ -5331,8 +5567,12 @@ int8_t ISDS_getRawAngularRates(WE_sensorInterface_t* sensorInterface, int16_t* x
  */
 int8_t ISDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float* xAcc)
 {
+    if (NULL == xAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationX(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationX(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5354,8 +5594,12 @@ int8_t ISDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float*
  */
 int8_t ISDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float* yAcc)
 {
+    if (NULL == yAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationY(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationY(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5377,8 +5621,12 @@ int8_t ISDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float*
  */
 int8_t ISDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float* zAcc)
 {
+    if (NULL == zAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationZ(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationZ(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5402,8 +5650,13 @@ int8_t ISDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float*
  */
 int8_t ISDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface, float* xAcc, float* yAcc, float* zAcc)
 {
+    if ((NULL == xAcc) || (NULL == yAcc) || (NULL == zAcc))
+    {
+        return WE_FAIL;
+    }
+
     int16_t xRawAcc, yRawAcc, zRawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerations(sensorInterface, &xRawAcc, &yRawAcc, &zRawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerations(sensorInterface, &xRawAcc, &yRawAcc, &zRawAcc))
     {
         return WE_FAIL;
     }
@@ -5428,8 +5681,12 @@ int8_t ISDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface, float*
  */
 int8_t ISDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t* xAcc)
 {
+    if (NULL == xAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationX(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationX(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5451,8 +5708,12 @@ int8_t ISDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t*
  */
 int8_t ISDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t* yAcc)
 {
+    if (NULL == yAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationY(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationY(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5474,8 +5735,12 @@ int8_t ISDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t*
  */
 int8_t ISDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t* zAcc)
 {
+    if (NULL == zAcc)
+    {
+        return WE_FAIL;
+    }
     int16_t rawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerationZ(sensorInterface, &rawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerationZ(sensorInterface, &rawAcc))
     {
         return WE_FAIL;
     }
@@ -5499,8 +5764,13 @@ int8_t ISDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t*
  */
 int8_t ISDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface, int16_t* xAcc, int16_t* yAcc, int16_t* zAcc)
 {
+    if ((NULL == xAcc) || (NULL == yAcc) || (NULL == zAcc))
+    {
+        return WE_FAIL;
+    }
+
     int16_t xRawAcc, yRawAcc, zRawAcc;
-    if (WE_FAIL == ISDS_getRawAccelerations(sensorInterface, &xRawAcc, &yRawAcc, &zRawAcc))
+    if (WE_SUCCESS != ISDS_getRawAccelerations(sensorInterface, &xRawAcc, &yRawAcc, &zRawAcc))
     {
         return WE_FAIL;
     }
@@ -5518,15 +5788,19 @@ int8_t ISDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface, int16_t*
  */
 int8_t ISDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t* xRawAcc)
 {
+    if (NULL == xRawAcc)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_ACC_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_ACC_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *xRawAcc = (int16_t)(tmp[1] << 8);
-    *xRawAcc |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *xRawAcc = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5539,15 +5813,19 @@ int8_t ISDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t* 
  */
 int8_t ISDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t* yRawAcc)
 {
+    if (NULL == yRawAcc)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_Y_OUT_L_ACC_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_Y_OUT_L_ACC_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *yRawAcc = (int16_t)(tmp[1] << 8);
-    *yRawAcc |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *yRawAcc = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5560,15 +5838,19 @@ int8_t ISDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t* 
  */
 int8_t ISDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t* zRawAcc)
 {
+    if (NULL == zRawAcc)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_Z_OUT_L_ACC_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_Z_OUT_L_ACC_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *zRawAcc = (int16_t)(tmp[1] << 8);
-    *zRawAcc |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *zRawAcc = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5583,15 +5865,20 @@ int8_t ISDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t* 
  */
 int8_t ISDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface, int16_t* xRawAcc, int16_t* yRawAcc, int16_t* zRawAcc)
 {
-    uint8_t tmp[6] = {0};
-
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_ACC_REG, 6, tmp))
+    if ((NULL == xRawAcc) || (NULL == yRawAcc) || (NULL == zRawAcc))
     {
         return WE_FAIL;
     }
 
-    *xRawAcc = (int16_t)(tmp[1] << 8);
-    *xRawAcc |= (int16_t)tmp[0];
+    uint8_t tmp[6] = {0};
+
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_X_OUT_L_ACC_REG, 6, tmp))
+    {
+        return WE_FAIL;
+    }
+
+    /* Safe shift: cast to uint16_t before shifting */
+    *xRawAcc = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     *yRawAcc = (int16_t)(tmp[3] << 8);
     *yRawAcc |= (int16_t)tmp[2];
@@ -5612,8 +5899,12 @@ int8_t ISDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface, int16_t* 
  */
 int8_t ISDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* temperature)
 {
+    if (NULL == temperature)
+    {
+        return WE_FAIL;
+    }
     int16_t tempRaw;
-    if (WE_FAIL == ISDS_getRawTemperature(sensorInterface, &tempRaw))
+    if (WE_SUCCESS != ISDS_getRawTemperature(sensorInterface, &tempRaw))
     {
         return WE_FAIL;
     }
@@ -5629,8 +5920,12 @@ int8_t ISDS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* t
  */
 int8_t ISDS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* temperature)
 {
+    if (NULL == temperature)
+    {
+        return WE_FAIL;
+    }
     int16_t tempRaw;
-    if (WE_FAIL == ISDS_getRawTemperature(sensorInterface, &tempRaw))
+    if (WE_SUCCESS != ISDS_getRawTemperature(sensorInterface, &tempRaw))
     {
         return WE_FAIL;
     }
@@ -5651,15 +5946,19 @@ int8_t ISDS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* t
  */
 int8_t ISDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* temperature)
 {
+    if (NULL == temperature)
+    {
+        return WE_FAIL;
+    }
     uint8_t tmp[2] = {0};
 
-    if (WE_FAIL == ISDS_ReadReg(sensorInterface, ISDS_OUT_TEMP_L_REG, 2, tmp))
+    if (WE_SUCCESS != ISDS_ReadReg(sensorInterface, ISDS_OUT_TEMP_L_REG, 2, tmp))
     {
         return WE_FAIL;
     }
 
-    *temperature = (int16_t)(tmp[1] << 8);
-    *temperature |= (int16_t)tmp[0];
+    /* Safe shift: cast to uint16_t before shifting */
+    *temperature = (int16_t)(((uint16_t)tmp[1] << 8) | (uint16_t)tmp[0]);
 
     return WE_SUCCESS;
 }
@@ -5689,7 +5988,7 @@ float ISDS_convertAcceleration_float(int16_t acc, ISDS_accFullScale_t fullScale)
 
         case ISDS_accFullScaleInvalid:
         default:
-            return 0;
+            return 0.0f; /* Invalid full scale */
     }
 }
 
@@ -5751,7 +6050,7 @@ float ISDS_convertAngularRate_float(int16_t rate, ISDS_gyroFullScale_t fullScale
             return ISDS_convertAngularRateFs2000dps_float(rate);
 
         default:
-            return 0;
+            return 0.0f; /* Invalid full scale */
     }
 }
 
@@ -5827,7 +6126,7 @@ int16_t ISDS_convertAcceleration_int(int16_t acc, ISDS_accFullScale_t fullScale)
 
         case ISDS_accFullScaleInvalid:
         default:
-            return 0;
+            return 0.0f; /* Invalid full scale */
     }
 }
 
@@ -5889,7 +6188,7 @@ int32_t ISDS_convertAngularRate_int(int16_t rate, ISDS_gyroFullScale_t fullScale
             return ISDS_convertAngularRateFs2000dps_int(rate);
 
         default:
-            return 0;
+            return 0.0f; /* Invalid full scale */
     }
 }
 

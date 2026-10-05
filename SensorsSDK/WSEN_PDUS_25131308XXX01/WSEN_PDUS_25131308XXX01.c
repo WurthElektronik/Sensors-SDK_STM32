@@ -34,8 +34,6 @@
 
 #include <platform.h>
 
-#define PDUS_BASE (uint64_t)2513130800000LL
-
 /**
  * @brief Default sensor interface configuration.
  */
@@ -86,6 +84,11 @@ static inline int8_t PDUS_ReadReg(WE_sensorInterface_t* sensorInterface, uint16_
  */
 int8_t PDUS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
+
     *sensorInterface = pdusDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -98,6 +101,11 @@ int8_t PDUS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  */
 int8_t PDUS_getRawPressure(WE_sensorInterface_t* sensorInterface, uint16_t* pressure)
 {
+    if (NULL == pressure)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t tmp[2] = {0};
 
     if (WE_FAIL == PDUS_ReadReg(sensorInterface, 2, tmp))
@@ -120,6 +128,11 @@ int8_t PDUS_getRawPressure(WE_sensorInterface_t* sensorInterface, uint16_t* pres
  */
 int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, uint16_t* pressure, uint16_t* temperature)
 {
+    if ((NULL == pressure) || (NULL == temperature))
+    {
+        return WE_FAIL;
+    }
+
     uint8_t tmp[4] = {0};
 
     if (WE_FAIL == PDUS_ReadReg(sensorInterface, 4, tmp))
@@ -139,7 +152,7 @@ int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, 
 #ifdef WE_USE_FLOAT
 
 /**
- * @brief Read the pressure and temperature values
+ * @brief Read the pressure value
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[in] type PDUS sensor type (i.e. pressure measurement range) for internal conversion of pressure, please refer to Article number mapping table
  * @param[out] presskPa Pointer to pressure value
@@ -147,6 +160,11 @@ int8_t PDUS_getRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, 
  */
 int8_t PDUS_getPressure_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float* presskPa)
 {
+    if (NULL == presskPa)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t rawPres = 0;
 
     if (WE_FAIL == PDUS_getRawPressure(sensorInterface, &rawPres))
@@ -168,6 +186,11 @@ int8_t PDUS_getPressure_float(WE_sensorInterface_t* sensorInterface, PDUS_Sensor
  */
 int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterface, PDUS_SensorType_t type, float* presskPa, float* tempDegC)
 {
+    if ((NULL == presskPa) || (NULL == tempDegC))
+    {
+        return WE_FAIL;
+    }
+
     uint16_t rawPres = 0;
     uint16_t rawTemp = 0;
 
@@ -192,7 +215,13 @@ int8_t PDUS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
  */
 int8_t PDUS_convertPressureToFloat(PDUS_SensorType_t type, uint16_t rawPressure, float* presskPa)
 {
-    float temp = (float)((float)rawPressure - (float)P_MIN_TYP_VAL_PDUS);
+    if (NULL == presskPa)
+    {
+        return WE_FAIL;
+    }
+
+    float temp = (float)rawPressure - (float)P_MIN_TYP_VAL_PDUS;
+    /* Conversion formula: P[kPa] = (raw_value * sensitivity) - P_min */
     switch (type)
     {
         case PDUS_pdus0:

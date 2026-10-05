@@ -94,7 +94,7 @@ typedef struct
 {
     uint8_t busy : 1;               /**< BUSY: Temperature conversion status (0: data conversion complete; 1: data conversion in progress) */
     uint8_t upperLimitExceeded : 1; /**< OVER_THL: Temperature upper limit status (0: temperature is below upper limit or disabled; 1: temperature exceeded high limit */
-    uint8_t lowerLimitExceeded : 2; /**< UNDER_TLL: Temperature lower limit status (0: temperature is above lower limit or disabled; 1: temperature exceeded low limit */
+    uint8_t lowerLimitExceeded : 1; /**< UNDER_TLL: Temperature lower limit status (0: temperature is above lower limit or disabled; 1: temperature exceeded low limit */
     uint8_t reserved01 : 5;         /**< Must be set to 0 */
 } TIDS_status_t;
 
@@ -132,58 +132,56 @@ extern "C"
 {
 #endif
 
-    /*         Function definitions         */
+/*         Function definitions         */
 
-    /* Sensor/interface initialization */
-    int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
+/* Sensor/interface initialization */
+int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
 
-    /* Device ID */
-    int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
+/* Device ID */
+int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
 
-    /* Software reset */
-    int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swReset);
-    int8_t TIDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, TIDS_state_t* swReset);
+/* Software reset */
+int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swReset);
+int8_t TIDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, TIDS_state_t* swReset);
 
-    /* Free run mode */
-    int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_state_t mode);
-    int8_t TIDS_isContinuousModeEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* mode);
+/* Free run mode */
+int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_state_t mode);
+int8_t TIDS_isContinuousModeEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* mode);
 
-    /* Block data update */
-    int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_state_t bdu);
-    int8_t TIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* bdu);
+/* Block data update */
+int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_state_t bdu);
+int8_t TIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* bdu);
 
-    /* Output data rate */
-    int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t odr);
-    int8_t TIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t* odr);
+/* Output data rate */
+int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t odr);
+int8_t TIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t* odr);
 
-    /* One shot mode */
-    int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t oneShot);
-    int8_t TIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* oneShot);
+/* One shot mode */
+int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t oneShot);
+int8_t TIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* oneShot);
 
-    /* Address auto increment */
-    int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_state_t autoIncr);
-    int8_t TIDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* autoIncr);
+/* Address auto increment */
+int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_state_t autoIncr);
+int8_t TIDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* autoIncr);
 
-    /* Temperature limits */
-    int8_t TIDS_setTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t hLimit);
-    int8_t TIDS_getTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t* hLimit);
+/* Temperature limits */
+int8_t TIDS_setTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t hLimit);
+int8_t TIDS_getTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t* hLimit);
 
-    int8_t TIDS_setTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t lLimit);
-    int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t* lLimit);
+int8_t TIDS_setTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t lLimit);
+int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t* lLimit);
 
-    /* Status */
-    int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t* status);
-    int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t* busy);
-    int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state);
-    int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state);
+/* Status */
+int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t* status);
+int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t* busy);
+int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state);
+int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state);
 
-    /* Standard data out */
-    int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp);
+/* Standard data out */
+int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp);
 
 #ifdef WE_USE_FLOAT
-    int8_t TIDS_getTemperature(WE_sensorInterface_t* sensorInterface, float* tempDegC);
-#else
-#warning "WSEN_TIDS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
+int8_t TIDS_getTemperature(WE_sensorInterface_t* sensorInterface, float* tempDegC);
 #endif /* WE_USE_FLOAT */
 
 #ifdef __cplusplus

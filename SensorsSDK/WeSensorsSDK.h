@@ -41,7 +41,7 @@
 /**
  * @brief SDK minor version number.
  */
-#define WE_SENSOR_SDK_MINOR_VERSION 7
+#define WE_SENSOR_SDK_MINOR_VERSION 8
 
 /**
  * @brief Return code for successful operations.
@@ -58,14 +58,15 @@
  */
 typedef enum
 {
-    WE_HIDS, /* Humidity sensor */
-    WE_GCDS, /* CO2 sensor */
-    WE_ITDS, /* Acceleration sensor */
-    WE_TIDS, /* Temperature sensor */
-    WE_PADS, /* Absolute pressure sensor */
-    WE_PDUS, /* Differential pressure sensor */
-    WE_ISDS, /* 3D accelerometer and 3D gyroscope */
-    WE_PDMS, /* GEN2 Differential pressure sensor */
+    WE_HIDS,    /* Humidity sensor */
+    WE_GCDS,    /* CO2 sensor */
+    WE_ITDS,    /* Acceleration sensor */
+    WE_TIDS,    /* Temperature sensor */
+    WE_PADS,    /* Absolute pressure sensor */
+    WE_PDUS,    /* Differential pressure sensor */
+    WE_ISDS,    /* 3D accelerometer and 3D gyroscope */
+    WE_PDMS,    /* GEN2 Differential pressure sensor */
+    WE_PDDS,    /* Dual-side nozzle differential pressure sensor */
     WE_SENSOR_TYPE_MAX
 } WE_sensorType_t;
 

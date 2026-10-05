@@ -51,7 +51,7 @@
 static WE_sensorInterface_t itds;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 static bool ITDS_selfTest(void);
 static bool ITDS_discardOldData(void);
 static bool ITDS_checkSelfTestValue(float value, float valueSelfTest);
@@ -73,7 +73,7 @@ void WE_itdsSelfTestExampleInit()
     debugPrintln("This is the \"self-test\" example program for the ITDS sensor.");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -109,7 +109,7 @@ void WE_itdsSelfTestExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -128,21 +128,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

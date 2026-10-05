@@ -128,7 +128,7 @@ typedef struct
 /**
  * @brief Interface control register
  *
- * Address 0x0B
+ * Address 0x0E
  * Type  R/W
  * Default value: 0x00
  */
@@ -146,7 +146,7 @@ typedef struct
 /**
  * @brief Control register 1
  *
- * Address 0x0F
+ * Address 0x10
  * Type  R/W
  * Default value: 0x00
  *
@@ -377,157 +377,155 @@ extern "C"
 {
 #endif
 
-    /*         Function definitions         */
+/*         Function definitions         */
 
-    int8_t PADS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
+int8_t PADS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
 
-    int8_t PADS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
+int8_t PADS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
 
-    int8_t PADS_enableAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t autoRefp);
-    int8_t PADS_isEnablingAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoRefp);
-    int8_t PADS_resetAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t reset);
+int8_t PADS_enableAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t autoRefp);
+int8_t PADS_isEnablingAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoRefp);
+int8_t PADS_resetAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t reset);
 
-    int8_t PADS_enableAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t autoZero);
-    int8_t PADS_isEnablingAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoZero);
-    int8_t PADS_resetAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t reset);
+int8_t PADS_enableAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t autoZero);
+int8_t PADS_isEnablingAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoZero);
+int8_t PADS_resetAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t reset);
 
-    int8_t PADS_enableDiffPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t diffEn);
-    int8_t PADS_isDiffPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* diffIntState);
+int8_t PADS_enableDiffPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t diffEn);
+int8_t PADS_isDiffPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* diffIntState);
 
-    int8_t PADS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
-    int8_t PADS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* latchInt);
+int8_t PADS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
+int8_t PADS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* latchInt);
 
-    int8_t PADS_enableLowPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
-    int8_t PADS_isLowPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpint);
-    int8_t PADS_enableHighPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
-    int8_t PADS_isHighPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpint);
+int8_t PADS_enableLowPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
+int8_t PADS_isLowPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpint);
+int8_t PADS_enableHighPressureInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
+int8_t PADS_isHighPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpint);
 
-    int8_t PADS_getInterruptSource(WE_sensorInterface_t* sensorInterface, PADS_intSource_t* intSource);
-    int8_t PADS_getInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* intState);
-    int8_t PADS_getLowPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpState);
-    int8_t PADS_getHighPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpState);
+int8_t PADS_getInterruptSource(WE_sensorInterface_t* sensorInterface, PADS_intSource_t* intSource);
+int8_t PADS_getInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* intState);
+int8_t PADS_getLowPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpState);
+int8_t PADS_getHighPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpState);
 
-    int8_t PADS_enableFifoFullInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t fullState);
-    int8_t PADS_enableFifoThresholdInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t threshState);
-    int8_t PADS_enableFifoOverrunInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t ovrState);
+int8_t PADS_enableFifoFullInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t fullState);
+int8_t PADS_enableFifoThresholdInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t threshState);
+int8_t PADS_enableFifoOverrunInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t ovrState);
 
-    int8_t PADS_isFifoFull(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoFull);
-    int8_t PADS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoWtm);
-    int8_t PADS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoOvr);
+int8_t PADS_isFifoFull(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoFull);
+int8_t PADS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoWtm);
+int8_t PADS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoOvr);
 
-    int8_t PADS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t drdy);
-    int8_t PADS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* drdy);
+int8_t PADS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, PADS_state_t drdy);
+int8_t PADS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* drdy);
 
-    int8_t PADS_setInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS_interruptEventControl_t ctr);
-    int8_t PADS_getInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS_interruptEventControl_t* intEvent);
+int8_t PADS_setInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS_interruptEventControl_t ctr);
+int8_t PADS_getInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS_interruptEventControl_t* intEvent);
 
-    int8_t PADS_setPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t thresholdPa);
-    int8_t PADS_getPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t* thresholdPa);
-    int8_t PADS_setPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t thr);
-    int8_t PADS_setPressureThresholdMSB(WE_sensorInterface_t* sensorInterface, uint8_t thr);
-    int8_t PADS_getPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrLSB);
-    int8_t PADS_getPressureThresholdMSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrMSB);
+int8_t PADS_setPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t thresholdPa);
+int8_t PADS_getPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t* thresholdPa);
+int8_t PADS_setPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t thr);
+int8_t PADS_setPressureThresholdMSB(WE_sensorInterface_t* sensorInterface, uint8_t thr);
+int8_t PADS_getPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrLSB);
+int8_t PADS_getPressureThresholdMSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrMSB);
 
-    int8_t PADS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, PADS_state_t i2cDisable);
-    int8_t PADS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* i2cDisabled);
-    int8_t PADS_disablePullDownIntPin(WE_sensorInterface_t* sensorInterface, PADS_state_t pullDown);
-    int8_t PADS_isPullDownIntDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* pinState);
-    int8_t PADS_setSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t saoStatus);
-    int8_t PADS_isSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* saoPinState);
-    int8_t PADS_setSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t sdaStatus);
-    int8_t PADS_isSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* sdaPinState);
+int8_t PADS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, PADS_state_t i2cDisable);
+int8_t PADS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* i2cDisabled);
+int8_t PADS_disablePullDownIntPin(WE_sensorInterface_t* sensorInterface, PADS_state_t pullDown);
+int8_t PADS_isPullDownIntDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* pinState);
+int8_t PADS_setSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t saoStatus);
+int8_t PADS_isSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* saoPinState);
+int8_t PADS_setSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t sdaStatus);
+int8_t PADS_isSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* sdaPinState);
 
-    int8_t PADS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_outputDataRate_t odr);
-    int8_t PADS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_outputDataRate_t* odr);
+int8_t PADS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_outputDataRate_t odr);
+int8_t PADS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_outputDataRate_t* odr);
 
-    int8_t PADS_enableLowPassFilter(WE_sensorInterface_t* sensorInterface, PADS_state_t filterEnabled);
-    int8_t PADS_isLowPassFilterEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* filterEnabled);
-    int8_t PADS_setLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_filterConf_t conf);
-    int8_t PADS_getLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_filterConf_t* conf);
+int8_t PADS_enableLowPassFilter(WE_sensorInterface_t* sensorInterface, PADS_state_t filterEnabled);
+int8_t PADS_isLowPassFilterEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* filterEnabled);
+int8_t PADS_setLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_filterConf_t conf);
+int8_t PADS_getLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_filterConf_t* conf);
 
-    int8_t PADS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, PADS_state_t bdu);
-    int8_t PADS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* bdu);
+int8_t PADS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, PADS_state_t bdu);
+int8_t PADS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* bdu);
 
-    int8_t PADS_reboot(WE_sensorInterface_t* sensorInterface, PADS_state_t reboot);
-    int8_t PADS_isRebooting(WE_sensorInterface_t* sensorInterface, PADS_state_t* reboot);
-    int8_t PADS_getBootStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* boot);
+int8_t PADS_reboot(WE_sensorInterface_t* sensorInterface, PADS_state_t reboot);
+int8_t PADS_isRebooting(WE_sensorInterface_t* sensorInterface, PADS_state_t* reboot);
+int8_t PADS_getBootStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* boot);
 
-    int8_t PADS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_interruptActiveLevel_t level);
-    int8_t PADS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_interruptActiveLevel_t* level);
+int8_t PADS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_interruptActiveLevel_t level);
+int8_t PADS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_interruptActiveLevel_t* level);
 
-    int8_t PADS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_interruptPinConfig_t pinType);
-    int8_t PADS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_interruptPinConfig_t* pinType);
+int8_t PADS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_interruptPinConfig_t pinType);
+int8_t PADS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_interruptPinConfig_t* pinType);
 
-    int8_t PADS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, PADS_state_t inc);
-    int8_t PADS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* inc);
+int8_t PADS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, PADS_state_t inc);
+int8_t PADS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* inc);
 
-    int8_t PADS_softReset(WE_sensorInterface_t* sensorInterface, PADS_state_t swReset);
-    int8_t PADS_getSoftResetState(WE_sensorInterface_t* sensorInterface, PADS_state_t* swReset);
+int8_t PADS_softReset(WE_sensorInterface_t* sensorInterface, PADS_state_t swReset);
+int8_t PADS_getSoftResetState(WE_sensorInterface_t* sensorInterface, PADS_state_t* swReset);
 
-    int8_t PADS_setPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t mode);
-    int8_t PADS_getPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t* mode);
+int8_t PADS_setPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t mode);
+int8_t PADS_getPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t* mode);
 
-    int8_t PADS_enableOneShot(WE_sensorInterface_t* sensorInterface, PADS_state_t oneShot);
-    int8_t PADS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* oneShot);
+int8_t PADS_enableOneShot(WE_sensorInterface_t* sensorInterface, PADS_state_t oneShot);
+int8_t PADS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* oneShot);
 
-    int8_t PADS_setPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t offset);
-    int8_t PADS_getPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset);
-    int8_t PADS_setPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t offset);
-    int8_t PADS_getPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset);
+int8_t PADS_setPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t offset);
+int8_t PADS_getPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset);
+int8_t PADS_setPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t offset);
+int8_t PADS_getPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset);
 
-    int8_t PADS_setFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t fifoMode);
-    int8_t PADS_getFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t* fifoMode);
+int8_t PADS_setFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t fifoMode);
+int8_t PADS_getFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t* fifoMode);
 
-    int8_t PADS_enableStopOnThreshold(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
-    int8_t PADS_isStopOnThresholdEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
+int8_t PADS_enableStopOnThreshold(WE_sensorInterface_t* sensorInterface, PADS_state_t state);
+int8_t PADS_isStopOnThresholdEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
 
-    int8_t PADS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifoThr);
-    int8_t PADS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThr);
+int8_t PADS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifoThr);
+int8_t PADS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThr);
 
-    int8_t PADS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoLevel);
+int8_t PADS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoLevel);
 
-    int8_t PADS_getReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressurePa);
-    int8_t PADS_getRawReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressure);
-    int8_t PADS_getReferencePressureLSB(WE_sensorInterface_t* sensorInterface, uint8_t* lowReferenceValue);
-    int8_t PADS_getReferencePressureMSB(WE_sensorInterface_t* sensorInterface, uint8_t* highReferenceValue);
+int8_t PADS_getReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressurePa);
+int8_t PADS_getRawReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressure);
+int8_t PADS_getReferencePressureLSB(WE_sensorInterface_t* sensorInterface, uint8_t* lowReferenceValue);
+int8_t PADS_getReferencePressureMSB(WE_sensorInterface_t* sensorInterface, uint8_t* highReferenceValue);
 
-    int8_t PADS_getTemperatureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
-    int8_t PADS_getPressureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
+int8_t PADS_getTemperatureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
+int8_t PADS_getPressureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
 
-    int8_t PADS_isPressureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
-    int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
-    int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* temp_state, PADS_state_t* press_state);
+int8_t PADS_isPressureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
+int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state);
+int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* temp_state, PADS_state_t* press_state);
 
-    int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t* rawPres);
-    int8_t PADS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp);
+int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t* rawPres);
+int8_t PADS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp);
 
-    int8_t PADS_getFifoRawPressure(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres);
-    int8_t PADS_getFifoRawTemperature(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* rawTemp);
-    int8_t PADS_getFifoRawValues(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres, int16_t* rawTemp);
+int8_t PADS_getFifoRawPressure(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres);
+int8_t PADS_getFifoRawTemperature(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* rawTemp);
+int8_t PADS_getFifoRawValues(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres, int16_t* rawTemp);
 
-    int8_t PADS_getPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa);
-    int8_t PADS_getDifferentialPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa);
-    int8_t PADS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* temperature);
+int8_t PADS_getPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa);
+int8_t PADS_getDifferentialPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa);
+int8_t PADS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* temperature);
 
-    int8_t PADS_getFifoPressure_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa);
-    int8_t PADS_getFifoTemperature_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* temperature);
-    int8_t PADS_getFifoValues_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa, int16_t* temperature);
+int8_t PADS_getFifoPressure_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa);
+int8_t PADS_getFifoTemperature_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* temperature);
+int8_t PADS_getFifoValues_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa, int16_t* temperature);
 
-    int32_t PADS_convertPressure_int(int32_t rawPres);
-    int32_t PADS_convertDifferentialPressure_int(int32_t rawPres);
+int32_t PADS_convertPressure_int(int32_t rawPres);
+int32_t PADS_convertDifferentialPressure_int(int32_t rawPres);
 
 #ifdef WE_USE_FLOAT
-    int8_t PADS_getPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
-    int8_t PADS_getDifferentialPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
-    int8_t PADS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC);
+int8_t PADS_getPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
+int8_t PADS_getDifferentialPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
+int8_t PADS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC);
 
-    int8_t PADS_getFifoPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
-    int8_t PADS_getFifoTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC);
+int8_t PADS_getFifoPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa);
+int8_t PADS_getFifoTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC);
 
-    float PADS_convertPressure_float(int32_t rawPres);
-    float PADS_convertDifferentialPressure_float(int32_t rawPres);
-#else
-#warning "WSEN_PADS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
+float PADS_convertPressure_float(int32_t rawPres);
+float PADS_convertDifferentialPressure_float(int32_t rawPres);
 #endif /* WE_USE_FLOAT */
 
 #ifdef __cplusplus

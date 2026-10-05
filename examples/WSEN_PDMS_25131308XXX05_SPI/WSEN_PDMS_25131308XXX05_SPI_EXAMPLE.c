@@ -50,7 +50,7 @@ static PDMS_SensorType_t pdmsSensorType;
 static PDMS_Spi_CrcSelect_t spiCrcSelect;
 
 /* Sensor initialization function */
-static bool PDMS_init(void);
+static bool WE_pdmsInit(void);
 
 /* Functions to print float values */
 static void debugPrintPressure_float(float pressureKPa);
@@ -72,11 +72,11 @@ void WE_pdmsSpiExampleInit()
     debugPrintln(bufferMinor);
     debugPrintln("Pin CS/SA0 at power on connected to VDD via pull-up resistors activates SPI communication..");
     debugPrintln("This example gives SPI measurement with CRC activated.");
-    debugPrintln("Set spi protocol to 0 in PDMS_init() function for measurement without CRC.");
-    debugPrintln("Select the right pdms sensor type in PDMS_init() function. PDMS_pdus3 is selected as default.");
+    debugPrintln("Set spi protocol to 0 in WE_pdmsInit() function for measurement without CRC.");
+    debugPrintln("Select the right pdms sensor type in WE_pdmsInit() function. PDMS_pdus3 is selected as default.");
 
     /* init PDMS */
-    if (false == PDMS_init())
+    if (false == WE_pdmsInit())
     {
         debugPrintln("**** PDMS_Init() error. STOP ****");
         WE_Delay(5);
@@ -124,7 +124,7 @@ void WE_pdmsSpiExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool PDMS_init(void)
+static bool WE_pdmsInit(void)
 {
     /* Initialize sensor interface */
     PDMS_getDefaultInterface(&pdms);

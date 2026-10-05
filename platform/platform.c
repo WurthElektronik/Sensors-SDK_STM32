@@ -66,34 +66,28 @@ static HAL_StatusTypeDef SPIx_TransceiveBytes(SPI_HandleTypeDef* handle, GPIO_Ty
  */
 inline int8_t WE_SPITransceive(WE_sensorInterface_t* interface, uint16_t numBytes, uint8_t* txData, uint8_t* rxData)
 {
-    HAL_StatusTypeDef status = HAL_OK;
+    HAL_StatusTypeDef status = HAL_ERROR;
 
     switch (interface->interfaceType)
     {
         case WE_spi:
+        {
 #ifdef HAL_SPI_MODULE_ENABLED
-            if (interface->options.spi.duplexMode == 0)
-            {
-                status = HAL_ERROR;
-            }
-            else if (interface->options.spi.burstMode == 0)
-            {
-                status = HAL_ERROR;
-            }
+
             /* Only burstMode == 1 is implemented for duplex mode */
-            else
+            if ((interface->options.spi.duplexMode == 1) && (interface->options.spi.burstMode == 1))
             {
                 status = SPIx_TransceiveBytes((SPI_HandleTypeDef*)interface->handle, (GPIO_TypeDef*)interface->options.spi.chipSelectPort, interface->options.spi.chipSelectPin, numBytes, interface->options.readTimeout, txData, rxData);
             }
-
-#else
-            status = HAL_ERROR;
 #endif /* HAL_SPI_MODULE_ENABLED */
             break;
+        }
+
         case WE_i2c:
         default:
-            status = HAL_ERROR;
+        {
             break;
+        }
     }
 
     return status == HAL_OK ? WE_SUCCESS : WE_FAIL;
@@ -111,13 +105,19 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint16
 {
     HAL_StatusTypeDef status = HAL_OK;
 
+    if ((0 == numBytesToRead) || (NULL == data) || (NULL == interface))
+    {
+        return WE_FAIL;
+    }
+
     switch (interface->interfaceType)
     {
         case WE_i2c:
+        {
 #ifdef HAL_I2C_MODULE_ENABLED
-            if ((interface->options.i2c.burstMode != 0) || (numBytesToRead == 1))
+            if ((interface->options.i2c.burstMode == 1) || (numBytesToRead == 1))
             {
-                if (numBytesToRead > 1 && interface->options.i2c.useRegAddrMsbForMultiBytesRead)
+                if ((numBytesToRead > 1) && interface->options.i2c.useRegAddrMsbForMultiBytesRead)
                 {
                     /* Register address most significant bit is used to enable multi bytes read */
                     regAdr |= 1 << 7;
@@ -137,10 +137,12 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint16
             status = HAL_ERROR;
 #endif /* HAL_I2C_MODULE_ENABLED */
             break;
+        }
 
         case WE_spi:
+        {
 #ifdef HAL_SPI_MODULE_ENABLED
-            if ((interface->options.spi.burstMode != 0) || (numBytesToRead == 1))
+            if ((interface->options.spi.burstMode == 1) || (numBytesToRead == 1))
             {
                 status = SPIx_ReadBytes((SPI_HandleTypeDef*)interface->handle, (GPIO_TypeDef*)interface->options.spi.chipSelectPort, interface->options.spi.chipSelectPin, regAdr, numBytesToRead, interface->options.readTimeout, data);
             }
@@ -155,10 +157,13 @@ inline int8_t WE_ReadReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint16
             status = HAL_ERROR;
 #endif /* HAL_SPI_MODULE_ENABLED */
             break;
+        }
 
         default:
+        {
             status = HAL_ERROR;
             break;
+        }
     }
 
     return status == HAL_OK ? WE_SUCCESS : WE_FAIL;
@@ -176,12 +181,17 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint1
 {
     HAL_StatusTypeDef status = HAL_OK;
 
+    if ((0 == numBytesToWrite) || (NULL == data) || (NULL == interface))
+    {
+        return WE_FAIL;
+    }
+
     switch (interface->interfaceType)
     {
-
         case WE_i2c:
+        {
 #ifdef HAL_I2C_MODULE_ENABLED
-            if (interface->options.i2c.burstMode != 0 || numBytesToWrite == 1)
+            if (interface->options.i2c.burstMode == 1 || numBytesToWrite == 1)
             {
                 status = I2Cx_WriteBytes((I2C_HandleTypeDef*)interface->handle, interface->options.i2c.address << 1, /* stm32 needs shifted value */
                                          regAdr, numBytesToWrite, interface->options.i2c.protocol, interface->options.writeTimeout, data);
@@ -198,10 +208,12 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint1
             status = HAL_ERROR;
 #endif /* HAL_I2C_MODULE_ENABLED */
             break;
+        }
 
         case WE_spi:
+        {
 #ifdef HAL_SPI_MODULE_ENABLED
-            if (interface->options.spi.burstMode != 0 || numBytesToWrite == 1)
+            if (interface->options.spi.burstMode == 1 || numBytesToWrite == 1)
             {
                 status = SPIx_WriteBytes((SPI_HandleTypeDef*)interface->handle, (GPIO_TypeDef*)interface->options.spi.chipSelectPort, interface->options.spi.chipSelectPin, regAdr, numBytesToWrite, interface->options.writeTimeout, data);
             }
@@ -216,10 +228,13 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint1
             status = HAL_ERROR;
 #endif /* HAL_SPI_MODULE_ENABLED */
             break;
+        }
 
         default:
+        {
             status = HAL_ERROR;
             break;
+        }
     }
 
     return status == HAL_OK ? WE_SUCCESS : WE_FAIL;
@@ -232,24 +247,35 @@ inline int8_t WE_WriteReg(WE_sensorInterface_t* interface, uint8_t regAdr, uint1
  */
 int8_t WE_isSensorInterfaceReady(WE_sensorInterface_t* interface)
 {
+    if ((NULL == interface) || (NULL == interface->handle))
+    {
+        return WE_FAIL;
+    }
+
     switch (interface->interfaceType)
     {
         case WE_i2c:
+        {
 #ifdef HAL_I2C_MODULE_ENABLED
             return (HAL_OK == HAL_I2C_IsDeviceReady((I2C_HandleTypeDef*)interface->handle, interface->options.i2c.address << 1, 64, 5000)) ? WE_SUCCESS : WE_FAIL;
 #else
             return WE_FAIL;
 #endif
+        }
 
         case WE_spi:
+        {
 #ifdef HAL_SPI_MODULE_ENABLED
             return WE_SUCCESS;
 #else
             return WE_FAIL;
 #endif
+        }
 
         default:
+        {
             return WE_FAIL;
+        }
     }
 }
 
@@ -279,7 +305,9 @@ static HAL_StatusTypeDef I2Cx_ReadBytes(I2C_HandleTypeDef* handle, uint8_t addr,
             return HAL_I2C_Master_Receive(handle, addr, value, numBytesToRead, timeout);
         }
         default:
+        {
             return HAL_ERROR;
+        }
     }
 }
 
@@ -307,7 +335,9 @@ static HAL_StatusTypeDef I2Cx_WriteBytes(I2C_HandleTypeDef* handle, uint8_t addr
             return HAL_I2C_Master_Transmit(handle, addr, value, numBytesToWrite, timeout);
         }
         default:
+        {
             return HAL_ERROR;
+        }
     }
 }
 
@@ -334,12 +364,11 @@ void WE_Delay(uint32_t delay) { HAL_Delay(delay); }
  */
 static HAL_StatusTypeDef SPIx_ReadBytes(SPI_HandleTypeDef* handle, GPIO_TypeDef* chipSelectPort, uint16_t chipSelectPin, uint8_t reg, uint16_t numBytesToRead, uint16_t timeout, uint8_t* value)
 {
-    HAL_StatusTypeDef status = HAL_OK;
     HAL_GPIO_WritePin(chipSelectPort, chipSelectPin, GPIO_PIN_RESET);
     /* Bit 7 has to be 0 for write and 1 for read operations */
     uint8_t header = reg | (1 << 7);
 
-    status = HAL_SPI_Transmit(handle, &header, 1, timeout);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(handle, &header, 1, timeout);
     if (status != HAL_OK)
     {
         return status;
@@ -362,12 +391,11 @@ static HAL_StatusTypeDef SPIx_ReadBytes(SPI_HandleTypeDef* handle, GPIO_TypeDef*
  */
 static HAL_StatusTypeDef SPIx_WriteBytes(SPI_HandleTypeDef* handle, GPIO_TypeDef* chipSelectPort, uint16_t chipSelectPin, uint8_t reg, uint16_t numBytesToWrite, uint16_t timeout, uint8_t* value)
 {
-    HAL_StatusTypeDef status = HAL_OK;
     HAL_GPIO_WritePin(chipSelectPort, chipSelectPin, GPIO_PIN_RESET);
     /* Bit 7 has to be 0 for write and 1 for read operations */
     uint8_t header = reg & ~(1 << 7);
 
-    status = HAL_SPI_Transmit(handle, &header, 1, timeout);
+    HAL_StatusTypeDef status = HAL_SPI_Transmit(handle, &header, 1, timeout);
     if (status != HAL_OK)
     {
         return status;

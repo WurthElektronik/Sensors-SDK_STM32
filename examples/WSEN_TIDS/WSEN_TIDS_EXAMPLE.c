@@ -40,8 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Comment/uncomment the following lines to disable/enable the examples for
- * each data type (see main function). */
+#pragma message("Comment/uncomment the following lines to disable/enable the examples for each data type (see main function)")
 /* Note: The float example won't compile unless WE_USE_FLOAT is defined. */
 #define TIDS_EXAMPLE_ENABLE_FLOAT
 #define TIDS_EXAMPLE_ENABLE_INT
@@ -100,7 +99,7 @@ void WE_tidsExampleInit()
  */
 void WE_tidsExampleLoop()
 {
-    /* Comment/uncomment the following lines to switch between example modes. */
+#pragma message("Comment/uncomment the following lines to switch between example modes.")
     TIDS_singleConversionMode();
     //  TIDS_continuousMode();
 }
@@ -126,21 +125,14 @@ static bool TIDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == TIDS_getDeviceID(&tids, &deviceIdValue))
-    {
-        if (deviceIdValue == TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
-        {
-            debugPrintln("**** TIDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** TIDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != TIDS_getDeviceID(&tids, &deviceIdValue))
     {
         debugPrintln("**** TIDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
+    {
+        debugPrintln("**** TIDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

@@ -60,6 +60,10 @@ static void convertDataToUInt8Array(const uint16_t* writeBuffer16, uint8_t* writ
  */
 static inline int8_t GCDS_ReadData(WE_sensorInterface_t* sensorInterface, uint8_t* data, uint16_t numBytesToRead)
 {
+    if (sensorInterface == NULL || data == NULL)
+    {
+        return WE_FAIL;
+    }
     /* 0xFF is used here as a place holder and it will not be used in the WE_ReadReg with WE_i2cProtocol_Raw and useRegAddrMsbForMultiBytesRead = 1; */
     return WE_ReadReg(sensorInterface, 0xFF, numBytesToRead, data);
 }
@@ -73,6 +77,10 @@ static inline int8_t GCDS_ReadData(WE_sensorInterface_t* sensorInterface, uint8_
  */
 static inline int8_t GCDS_WriteData(WE_sensorInterface_t* sensorInterface, uint8_t* data, uint16_t numBytesToWrite)
 {
+    if (sensorInterface == NULL || data == NULL)
+    {
+        return WE_FAIL;
+    }
     /* 0xFF is used here as a place holder and it will not be used in the WE_WriteReg with WE_i2cProtocol_Raw and useRegAddrMsbForMultiBytesRead = 1; */
     return WE_WriteReg(sensorInterface, 0xFF, numBytesToWrite, data);
 }
@@ -85,6 +93,10 @@ static inline int8_t GCDS_WriteData(WE_sensorInterface_t* sensorInterface, uint8
  */
 static uint8_t GCDS_GenerateCRC(const uint8_t* data, uint16_t count)
 {
+    if (data == NULL)
+    {
+        return WE_FAIL;
+    }
     uint16_t current_byte;
     uint8_t crc = CRC8_INIT;
 
@@ -117,6 +129,10 @@ static uint8_t GCDS_GenerateCRC(const uint8_t* data, uint16_t count)
  */
 static int8_t GCDS_CheckCRC(const uint8_t* data, uint16_t count, uint8_t checksum)
 {
+    if (data == NULL)
+    {
+        return WE_FAIL;
+    }
     if (GCDS_GenerateCRC(data, count) != checksum)
     {
         return WE_FAIL;
@@ -132,6 +148,10 @@ static int8_t GCDS_CheckCRC(const uint8_t* data, uint16_t count, uint8_t checksu
  */
 int8_t GCDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface)
 {
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
     *sensorInterface = gcdsDefaultSensorInterface;
 
     return WE_SUCCESS;
@@ -148,8 +168,11 @@ int8_t GCDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, int32_t* temperature, uint32_t* humidity)
 {
+    if (sensorInterface == NULL || co2 == NULL || temperature == NULL || humidity == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t temperatureRaw = 0;
     uint16_t humidityRaw = 0;
     uint16_t co2ValueInt = 0;
@@ -159,8 +182,7 @@ int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, i
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -168,24 +190,19 @@ int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, i
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 9);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 9))
     {
         return WE_FAIL;
     }
-
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]))
     {
         return WE_FAIL;
     }
@@ -195,12 +212,14 @@ int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, i
     humidityRaw = ((uint16_t)readBuffer8[6] << 8) | ((uint16_t)readBuffer8[7]);
 
     /* Please refer to the user manual for signal conversion logic. The result is multiplied with 1000 to create milli values */
-    *temperature = (uint16_t)(((temperatureRaw * 175.0f / 65535.0f) - 45.0f) * 1000);
+    *temperature = (int32_t)(((temperatureRaw * 175.0f / 65535.0f) - 45.0f) * 1000.0f);
     *humidity = (uint32_t)((humidityRaw * 100.0f / 65535.0f) * 1000);
     *co2 = co2ValueInt;
 
-    return status;
+    return WE_SUCCESS;
 }
+
+#ifdef WE_USE_FLOAT
 
 /**
  * @brief Performs a measurement and retrieves CO2, temperature, and humidity data.
@@ -212,7 +231,11 @@ int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, i
  */
 int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* co2, float* temperature, float* humidity)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || co2 == NULL || temperature == NULL || humidity == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t temperatureRaw = 0;
     uint16_t humidityRaw = 0;
     uint16_t co2ValueInt = 0;
@@ -222,8 +245,7 @@ int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* 
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -231,24 +253,20 @@ int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* 
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 9);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 9))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]))
     {
         return WE_FAIL;
     }
@@ -262,8 +280,10 @@ int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* 
     *humidity = (humidityRaw * 100.0f / 65535.0f);
     *co2 = co2ValueInt;
 
-    return status;
+    return WE_SUCCESS;
 }
+
+#endif /* WE_USE_FLOAT */
 
 /**
  * @brief Reads the serial number of the sensor.
@@ -273,22 +293,23 @@ int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* 
  */
 int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo)
 {
+    if (sensorInterface == NULL || serialNo == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t writeBuffer16[1] = {GCDS_GET_SERIAL_NUMBER};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[9] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_Stop_Periodic_Measurement(sensorInterface);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_Stop_Periodic_Measurement(sensorInterface))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -296,24 +317,19 @@ int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo)
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 9);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 9))
     {
         return WE_FAIL;
     }
-
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[3], GCDS_WORD_SIZE, readBuffer8[5]))
     {
         return WE_FAIL;
     }
-    status = GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[6], GCDS_WORD_SIZE, readBuffer8[8]))
     {
         return WE_FAIL;
     }
@@ -325,7 +341,7 @@ int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo)
     *(serialNo + 4) = readBuffer8[6];
     *(serialNo + 5) = readBuffer8[7];
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -335,16 +351,13 @@ int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo)
  */
 int8_t GCDS_Init(WE_sensorInterface_t* sensorInterface)
 {
-    uint8_t serialNo[6] = {0};
-    int8_t status = WE_FAIL;
-
-    status = GCDS_Read_SlNo(sensorInterface, serialNo);
-    if (status != WE_SUCCESS)
+    if (sensorInterface == NULL)
     {
         return WE_FAIL;
     }
+    uint8_t serialNo[6] = {0};
 
-    return status;
+    return GCDS_Read_SlNo(sensorInterface, serialNo);
 }
 
 /**
@@ -354,15 +367,17 @@ int8_t GCDS_Init(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Power_Down(WE_sensorInterface_t* sensorInterface)
 {
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t writeBuffer16[1] = {GCDS_POWER_DOWN};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -370,7 +385,7 @@ int8_t GCDS_Power_Down(WE_sensorInterface_t* sensorInterface)
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -380,8 +395,11 @@ int8_t GCDS_Power_Down(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Wake_Up(WE_sensorInterface_t* sensorInterface)
 {
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t writeBuffer16[1] = {GCDS_WAKE_UP};
     uint8_t writeBuffer8[2] = {0};
     uint8_t serialNo[SERIAL_NO_LENGTH] = {0};
@@ -389,18 +407,12 @@ int8_t GCDS_Wake_Up(WE_sensorInterface_t* sensorInterface)
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
     /* GCDS does not acknowledge the wake_up command. */
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
+    GCDS_WriteData(sensorInterface, writeBuffer8, 2);
 
     /* Mandatory 30 ms delay for the sensor to process the command. */
     WE_Delay(30);
 
-    status = GCDS_Read_SlNo(sensorInterface, serialNo);
-    if (status < 0)
-    {
-        return WE_FAIL;
-    }
-
-    return status;
+    return GCDS_Read_SlNo(sensorInterface, serialNo);
 }
 
 /**
@@ -412,7 +424,11 @@ int8_t GCDS_Wake_Up(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target, uint16_t* frcCorrection)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || co2Target == NULL || frcCorrection == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_PERFORM_MANUAL_RECALIBRATION};
     uint8_t writeBuffer8[5] = {0};
     uint8_t readBuffer8[3] = {0};
@@ -422,8 +438,7 @@ int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, 
     convertDataToUInt8Array(co2Target, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -431,16 +446,13 @@ int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, 
     /* Mandatory 400 ms delay for the sensor to process the command. */
     WE_Delay(400);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
-
         return WE_FAIL;
     }
 
@@ -453,7 +465,7 @@ int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, 
 
     *frcCorrection = frcCorrectionRaw - FRC_CORRECTION_CONSTANT;
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -464,15 +476,18 @@ int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, 
  */
 int8_t GCDS_Get_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, uint16_t* co2Target)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || co2Target == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SELF_CALIB_TARGET};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -480,21 +495,19 @@ int8_t GCDS_Get_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, uint16_
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *co2Target = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -505,8 +518,11 @@ int8_t GCDS_Get_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, uint16_
  */
 int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target)
 {
+    if (sensorInterface == NULL || co2Target == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t writeBuffer16[1] = {GCDS_SET_SELF_CALIB_TARGET};
     uint8_t writeBuffer8[5] = {0};
 
@@ -514,8 +530,7 @@ int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const u
     convertDataToUInt8Array(co2Target, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -523,7 +538,7 @@ int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const u
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -534,15 +549,18 @@ int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const u
  */
 int8_t GCDS_Get_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ASCEnabled == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SELF_CALIB_ENABLED};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -550,21 +568,19 @@ int8_t GCDS_Get_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* 
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *ASCEnabled = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -575,8 +591,11 @@ int8_t GCDS_Get_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* 
  */
 int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled)
 {
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint16_t writeBuffer16[1] = {GCDS_SET_SELF_CALIB_ENABLED};
     uint8_t writeBuffer8[5] = {0};
     uint16_t ASCEnabled16 = (uint16_t)(*ASCEnabled);
@@ -585,8 +604,7 @@ int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* 
     convertDataToUInt8Array(&ASCEnabled16, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -594,7 +612,7 @@ int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* 
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -605,15 +623,18 @@ int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* 
  */
 int8_t GCDS_Get_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascInitialPeriod)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ascInitialPeriod == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SELF_CALIB_INITIAL_PERIOD};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -621,21 +642,19 @@ int8_t GCDS_Get_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, ui
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *ascInitialPeriod = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -647,7 +666,11 @@ int8_t GCDS_Get_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, ui
  */
 int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascInitialPeriod)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ascInitialPeriod == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_SET_SELF_CALIB_INITIAL_PERIOD};
     uint8_t writeBuffer8[5] = {0};
 
@@ -655,8 +678,7 @@ int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, co
     convertDataToUInt8Array(ascInitialPeriod, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -664,7 +686,7 @@ int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, co
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -675,15 +697,18 @@ int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, co
  */
 int8_t GCDS_Get_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascStdPeriod)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ascStdPeriod == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SELF_CALIB_STANDARD_PERIOD};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -691,21 +716,19 @@ int8_t GCDS_Get_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, uin
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *ascStdPeriod = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -716,7 +739,11 @@ int8_t GCDS_Get_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, uin
  */
 int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascStdPeriod)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ascStdPeriod == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_SET_SELF_CALIB_STANDARD_PERIOD};
     uint8_t writeBuffer8[5] = {0};
 
@@ -724,8 +751,7 @@ int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, con
     convertDataToUInt8Array(ascStdPeriod, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -733,7 +759,7 @@ int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, con
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -744,7 +770,11 @@ int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, con
  */
 int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32_t* temperatureOffset)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || temperatureOffset == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_TEMPERATURE_OFFSET};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
@@ -752,8 +782,7 @@ int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -761,14 +790,12 @@ int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
@@ -776,7 +803,7 @@ int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32
     temperatureRaw = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
     *temperatureOffset = (uint32_t)(((temperatureRaw * 175.0) / 65535.0) * 1000);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -788,7 +815,11 @@ int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32
  */
 int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const uint32_t* temperatureOffset)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || temperatureOffset == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_SET_TEMPERATURE_OFFSET};
     uint8_t writeBuffer8[5] = {0};
     uint16_t setTemperatureOffset_raw = 0;
@@ -798,8 +829,7 @@ int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const 
     convertDataToUInt8Array(&setTemperatureOffset_raw, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -807,7 +837,7 @@ int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const 
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -818,15 +848,18 @@ int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const 
  */
 int8_t GCDS_Get_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, uint16_t* sensorAltitude)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || sensorAltitude == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SENSOR_ALTITUDE};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -834,21 +867,19 @@ int8_t GCDS_Get_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, uint16_t*
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *sensorAltitude = ((uint16_t)readBuffer8[0] << 8) | ((uint16_t)readBuffer8[1]);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -859,7 +890,11 @@ int8_t GCDS_Get_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, uint16_t*
  */
 int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uint16_t* sensorAltitude)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || sensorAltitude == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_SET_SENSOR_ALTITUDE};
     uint8_t writeBuffer8[5] = {0};
 
@@ -867,8 +902,7 @@ int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uin
     convertDataToUInt8Array(sensorAltitude, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -876,7 +910,7 @@ int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uin
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -887,15 +921,18 @@ int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uin
  */
 int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t* ambientPressure)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ambientPressure == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SET_AMBIENT_PRESSURE};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -903,14 +940,12 @@ int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
@@ -919,7 +954,7 @@ int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t
     /* Convert to ambient pressure from raw value by multiplying by 100 */
     *ambientPressure = rawPressure * 100;
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -930,7 +965,11 @@ int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t
  */
 int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const uint32_t* ambientPressure)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || ambientPressure == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_SET_AMBIENT_PRESSURE};
     uint8_t writeBuffer8[5] = {0};
 
@@ -941,8 +980,7 @@ int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const ui
     convertDataToUInt8Array(&rawPressure, &writeBuffer8[2]);
     writeBuffer8[4] = GCDS_GenerateCRC(&writeBuffer8[2], GCDS_WORD_SIZE);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 5);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 5))
     {
         return WE_FAIL;
     }
@@ -950,7 +988,7 @@ int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const ui
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -960,14 +998,17 @@ int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const ui
  */
 int8_t GCDS_Persist_Settings(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_PERSIST_SETTINGS};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, &writeBuffer8[0]);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -975,7 +1016,7 @@ int8_t GCDS_Persist_Settings(WE_sensorInterface_t* sensorInterface)
     /* Mandatory 800 ms delay for the sensor to process the command. */
     WE_Delay(800);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -986,14 +1027,17 @@ int8_t GCDS_Persist_Settings(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Reinit(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_REINIT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, &writeBuffer8[0]);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1001,7 +1045,7 @@ int8_t GCDS_Reinit(WE_sensorInterface_t* sensorInterface)
     /* Mandatory 30 ms delay for the sensor to process the command. */
     WE_Delay(30);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1012,15 +1056,18 @@ int8_t GCDS_Reinit(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Perform_Self_Test(WE_sensorInterface_t* sensorInterface, uint16_t* sensorStatus)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || sensorStatus == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t writeBuffer8[2] = {0};
     uint16_t writeBuffer16[1] = {GCDS_PERFORM_SELF_TEST};
     uint8_t readBuffer8[3] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1028,21 +1075,19 @@ int8_t GCDS_Perform_Self_Test(WE_sensorInterface_t* sensorInterface, uint16_t* s
     /* Mandatory 10000 ms delay for the sensor to process the command. */
     WE_Delay(10000);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], 2, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], 2, readBuffer8[2]))
     {
         return WE_FAIL;
     }
 
     *sensorStatus = (uint16_t)((uint16_t)readBuffer8[0] << 8) | (uint16_t)readBuffer8[1];
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1052,14 +1097,17 @@ int8_t GCDS_Perform_Self_Test(WE_sensorInterface_t* sensorInterface, uint16_t* s
  */
 int8_t GCDS_Perform_Factory_Reset(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_PERFORM_FACTORY_RESET};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1067,7 +1115,7 @@ int8_t GCDS_Perform_Factory_Reset(WE_sensorInterface_t* sensorInterface)
     /* Mandatory 1200 ms delay for the sensor to process the command. */
     WE_Delay(1200);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1077,19 +1125,22 @@ int8_t GCDS_Perform_Factory_Reset(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Start_Periodic_Measurement(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_START_PERIODIC_MEASUREMENT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1099,14 +1150,17 @@ int8_t GCDS_Start_Periodic_Measurement(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Stop_Periodic_Measurement(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_STOP_PERIODIC_MEASUREMENT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1114,7 +1168,7 @@ int8_t GCDS_Stop_Periodic_Measurement(WE_sensorInterface_t* sensorInterface)
     /* Mandatory 500 ms delay for the sensor to process the command. */
     WE_Delay(500);
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1125,19 +1179,22 @@ int8_t GCDS_Stop_Periodic_Measurement(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Start_Low_Power_Measurement(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_START_LOW_POWER_MEASUREMENT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
 
-    return status;
+    return WE_SUCCESS;
 }
 
 /**
@@ -1149,7 +1206,11 @@ int8_t GCDS_Start_Low_Power_Measurement(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* dataReady)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL || dataReady == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_GET_DATA_READY_STATUS};
     uint8_t writeBuffer8[2] = {0};
     uint8_t readBuffer8[3] = {0};
@@ -1157,8 +1218,7 @@ int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* d
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1166,14 +1226,12 @@ int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* d
     /* Mandatory 1 ms delay for the sensor to process the command. */
     WE_Delay(1);
 
-    status = GCDS_ReadData(sensorInterface, readBuffer8, 3);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_ReadData(sensorInterface, readBuffer8, 3))
     {
         return WE_FAIL;
     }
 
-    status = GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_CheckCRC(&readBuffer8[0], GCDS_WORD_SIZE, readBuffer8[2]))
     {
         return WE_FAIL;
     }
@@ -1193,14 +1251,17 @@ int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* d
  */
 int8_t GCDS_Measure_Single_Shot(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_MEASURE_SINGLE_SHOT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }
@@ -1220,14 +1281,17 @@ int8_t GCDS_Measure_Single_Shot(WE_sensorInterface_t* sensorInterface)
  */
 int8_t GCDS_Measure_Single_Shot_RHT(WE_sensorInterface_t* sensorInterface)
 {
-    int8_t status = WE_FAIL;
+    if (sensorInterface == NULL)
+    {
+        return WE_FAIL;
+    }
+
     uint16_t writeBuffer16[1] = {GCDS_MEASURE_SINGLE_SHOT_RHT};
     uint8_t writeBuffer8[2] = {0};
 
     convertDataToUInt8Array(writeBuffer16, writeBuffer8);
 
-    status = GCDS_WriteData(sensorInterface, writeBuffer8, 2);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != GCDS_WriteData(sensorInterface, writeBuffer8, 2))
     {
         return WE_FAIL;
     }

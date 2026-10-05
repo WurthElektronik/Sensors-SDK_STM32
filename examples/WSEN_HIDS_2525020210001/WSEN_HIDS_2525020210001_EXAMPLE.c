@@ -40,8 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Comment/uncomment the following lines to disable/enable the examples for
- * each data type (see WE_hidsExampleLoop() function). */
+#pragma message("Comment/uncomment the following lines to disable/enable the examples for each data type (see WE_hidsExampleLoop() function")
 /* Note: The float example won't compile unless WE_USE_FLOAT is defined. */
 #define HIDS_EXAMPLE_ENABLE_FLOAT
 #define HIDS_EXAMPLE_ENABLE_INT16
@@ -51,7 +50,7 @@
 static WE_sensorInterface_t hids;
 
 /* Sensor initialization function */
-static bool HIDS_init(void);
+static bool WE_hidsInit(void);
 
 /**
  * @brief Example initialization.
@@ -70,9 +69,9 @@ void WE_hidsExampleInit()
     debugPrintln("This is the example program for the HIDS sensor connected via I2C.");
 
     /* init HIDS */
-    if (false == HIDS_init())
+    if (false == WE_hidsInit())
     {
-        debugPrintln("**** HIDS_Init() error. STOP ****");
+        debugPrintln("**** WE_hidsInit() error. STOP ****");
         HAL_Delay(5);
         while (1)
             ;
@@ -94,27 +93,28 @@ void WE_hidsExampleLoop()
     HIDS_state_t tempStatus = HIDS_disable;
     HIDS_state_t oneShotStatus = HIDS_enable;
 
-    if (WE_FAIL == HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
+    if (WE_SUCCESS != HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
     {
         debugPrintln("**** HIDS_enOneShot(enable): NOT OK ****");
+        return;
     }
 
     HAL_Delay(1);
 
-    while (waitForMeasurement == true)
+    while (true == waitForMeasurement)
     {
         /* Get status info for humidity, temperature and oneshot */
-        if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humStatus))
+        if (WE_SUCCESS != HIDS_isHumidityDataAvailable(&hids, &humStatus))
         {
             debugPrintln("**** HIDS_getHumStatus(): NOT OK ****");
         }
 
-        if (WE_FAIL == HIDS_isTemperatureDataAvailable(&hids, &tempStatus))
+        if (WE_SUCCESS != HIDS_isTemperatureDataAvailable(&hids, &tempStatus))
         {
             debugPrintln("**** HIDS_getTempStatus(): NOT OK ****");
         }
 
-        if (WE_FAIL == HIDS_isOneShotEnabled(&hids, &oneShotStatus))
+        if (WE_SUCCESS != HIDS_isOneShotEnabled(&hids, &oneShotStatus))
         {
             debugPrintln("**** HIDS_getOneShotState(): NOT OK ****");
         }
@@ -136,7 +136,7 @@ void WE_hidsExampleLoop()
     float humidity = 0.0f;
     float temperature = 0.0f;
 
-    if (HIDS_getHumidity_float(&hids, &humidity) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getHumidity_float(&hids, &humidity))
     {
         float humidityAbs = humidity; /* humidity is preclamped in the 0 ... 100 % range by the HIDS_getHumidity_float() function already. no fabs() needed here! */
         uint16_t full = (uint16_t)humidityAbs;
@@ -154,7 +154,7 @@ void WE_hidsExampleLoop()
         debugPrintln("%");
     }
 
-    if (HIDS_getTemperature_float(&hids, &temperature) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getTemperature_float(&hids, &temperature))
     {
         float temperatureAbs = fabs(temperature);
         uint16_t full = (uint16_t)temperatureAbs;
@@ -184,7 +184,7 @@ void WE_hidsExampleLoop()
     uint16_t humidity_uint16 = 0;
     int16_t temperature_int16 = 0;
 
-    if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getHumidity_uint16(&hids, &humidity_uint16))
     {
         uint16_t full = humidity_uint16 / 100;
         uint16_t decimals = humidity_uint16 % 100; /* 2 decimal places */
@@ -201,7 +201,7 @@ void WE_hidsExampleLoop()
         debugPrintln("%");
     }
 
-    if (HIDS_getTemperature_int16(&hids, &temperature_int16) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getTemperature_int16(&hids, &temperature_int16))
     {
         uint16_t full = ((uint16_t)abs(temperature_int16)) / 100;
         uint16_t decimals = (uint16_t)(abs(temperature_int16) % 100); /* 2 decimal places */
@@ -230,7 +230,7 @@ void WE_hidsExampleLoop()
     int8_t humidity_int8 = 0;
     int8_t temperature_int8 = 0;
 
-    if (HIDS_getHumidity_int8(&hids, &humidity_int8) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getHumidity_int8(&hids, &humidity_int8))
     {
         char buffer[4]; /* 3 pre-decimal point positions (from 0% to max 100% RH) */
         sprintf(buffer, "%d", humidity_int8);
@@ -240,7 +240,7 @@ void WE_hidsExampleLoop()
         debugPrintln("%");
     }
 
-    if (HIDS_getTemperature_int8(&hids, &temperature_int8) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getTemperature_int8(&hids, &temperature_int8))
     {
         char buffer[4]; /* 3 pre-decimal point positions (from -40 to +85 degrees Celsius) */
         sprintf(buffer, "%d", temperature_int8);
@@ -259,7 +259,7 @@ void WE_hidsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool HIDS_init(void)
+static bool WE_hidsInit(void)
 {
     /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
     HIDS_getDefaultInterface(&hids);
@@ -277,21 +277,14 @@ static bool HIDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
-    {
-        if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != HIDS_getDeviceID(&hids, &deviceIdValue))
     {
         debugPrintln("**** HIDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
+    {
+        debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

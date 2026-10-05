@@ -41,13 +41,13 @@
 #include <string.h>
 
 /* Functions containing main loops for the available example */
-void WE_gcdsEvaluationCSVRaw();
+static void WE_gcdsEvaluationCSVRaw(void);
+
+/* Sensor initialization function */
+static bool WE_gcdsInit(void);
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t gcds;
-
-/* Sensor initialization function */
-static bool GCDS_init(void);
 
 /**
  * @brief Example initialization.
@@ -55,7 +55,7 @@ static bool GCDS_init(void);
  */
 void WE_gcdsExampleInit()
 {
-    if (false == GCDS_init())
+    if (false == WE_gcdsInit())
     {
         debugPrintln("**** GCDS_init() error. STOP ****");
         WE_Delay(5);
@@ -82,8 +82,7 @@ void WE_gcdsEvaluationCSVRaw()
         debugPrintln("**** GCDS_Get_Data_Ready_Status(): NOT OK ****");
         return;
     }
-
-    if (dataReadyStatus != true)
+    else if (false == dataReadyStatus)
     {
         return;
     }
@@ -112,7 +111,7 @@ void WE_gcdsEvaluationCSVRaw()
 /**
  * @brief Initializes the gcds sensor for this example application.
  */
-static bool GCDS_init(void)
+static bool WE_gcdsInit(void)
 {
     /* Initialize sensor interface (use i2c with GCDS address, burst mode activated) */
     GCDS_Get_Default_Interface(&gcds);
@@ -121,6 +120,10 @@ static bool GCDS_init(void)
 
     /* Wait for boot */
     WE_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&gcds))
+    {
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
     if (WE_SUCCESS != GCDS_Init(&gcds))
     {
@@ -129,8 +132,6 @@ static bool GCDS_init(void)
         while (1)
             ;
     }
-
-    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
     if (WE_SUCCESS != GCDS_Start_Periodic_Measurement(&gcds))
     {

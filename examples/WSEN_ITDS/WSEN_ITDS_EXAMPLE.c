@@ -40,8 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Comment/uncomment the following lines to disable/enable the examples for
- * each data type (see WE_itdsExampleLoop() function). */
+#pragma message("Comment/uncomment the following lines to disable/enable the examples for each data type (see WE_itdsExampleLoop() function)")
 /* Note: The float example won't compile unless WE_USE_FLOAT is defined. */
 #define ITDS_EXAMPLE_ENABLE_FLOAT
 #define ITDS_EXAMPLE_ENABLE_INT
@@ -62,7 +61,7 @@ static ITDS_example_mode itdsExampleMode = highPerformanceExample;
 static WE_sensorInterface_t itds;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 
 /* Example modes for the ITDS sensor */
 void ITDS_startHighPerformanceMode();
@@ -97,7 +96,7 @@ void WE_itdsExampleInit()
     debugPrintln("This is the example program showing basic usage of the ITDS sensor connected via I2C.");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -147,7 +146,7 @@ void WE_itdsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -166,21 +165,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -193,7 +185,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do

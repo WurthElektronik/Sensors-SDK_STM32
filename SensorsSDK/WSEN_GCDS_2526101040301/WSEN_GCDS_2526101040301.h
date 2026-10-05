@@ -80,38 +80,40 @@ typedef enum
 extern "C"
 {
 #endif
-    int8_t GCDS_Start_Periodic_Measurement(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, int32_t* temperature, uint32_t* humidity);
-    int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* co2, float* temperature, float* humidity);
-    int8_t GCDS_Stop_Periodic_Measurement(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const uint32_t* temperatureOffset);
-    int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32_t* temperatureOffset);
-    int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uint16_t* sensorAltitude);
-    int8_t GCDS_Get_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, uint16_t* sensorAltitude);
-    int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const uint32_t* ambientPressure);
-    int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t* ambientPressure);
-    int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target, uint16_t* frcCorrection);
-    int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled);
-    int8_t GCDS_Get_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled);
-    int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target);
-    int8_t GCDS_Get_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, uint16_t* co2Target);
-    int8_t GCDS_Start_Low_Power_Measurement(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* dataReady);
-    int8_t GCDS_Persist_Settings(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo);
-    int8_t GCDS_Perform_Self_Test(WE_sensorInterface_t* sensorInterface, uint16_t* sensorStatus);
-    int8_t GCDS_Perform_Factory_Reset(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Reinit(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Measure_Single_Shot(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Measure_Single_Shot_RHT(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Power_Down(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Wake_Up(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascInitialPeriod);
-    int8_t GCDS_Get_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascInitialPeriod);
-    int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascStdPeriod);
-    int8_t GCDS_Get_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascStdPeriod);
-    int8_t GCDS_Init(WE_sensorInterface_t* sensorInterface);
-    int8_t GCDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Start_Periodic_Measurement(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Measure_Data(WE_sensorInterface_t* sensorInterface, uint16_t* co2, int32_t* temperature, uint32_t* humidity);
+#ifdef WE_USE_FLOAT
+int8_t GCDS_Measure_Data_Float(WE_sensorInterface_t* sensorInterface, uint16_t* co2, float* temperature, float* humidity);
+#endif /* WE_USE_FLOAT */
+int8_t GCDS_Stop_Periodic_Measurement(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Set_Temperature_Offset(WE_sensorInterface_t* sensorInterface, const uint32_t* temperatureOffset);
+int8_t GCDS_Get_Temperature_Offset(WE_sensorInterface_t* sensorInterface, uint32_t* temperatureOffset);
+int8_t GCDS_Set_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, const uint16_t* sensorAltitude);
+int8_t GCDS_Get_Sensor_Altitude(WE_sensorInterface_t* sensorInterface, uint16_t* sensorAltitude);
+int8_t GCDS_Set_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, const uint32_t* ambientPressure);
+int8_t GCDS_Get_Ambient_Pressure(WE_sensorInterface_t* sensorInterface, uint32_t* ambientPressure);
+int8_t GCDS_Perform_Manual_Recalibration(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target, uint16_t* frcCorrection);
+int8_t GCDS_Set_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled);
+int8_t GCDS_Get_Self_Calib_Enabled(WE_sensorInterface_t* sensorInterface, bool* ASCEnabled);
+int8_t GCDS_Set_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, const uint16_t* co2Target);
+int8_t GCDS_Get_Self_Calib_Target(WE_sensorInterface_t* sensorInterface, uint16_t* co2Target);
+int8_t GCDS_Start_Low_Power_Measurement(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Get_Data_Ready_Status(WE_sensorInterface_t* sensorInterface, bool* dataReady);
+int8_t GCDS_Persist_Settings(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint8_t* serialNo);
+int8_t GCDS_Perform_Self_Test(WE_sensorInterface_t* sensorInterface, uint16_t* sensorStatus);
+int8_t GCDS_Perform_Factory_Reset(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Reinit(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Measure_Single_Shot(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Measure_Single_Shot_RHT(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Power_Down(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Wake_Up(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Set_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascInitialPeriod);
+int8_t GCDS_Get_Self_Calib_Init_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascInitialPeriod);
+int8_t GCDS_Set_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, const uint16_t* ascStdPeriod);
+int8_t GCDS_Get_Self_Calib_Std_Period(WE_sensorInterface_t* sensorInterface, uint16_t* ascStdPeriod);
+int8_t GCDS_Init(WE_sensorInterface_t* sensorInterface);
+int8_t GCDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface);
 #ifdef __cplusplus
 }
 #endif

@@ -48,7 +48,7 @@ static WE_sensorInterface_t itds;
 static bool tapOccurred = false;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 
 /**
  * @brief Example initialization.
@@ -69,7 +69,7 @@ void WE_itdsTapExampleInit()
     debugPrintln("* INT_0 to PA0, rising edge only");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -87,12 +87,12 @@ void WE_itdsTapExampleLoop()
     /* Tap events can be detected via the interrupt pin or by reading the status register. */
     /* Here, the status register is checked after a tap interrupt has occurred. */
     /* See HAL_GPIO_EXTI_Rising_Callback() for the corresponding ISR callback. */
-    if (tapOccurred == true)
+    if (true == tapOccurred)
     {
         tapOccurred = false;
 
         ITDS_tapEvent_t tapEvent;
-        if (ITDS_getTapEventRegister(&itds, &tapEvent) == WE_SUCCESS)
+        if (WE_SUCCESS == ITDS_getTapEventRegister(&itds, &tapEvent))
         {
             /* Check if tap event has occurred */
             if (tapEvent.singleState != 0 || tapEvent.doubleState != 0)
@@ -133,7 +133,7 @@ void WE_itdsTapExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -152,21 +152,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -179,7 +172,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do

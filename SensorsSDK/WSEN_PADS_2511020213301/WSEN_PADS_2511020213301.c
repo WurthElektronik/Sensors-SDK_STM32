@@ -74,6 +74,11 @@ static inline int8_t PADS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t PADS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
+
     *sensorInterface = padsDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -87,7 +92,15 @@ int8_t PADS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] deviceID The returned device ID.
  * @retval Error code
  */
-int8_t PADS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID) { return PADS_ReadReg(sensorInterface, PADS_DEVICE_ID_REG, 1, deviceID); }
+int8_t PADS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID)
+{
+    if (NULL == deviceID)
+    {
+        return WE_FAIL;
+    }
+
+    return PADS_ReadReg(sensorInterface, PADS_DEVICE_ID_REG, 1, deviceID);
+}
 
 /**
  * @brief Enable the AUTOREFP function
@@ -119,7 +132,7 @@ int8_t PADS_enableAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t a
 /**
  * @brief Check if the AUTOREFP function is currently being enabled.
  *
- * Note that when enabling AUTOREFP using PADS_enableAutoRefp(WE_sensorInterface_t* sensorInterface, ), the AUTOREFP bit
+ * Note that when enabling AUTOREFP using PADS_enableAutoRefp(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoRefp ), the AUTOREFP bit
  * will stay high only until the first conversion is complete. The function will remain
  * turned on even if the bit is zero.
  *
@@ -203,6 +216,10 @@ int8_t PADS_enableAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state
  */
 int8_t PADS_isEnablingAutoZeroMode(WE_sensorInterface_t* sensorInterface, PADS_state_t* autoZero)
 {
+    if (NULL == autoZero)
+    {
+        return WE_FAIL;
+    }
     PADS_interruptConfiguration_t interruptConfigurationReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_CFG_REG, 1, (uint8_t*)&interruptConfigurationReg))
@@ -263,6 +280,11 @@ int8_t PADS_enableDiffPressureInterrupt(WE_sensorInterface_t* sensorInterface, P
  */
 int8_t PADS_isDiffPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* diffIntState)
 {
+    if (NULL == diffIntState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interruptConfiguration_t interruptConfigurationReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_CFG_REG, 1, (uint8_t*)&interruptConfigurationReg))
@@ -303,6 +325,11 @@ int8_t PADS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, PADS_s
  */
 int8_t PADS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* latchInt)
 {
+    if (NULL == latchInt)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interruptConfiguration_t interruptConfigurationReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_CFG_REG, 1, (uint8_t*)&interruptConfigurationReg))
@@ -343,6 +370,11 @@ int8_t PADS_enableLowPressureInterrupt(WE_sensorInterface_t* sensorInterface, PA
  */
 int8_t PADS_isLowPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpint)
 {
+    if (NULL == lpint)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interruptConfiguration_t interruptConfigurationReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_CFG_REG, 1, (uint8_t*)&interruptConfigurationReg))
@@ -383,6 +415,11 @@ int8_t PADS_enableHighPressureInterrupt(WE_sensorInterface_t* sensorInterface, P
  */
 int8_t PADS_isHighPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpint)
 {
+    if (NULL == hpint)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interruptConfiguration_t interruptConfigurationReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_CFG_REG, 1, (uint8_t*)&interruptConfigurationReg))
@@ -401,7 +438,14 @@ int8_t PADS_isHighPressureInterruptEnabled(WE_sensorInterface_t* sensorInterface
  * @param[out] intSource The returned interrupt source register state
  * @retval Error code
  */
-int8_t PADS_getInterruptSource(WE_sensorInterface_t* sensorInterface, PADS_intSource_t* intSource) { return PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)intSource); }
+int8_t PADS_getInterruptSource(WE_sensorInterface_t* sensorInterface, PADS_intSource_t* intSource)
+{
+    if (NULL == intSource)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)intSource);
+}
 
 /**
  * @brief Read the state of the interrupts
@@ -411,6 +455,11 @@ int8_t PADS_getInterruptSource(WE_sensorInterface_t* sensorInterface, PADS_intSo
  */
 int8_t PADS_getInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* intState)
 {
+    if (NULL == intState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_intSource_t int_source;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)&int_source))
@@ -431,6 +480,11 @@ int8_t PADS_getInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state
  */
 int8_t PADS_getLowPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* lpState)
 {
+    if (NULL == lpState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_intSource_t int_source;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)&int_source))
@@ -447,10 +501,15 @@ int8_t PADS_getLowPressureInterruptStatus(WE_sensorInterface_t* sensorInterface,
  * @brief Read the state of the differential high pressure interrupt [not active, active]
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] hpState The returned state of the differential high pressure interrupt
- * @retval No error
+ * @retval Error code
  */
 int8_t PADS_getHighPressureInterruptStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* hpState)
 {
+    if (NULL == hpState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_intSource_t int_source;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)&int_source))
@@ -458,7 +517,7 @@ int8_t PADS_getHighPressureInterruptStatus(WE_sensorInterface_t* sensorInterface
         return WE_FAIL;
     }
 
-    *hpState = int_source.diffPresHighEvent;
+    *hpState = (PADS_state_t)int_source.diffPresHighEvent;
 
     return WE_SUCCESS;
 }
@@ -531,6 +590,11 @@ int8_t PADS_enableFifoOverrunInterrupt(WE_sensorInterface_t* sensorInterface, PA
  */
 int8_t PADS_isFifoFull(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoFull)
 {
+    if (NULL == fifoFull)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoStatus2_t fifo_status2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_STATUS2_REG, 1, (uint8_t*)&fifo_status2))
@@ -551,6 +615,11 @@ int8_t PADS_isFifoFull(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifo
  */
 int8_t PADS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoWtm)
 {
+    if (NULL == fifoWtm)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoStatus2_t fifo_status2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_STATUS2_REG, 1, (uint8_t*)&fifo_status2))
@@ -571,6 +640,11 @@ int8_t PADS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, PADS_s
  */
 int8_t PADS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, PADS_state_t* fifoOvr)
 {
+    if (NULL == fifoOvr)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoStatus2_t fifo_status2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_STATUS2_REG, 1, (uint8_t*)&fifo_status2))
@@ -611,6 +685,11 @@ int8_t PADS_enableDataReadyInterrupt(WE_sensorInterface_t* sensorInterface, PADS
  */
 int8_t PADS_isDataReadyInterruptEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* drdy)
 {
+    if (NULL == drdy)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl3_t ctrl3;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
@@ -651,6 +730,11 @@ int8_t PADS_setInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS
  */
 int8_t PADS_getInterruptEventControl(WE_sensorInterface_t* sensorInterface, PADS_interruptEventControl_t* intEvent)
 {
+    if (NULL == intEvent)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl3_t ctrl3;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_3_REG, 1, (uint8_t*)&ctrl3))
@@ -691,6 +775,11 @@ int8_t PADS_setPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t
  */
 int8_t PADS_getPressureThreshold(WE_sensorInterface_t* sensorInterface, uint32_t* thresholdPa)
 {
+    if (NULL == thresholdPa)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t thrLSB, thrMSB;
     if (WE_FAIL == PADS_getPressureThresholdLSB(sensorInterface, &thrLSB))
     {
@@ -736,7 +825,14 @@ int8_t PADS_setPressureThresholdMSB(WE_sensorInterface_t* sensorInterface, uint8
  * @param[out] thrLSB The returned pressure threshold LSB value
  * @retval Error code
  */
-int8_t PADS_getPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrLSB) { return PADS_ReadReg(sensorInterface, PADS_THR_P_L_REG, 1, thrLSB); }
+int8_t PADS_getPressureThresholdLSB(WE_sensorInterface_t* sensorInterface, uint8_t* thrLSB)
+{
+    if (NULL == thrLSB)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_THR_P_L_REG, 1, thrLSB);
+}
 
 /**
  * @brief Read the MSB pressure threshold value
@@ -777,6 +873,11 @@ int8_t PADS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, PADS_stat
  */
 int8_t PADS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* i2cDisabled)
 {
+    if (NULL == i2cDisabled)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interfaceCtrl_t interfaceCtrl;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INTERFACE_CTRL_REG, 1, (uint8_t*)&interfaceCtrl))
@@ -817,6 +918,11 @@ int8_t PADS_disablePullDownIntPin(WE_sensorInterface_t* sensorInterface, PADS_st
  */
 int8_t PADS_isPullDownIntDisabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* pinState)
 {
+    if (NULL == pinState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interfaceCtrl_t interfaceCtrl;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INTERFACE_CTRL_REG, 1, (uint8_t*)&interfaceCtrl))
@@ -856,6 +962,11 @@ int8_t PADS_setSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t sao
  */
 int8_t PADS_isSAOPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* saoPinState)
 {
+    if (NULL == saoPinState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interfaceCtrl_t interfaceCtrl;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INTERFACE_CTRL_REG, 1, (uint8_t*)&interfaceCtrl))
@@ -896,6 +1007,11 @@ int8_t PADS_setSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t sda
  */
 int8_t PADS_isSDAPullUp(WE_sensorInterface_t* sensorInterface, PADS_state_t* sdaPinState)
 {
+    if (NULL == sdaPinState)
+    {
+        return WE_FAIL;
+    }
+
     PADS_interfaceCtrl_t interfaceCtrl;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INTERFACE_CTRL_REG, 1, (uint8_t*)&interfaceCtrl))
@@ -936,6 +1052,11 @@ int8_t PADS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_output
  */
 int8_t PADS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, PADS_outputDataRate_t* odr)
 {
+    if (NULL == odr)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl1_t ctrl1;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
@@ -976,6 +1097,11 @@ int8_t PADS_enableLowPassFilter(WE_sensorInterface_t* sensorInterface, PADS_stat
  */
 int8_t PADS_isLowPassFilterEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* filterEnabled)
 {
+    if (NULL == filterEnabled)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl1_t ctrl1;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
@@ -1016,6 +1142,11 @@ int8_t PADS_setLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_f
  */
 int8_t PADS_getLowPassFilterConfig(WE_sensorInterface_t* sensorInterface, PADS_filterConf_t* conf)
 {
+    if (NULL == conf)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl1_t ctrl1;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
@@ -1056,6 +1187,11 @@ int8_t PADS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, PADS_st
  */
 int8_t PADS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* bdu)
 {
+    if (NULL == bdu)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl1_t ctrl1;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_1_REG, 1, (uint8_t*)&ctrl1))
@@ -1096,6 +1232,11 @@ int8_t PADS_reboot(WE_sensorInterface_t* sensorInterface, PADS_state_t reboot)
  */
 int8_t PADS_isRebooting(WE_sensorInterface_t* sensorInterface, PADS_state_t* reboot)
 {
+    if (NULL == reboot)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1110,11 +1251,16 @@ int8_t PADS_isRebooting(WE_sensorInterface_t* sensorInterface, PADS_state_t* reb
 /**
  * @brief Read the boot state
  * @param[in] sensorInterface Pointer to sensor interface
- * @param[in] boot The returned Boot state
+ * @param[out] boot The returned Boot state
  * @retval Error code
  */
 int8_t PADS_getBootStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* boot)
 {
+    if (NULL == boot)
+    {
+        return WE_FAIL;
+    }
+
     PADS_intSource_t int_source_reg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_INT_SOURCE_REG, 1, (uint8_t*)&int_source_reg))
@@ -1155,6 +1301,11 @@ int8_t PADS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_
  */
 int8_t PADS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, PADS_interruptActiveLevel_t* level)
 {
+    if (NULL == level)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1195,6 +1346,11 @@ int8_t PADS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_inte
  */
 int8_t PADS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, PADS_interruptPinConfig_t* pinType)
 {
+    if (NULL == pinType)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1235,6 +1391,11 @@ int8_t PADS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, PADS_stat
  */
 int8_t PADS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* inc)
 {
+    if (NULL == inc)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1275,6 +1436,11 @@ int8_t PADS_softReset(WE_sensorInterface_t* sensorInterface, PADS_state_t swRese
  */
 int8_t PADS_getSoftResetState(WE_sensorInterface_t* sensorInterface, PADS_state_t* swReset)
 {
+    if (NULL == swReset)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1314,6 +1480,11 @@ int8_t PADS_setPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t
  */
 int8_t PADS_getPowerMode(WE_sensorInterface_t* sensorInterface, PADS_powerMode_t* mode)
 {
+    if (NULL == mode)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1353,6 +1524,11 @@ int8_t PADS_enableOneShot(WE_sensorInterface_t* sensorInterface, PADS_state_t on
  */
 int8_t PADS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* oneShot)
 {
+    if (NULL == oneShot)
+    {
+        return WE_FAIL;
+    }
+
     PADS_ctrl2_t ctrl2;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_CTRL_2_REG, 1, (uint8_t*)&ctrl2))
@@ -1379,7 +1555,14 @@ int8_t PADS_setPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t 
  * @param[out] offset The returned LSB part of the pressure offset value
  * @retval Error code
  */
-int8_t PADS_getPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset) { return PADS_ReadReg(sensorInterface, PADS_OPC_P_L_REG, 1, offset); }
+int8_t PADS_getPressureOffsetLSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset)
+{
+    if (NULL == offset)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_OPC_P_L_REG, 1, offset);
+}
 
 /**
  * @brief Set MSB part of the pressure offset value
@@ -1395,7 +1578,14 @@ int8_t PADS_setPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t 
  * @param[out] offset The returned MSB part of the pressure offset value
  * @retval Error code
  */
-int8_t PADS_getPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset) { return PADS_ReadReg(sensorInterface, PADS_OPC_P_H_REG, 1, offset); }
+int8_t PADS_getPressureOffsetMSB(WE_sensorInterface_t* sensorInterface, uint8_t* offset)
+{
+    if (NULL == offset)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_OPC_P_H_REG, 1, offset);
+}
 
 /**
  * @brief Set the FIFO mode
@@ -1425,6 +1615,11 @@ int8_t PADS_setFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t f
  */
 int8_t PADS_getFifoMode(WE_sensorInterface_t* sensorInterface, PADS_fifoMode_t* fifoMode)
 {
+    if (NULL == fifoMode)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoCtrl_t fifoCtrlReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrlReg))
@@ -1465,6 +1660,11 @@ int8_t PADS_enableStopOnThreshold(WE_sensorInterface_t* sensorInterface, PADS_st
  */
 int8_t PADS_isStopOnThresholdEnabled(WE_sensorInterface_t* sensorInterface, PADS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoCtrl_t fifoCtrlReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_CTRL_REG, 1, (uint8_t*)&fifoCtrlReg))
@@ -1505,6 +1705,11 @@ int8_t PADS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifo
  */
 int8_t PADS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThr)
 {
+    if (NULL == fifoThr)
+    {
+        return WE_FAIL;
+    }
+
     PADS_fifoThreshold_t fifoThresholdReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_FIFO_WTM_REG, 1, (uint8_t*)&fifoThresholdReg))
@@ -1523,7 +1728,14 @@ int8_t PADS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fif
  * @param[out] fifoLevel The returned FIFO fill level
  * @retval Error code
  */
-int8_t PADS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoLevel) { return PADS_ReadReg(sensorInterface, PADS_FIFO_STATUS1_REG, 1, fifoLevel); }
+int8_t PADS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoLevel)
+{
+    if (NULL == fifoLevel)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_FIFO_STATUS1_REG, 1, fifoLevel);
+}
 
 /**
  * @brief Read the reference pressure
@@ -1536,6 +1748,11 @@ int8_t PADS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fif
  */
 int8_t PADS_getReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressurePa)
 {
+    if (NULL == referencePressurePa)
+    {
+        return WE_FAIL;
+    }
+
     if (WE_FAIL == PADS_getRawReferencePressure(sensorInterface, referencePressurePa))
     {
         return WE_FAIL;
@@ -1555,6 +1772,11 @@ int8_t PADS_getReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t
  */
 int8_t PADS_getRawReferencePressure(WE_sensorInterface_t* sensorInterface, uint32_t* referencePressure)
 {
+    if (NULL == referencePressure)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t low, high;
     if (WE_FAIL == PADS_getReferencePressureLSB(sensorInterface, &low))
     {
@@ -1574,7 +1796,14 @@ int8_t PADS_getRawReferencePressure(WE_sensorInterface_t* sensorInterface, uint3
  * @param[out] lowReferenceValue The returned reference pressure LSB
  * @retval Error code
  */
-int8_t PADS_getReferencePressureLSB(WE_sensorInterface_t* sensorInterface, uint8_t* lowReferenceValue) { return PADS_ReadReg(sensorInterface, PADS_REF_P_L_REG, 1, lowReferenceValue); }
+int8_t PADS_getReferencePressureLSB(WE_sensorInterface_t* sensorInterface, uint8_t* lowReferenceValue)
+{
+    if (NULL == lowReferenceValue)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_REF_P_L_REG, 1, lowReferenceValue);
+}
 
 /**
  * @brief Read the MSB of the reference pressure
@@ -1582,7 +1811,14 @@ int8_t PADS_getReferencePressureLSB(WE_sensorInterface_t* sensorInterface, uint8
  * @param[out] highReferenceValue The returned reference pressure MSB
  * @retval Error code
  */
-int8_t PADS_getReferencePressureMSB(WE_sensorInterface_t* sensorInterface, uint8_t* highReferenceValue) { return PADS_ReadReg(sensorInterface, PADS_REF_P_H_REG, 1, highReferenceValue); }
+int8_t PADS_getReferencePressureMSB(WE_sensorInterface_t* sensorInterface, uint8_t* highReferenceValue)
+{
+    if (NULL == highReferenceValue)
+    {
+        return WE_FAIL;
+    }
+    return PADS_ReadReg(sensorInterface, PADS_REF_P_H_REG, 1, highReferenceValue);
+}
 
 /**
  * @brief Check if the temperature data register has been overwritten
@@ -1592,6 +1828,11 @@ int8_t PADS_getReferencePressureMSB(WE_sensorInterface_t* sensorInterface, uint8
  */
 int8_t PADS_getTemperatureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_status_t statusReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t*)&statusReg))
@@ -1612,6 +1853,11 @@ int8_t PADS_getTemperatureOverrunStatus(WE_sensorInterface_t* sensorInterface, P
  */
 int8_t PADS_getPressureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_status_t statusReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t*)&statusReg))
@@ -1632,6 +1878,11 @@ int8_t PADS_getPressureOverrunStatus(WE_sensorInterface_t* sensorInterface, PADS
  */
 int8_t PADS_isPressureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_status_t statusReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t*)&statusReg))
@@ -1651,6 +1902,11 @@ int8_t PADS_isPressureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_
  */
 int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_status_t statusReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t*)&statusReg))
@@ -1672,6 +1928,11 @@ int8_t PADS_isTemperatureDataAvailable(WE_sensorInterface_t* sensorInterface, PA
  */
 int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t* temp_state, PADS_state_t* press_state)
 {
+    if (NULL == press_state)
+    {
+        return WE_FAIL;
+    }
+
     PADS_status_t statusReg;
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_STATUS_REG, 1, (uint8_t*)&statusReg))
@@ -1699,6 +1960,11 @@ int8_t PADS_isDataAvailable(WE_sensorInterface_t* sensorInterface, PADS_state_t*
  */
 int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t* rawPres)
 {
+    if (NULL == rawPres)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t tmp[3] = {0};
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_DATA_P_XL_REG, 3, tmp))
@@ -1706,10 +1972,10 @@ int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t* rawPr
         return WE_FAIL;
     }
 
-    *rawPres = (int32_t)(tmp[2] << 24);
-    *rawPres |= (int32_t)(tmp[1] << 16);
-    *rawPres |= (int32_t)(tmp[0] << 8);
-    *rawPres /= 256;
+    *rawPres = (int32_t)((uint32_t)tmp[2] << 24);
+    *rawPres |= (int32_t)((uint32_t)tmp[1] << 16);
+    *rawPres |= (int32_t)((uint32_t)tmp[0] << 8);
+    *rawPres >>= 8; /* or /= 256 */
 
     return WE_SUCCESS;
 }
@@ -1722,6 +1988,11 @@ int8_t PADS_getRawPressure(WE_sensorInterface_t* sensorInterface, int32_t* rawPr
  */
 int8_t PADS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp)
 {
+    if (NULL == rawTemp)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t tmp[2] = {0};
 
     if (WE_FAIL == PADS_ReadReg(sensorInterface, PADS_DATA_T_L_REG, 2, tmp))
@@ -1744,6 +2015,11 @@ int8_t PADS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* ra
  */
 int8_t PADS_getFifoRawPressure(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres)
 {
+    if (NULL == rawPres)
+    {
+        return WE_FAIL;
+    }
+
     if (numSamples > PADS_FIFO_BUFFER_SIZE)
     {
         return WE_FAIL;
@@ -1757,10 +2033,10 @@ int8_t PADS_getFifoRawPressure(WE_sensorInterface_t* sensorInterface, uint8_t nu
     uint8_t* bufferPtr = fifoBuffer;
     for (uint8_t i = 0; i < numSamples; i++, bufferPtr += 5, rawPres++)
     {
-        *rawPres = (int32_t)(bufferPtr[2] << 24);
-        *rawPres |= (int32_t)(bufferPtr[1] << 16);
-        *rawPres |= (int32_t)(bufferPtr[0] << 8);
-        *rawPres /= 256;
+        *rawPres = (int32_t)((uint32_t)bufferPtr[2] << 24);
+        *rawPres |= (int32_t)((uint32_t)bufferPtr[1] << 16);
+        *rawPres |= (int32_t)((uint32_t)bufferPtr[0] << 8);
+        *rawPres >>= 8; /* or /= 256 */
     }
 
     return WE_SUCCESS;
@@ -1775,6 +2051,11 @@ int8_t PADS_getFifoRawPressure(WE_sensorInterface_t* sensorInterface, uint8_t nu
  */
 int8_t PADS_getFifoRawTemperature(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* rawTemp)
 {
+    if (NULL == rawTemp)
+    {
+        return WE_FAIL;
+    }
+
     if (numSamples > PADS_FIFO_BUFFER_SIZE)
     {
         return WE_FAIL;
@@ -1805,6 +2086,11 @@ int8_t PADS_getFifoRawTemperature(WE_sensorInterface_t* sensorInterface, uint8_t
  */
 int8_t PADS_getFifoRawValues(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* rawPres, int16_t* rawTemp)
 {
+    if ((NULL == rawPres) || (NULL == rawTemp))
+    {
+        return WE_FAIL;
+    }
+
     if (numSamples > PADS_FIFO_BUFFER_SIZE)
     {
         return WE_FAIL;
@@ -1843,6 +2129,11 @@ int8_t PADS_getFifoRawValues(WE_sensorInterface_t* sensorInterface, uint8_t numS
  */
 int8_t PADS_getPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa)
 {
+    if (NULL == pressPa)
+    {
+        return WE_FAIL;
+    }
+
     int32_t rawPressure = 0;
     if (PADS_getRawPressure(sensorInterface, &rawPressure) == WE_SUCCESS)
     {
@@ -1867,6 +2158,11 @@ int8_t PADS_getPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pres
  */
 int8_t PADS_getDifferentialPressure_int(WE_sensorInterface_t* sensorInterface, int32_t* pressPa)
 {
+    if (NULL == pressPa)
+    {
+        return WE_FAIL;
+    }
+
     int32_t rawPressure = 0;
     if (PADS_getRawPressure(sensorInterface, &rawPressure) == WE_SUCCESS)
     {
@@ -1885,7 +2181,14 @@ int8_t PADS_getDifferentialPressure_int(WE_sensorInterface_t* sensorInterface, i
  * @param[out] temperature The returned temperature measurement
  * @retval Error code
  */
-int8_t PADS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* temperature) { return PADS_getRawTemperature(sensorInterface, temperature); }
+int8_t PADS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* temperature)
+{
+    if (NULL == temperature)
+    {
+        return WE_FAIL;
+    }
+    return PADS_getRawTemperature(sensorInterface, temperature);
+}
 
 /**
  * @brief Read one or more pressure values from FIFO.
@@ -1896,6 +2199,11 @@ int8_t PADS_getTemperature_int(WE_sensorInterface_t* sensorInterface, int16_t* t
  */
 int8_t PADS_getFifoPressure_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa)
 {
+    if (NULL == pressPa)
+    {
+        return WE_FAIL;
+    }
+
     if (WE_FAIL == PADS_getFifoRawPressure(sensorInterface, numSamples, pressPa))
     {
         return WE_FAIL;
@@ -1916,7 +2224,14 @@ int8_t PADS_getFifoPressure_int(WE_sensorInterface_t* sensorInterface, uint8_t n
  * @param[out] temperature The returned FIFO temperature measurement(s) in 0.01 °C
  * @retval Error code
  */
-int8_t PADS_getFifoTemperature_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* temperature) { return PADS_getFifoRawTemperature(sensorInterface, numSamples, temperature); }
+int8_t PADS_getFifoTemperature_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* temperature)
+{
+    if (NULL == temperature)
+    {
+        return WE_FAIL;
+    }
+    return PADS_getFifoRawTemperature(sensorInterface, numSamples, temperature);
+}
 
 /**
  * @brief Reads one or more pressure and temperature values from FIFO
@@ -1928,6 +2243,11 @@ int8_t PADS_getFifoTemperature_int(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t PADS_getFifoValues_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int32_t* pressPa, int16_t* temperature)
 {
+    if ((NULL == pressPa) || (NULL == temperature))
+    {
+        return WE_FAIL;
+    }
+
     if (WE_FAIL == PADS_getFifoRawValues(sensorInterface, numSamples, pressPa, temperature))
     {
         return WE_FAIL;
@@ -1977,6 +2297,11 @@ int32_t PADS_convertDifferentialPressure_int(int32_t rawPres) { return (rawPres 
  */
 int8_t PADS_getPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa)
 {
+    if (NULL == presskPa)
+    {
+        return WE_FAIL;
+    }
+
     int32_t rawPressure = 0;
     if (PADS_getRawPressure(sensorInterface, &rawPressure) == WE_SUCCESS)
     {
@@ -2001,6 +2326,11 @@ int8_t PADS_getPressure_float(WE_sensorInterface_t* sensorInterface, float* pres
  */
 int8_t PADS_getDifferentialPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa)
 {
+    if (NULL == presskPa)
+    {
+        return WE_FAIL;
+    }
+
     int32_t rawPressure = 0;
     if (PADS_getRawPressure(sensorInterface, &rawPressure) == WE_SUCCESS)
     {
@@ -2021,6 +2351,11 @@ int8_t PADS_getDifferentialPressure_float(WE_sensorInterface_t* sensorInterface,
  */
 int8_t PADS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC)
 {
+    if (NULL == tempDegC)
+    {
+        return WE_FAIL;
+    }
+
     int16_t rawTemp = 0;
     if (PADS_getRawTemperature(sensorInterface, &rawTemp) == WE_SUCCESS)
     {
@@ -2043,6 +2378,11 @@ int8_t PADS_getTemperature_float(WE_sensorInterface_t* sensorInterface, float* t
  */
 int8_t PADS_getFifoPressure_float(WE_sensorInterface_t* sensorInterface, float* presskPa)
 {
+    if (NULL == presskPa)
+    {
+        return WE_FAIL;
+    }
+
     int32_t rawPressure = 0;
     if (PADS_getFifoRawPressure(sensorInterface, 1, &rawPressure) == WE_SUCCESS)
     {
@@ -2063,6 +2403,11 @@ int8_t PADS_getFifoPressure_float(WE_sensorInterface_t* sensorInterface, float* 
  */
 int8_t PADS_getFifoTemperature_float(WE_sensorInterface_t* sensorInterface, float* tempDegC)
 {
+    if (NULL == tempDegC)
+    {
+        return WE_FAIL;
+    }
+
     int16_t rawTemp = 0;
     if (PADS_getFifoRawTemperature(sensorInterface, 1, &rawTemp) == WE_SUCCESS)
     {

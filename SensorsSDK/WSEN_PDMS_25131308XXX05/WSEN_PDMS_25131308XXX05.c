@@ -64,7 +64,7 @@ static inline int8_t PDMS_ReadReg(WE_sensorInterface_t* sensorInterface, uint16_
  * @param[in] data Write buffer.
  * @return Error Code.
  */
-static inline int8_t PDMS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_t regAdr, uint16_t numBytesToWrite, uint8_t* data)
+static inline int8_t PDMS_WriteReg(WE_sensorInterface_t* sensorInterface, uint16_t numBytesToWrite, uint8_t* data)
 {
     /* 0xFF is used here as a place holder and it will not be used in the WE_WriteReg with WE_i2cProtocol_Raw and useRegAddrMsbForMultiBytesRead = 1; */
     return WE_WriteReg(sensorInterface, 0xFF, numBytesToWrite, data);
@@ -87,6 +87,10 @@ static inline int8_t PDMS_SPITransceive(WE_sensorInterface_t* sensorInterface, u
  */
 int8_t PDMS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
     *sensorInterface = PDMSDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -175,6 +179,8 @@ static uint8_t calc_crc8(uint8_t polynom, uint8_t init, uint8_t* data, uint16_t 
     return crc & 0xFF;
 }
 
+#ifdef WE_USE_FLOAT
+
 /**
  * @brief Read the pressure and temperature values
  * @param[in] sensorInterface Pointer to sensor interface
@@ -186,15 +192,14 @@ static uint8_t calc_crc8(uint8_t polynom, uint8_t init, uint8_t* data, uint16_t 
  */
 int8_t PDMS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterface, PDMS_SensorType_t type, float* pressureKPa, float* temperatureDegC, uint16_t* syncStatusValue)
 {
-    uint16_t rawPressure = 0;
-    uint16_t rawTemperature = 0;
-    uint16_t statusValue = 0;
-
-    /* Check if sensor interface is initialized */
-    if (sensorInterface == NULL)
+    if (NULL == sensorInterface || NULL == pressureKPa || NULL == temperatureDegC || NULL == syncStatusValue)
     {
         return WE_FAIL;
     }
+
+    uint16_t rawPressure = 0;
+    uint16_t rawTemperature = 0;
+    uint16_t statusValue = 0;
 
     switch (sensorInterface->interfaceType)
     {
@@ -203,22 +208,24 @@ int8_t PDMS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
             switch (sensorInterface->options.i2c.address)
             {
                 case PDMS_I2C_ADDRESS_CRC:
-                    if (WE_FAIL == PDMS_I2C_GetRawPressureAndTemperature_WithCRC(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
+                    if (WE_SUCCESS != PDMS_I2C_GetRawPressureAndTemperature_WithCRC(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
                     {
                         return WE_FAIL;
                     }
                     break;
 
                 case PDMS_I2C_ADDRESS:
-                    if (WE_FAIL == PDMS_I2C_GetRawPressureAndTemperature(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
+                    if (WE_SUCCESS != PDMS_I2C_GetRawPressureAndTemperature(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
                     {
                         return WE_FAIL;
                     }
                     break;
 
                 default:
+                {
                     /* Invalid I2C address for PDMS type pressure sensors */
                     return WE_FAIL;
+                }
             }
         }
         break;
@@ -234,23 +241,30 @@ int8_t PDMS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
             switch (*(PDMS_Spi_CrcSelect_t*)sensorInterface->options.spi.sensorSpecificSettings)
             {
                 case PDMS_SPI_withoutCRC:
-                    if (WE_FAIL == PDMS_SPI_GetRawPressureAndTemperature(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
+                    if (WE_SUCCESS != PDMS_SPI_GetRawPressureAndTemperature(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
                     {
                         return WE_FAIL;
                     }
                     break;
 
                 case PDMS_SPI_withCRC:
-                    if (WE_FAIL == PDMS_SPI_getRawPressureAndTemperature_WithCRC(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
+                    if (WE_SUCCESS != PDMS_SPI_GetRawPressureAndTemperature_WithCRC(sensorInterface, &rawPressure, &rawTemperature, &statusValue))
                     {
                         return WE_FAIL;
                     }
                     break;
 
                 default:
+                {
                     /* Invalid SPI CRC select */
                     return WE_FAIL;
+                }
             }
+        }
+
+        default:
+        {
+            return WE_FAIL;
         }
     }
     *syncStatusValue = statusValue;
@@ -291,6 +305,8 @@ int8_t PDMS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
     return WE_SUCCESS;
 }
 
+#endif /* WE_USE_FLOAT */
+
 /**
  * @brief Read the raw pressure and temperature values via I2C interface
  * @param[in] sensorInterface Pointer to sensor interface
@@ -301,8 +317,12 @@ int8_t PDMS_getPressureAndTemperature_float(WE_sensorInterface_t* sensorInterfac
  */
 int8_t PDMS_I2C_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, uint16_t* rawPressure, uint16_t* rawTemperature, uint16_t* syncStatusValue)
 {
+    if (NULL == sensorInterface || NULL == rawPressure || NULL == rawTemperature || NULL == syncStatusValue)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t writeBuffer8 = PDMS_I2C_READ_MEASUREMENT;
-    int8_t status = WE_FAIL;
     uint8_t readbuffer8[6];
 
     /* Invalid I2C check address for measurement without CRC */
@@ -311,14 +331,12 @@ int8_t PDMS_I2C_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterfa
         return WE_FAIL;
     }
 
-    status = PDMS_WriteReg(sensorInterface, 0xFF, 1, &writeBuffer8);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_WriteReg(sensorInterface, 1, &writeBuffer8))
     {
         return WE_FAIL;
     }
 
-    status = PDMS_ReadReg(sensorInterface, 6, &readbuffer8[0]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_ReadReg(sensorInterface, 6, &readbuffer8[0]))
     {
         return WE_FAIL;
     }
@@ -340,8 +358,12 @@ int8_t PDMS_I2C_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterfa
  */
 int8_t PDMS_I2C_GetRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* sensorInterface, uint16_t* rawPressure, uint16_t* rawTemperature, uint16_t* syncStatusValue)
 {
+    if (NULL == sensorInterface || NULL == rawPressure || NULL == rawTemperature || NULL == syncStatusValue)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t writeBuffer8[2] = {0};
-    int8_t status = WE_FAIL;
     uint8_t readbuffer8[7];
     uint8_t crc4;
     uint8_t crc8;
@@ -362,14 +384,12 @@ int8_t PDMS_I2C_GetRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* senso
     crc4 = calc_crc4(CRC4_I2C_POLYNOMIAL, CRC4_I2C_INIT, &writeBuffer8[0], 2);
     writeBuffer8[1] |= (crc4 & 0x0F);
 
-    status = PDMS_WriteReg(sensorInterface, 0xff, 2, &writeBuffer8[0]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_WriteReg(sensorInterface, 2, &writeBuffer8[0]))
     {
         return WE_FAIL;
     }
 
-    status = PDMS_ReadReg(sensorInterface, 7, &readbuffer8[0]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_ReadReg(sensorInterface, 7, &readbuffer8[0]))
     {
         return WE_FAIL;
     }
@@ -404,7 +424,11 @@ int8_t PDMS_I2C_GetRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* senso
  */
 int8_t PDMS_SPI_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterface, uint16_t* rawPressure, uint16_t* rawTemperature, uint16_t* syncStatusValue)
 {
-    int8_t status = WE_FAIL;
+    if (NULL == sensorInterface || NULL == rawPressure || NULL == rawTemperature || NULL == syncStatusValue)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t readbuffer8[8] = {0};
     uint8_t writebuffer8[8] = {0};
 
@@ -420,8 +444,7 @@ int8_t PDMS_SPI_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterfa
     /* Set next 3 bits (bits 4–6) of the second byte to (number of data words to read (3) - 1), which is 2 */
     writebuffer8[1] |= ((3 - 1) << 4);
 
-    status = PDMS_SPITransceive(sensorInterface, 8, &writebuffer8[0], &readbuffer8[0]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_SPITransceive(sensorInterface, 8, &writebuffer8[0], &readbuffer8[0]))
     {
         return WE_FAIL;
     }
@@ -442,10 +465,13 @@ int8_t PDMS_SPI_GetRawPressureAndTemperature(WE_sensorInterface_t* sensorInterfa
  * @param[out] syncStatusValue Pointer to store the synchronized status value
  * @retval Error code
  */
-int8_t PDMS_SPI_getRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* sensorInterface, uint16_t* rawPressure, uint16_t* rawTemperature, uint16_t* syncStatusValue)
+int8_t PDMS_SPI_GetRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* sensorInterface, uint16_t* rawPressure, uint16_t* rawTemperature, uint16_t* syncStatusValue)
 {
+    if (NULL == sensorInterface || NULL == rawPressure || NULL == rawTemperature || NULL == syncStatusValue)
+    {
+        return WE_FAIL;
+    }
 
-    int8_t status = WE_FAIL;
     uint8_t readbuffer8[9] = {0};
     uint8_t writebuffer8[9] = {0};
     uint8_t crc4;
@@ -467,8 +493,7 @@ int8_t PDMS_SPI_getRawPressureAndTemperature_WithCRC(WE_sensorInterface_t* senso
     crc4 = calc_crc4(CRC4_SPI_POLYNOMIAL, CRC4_SPI_INIT, &writebuffer8[0], 2);
     writebuffer8[1] |= (crc4 & 0x0F);
 
-    status = PDMS_SPITransceive(sensorInterface, 9, &writebuffer8[0], &readbuffer8[0]);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != PDMS_SPITransceive(sensorInterface, 9, &writebuffer8[0], &readbuffer8[0]))
     {
         return WE_FAIL;
     }

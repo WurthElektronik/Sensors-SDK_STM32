@@ -35,6 +35,7 @@
 #include "main.h"
 #include "spi.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@
 static WE_sensorInterface_t hids;
 
 /* Sensor initialization function */
-static bool HIDS_init(void);
+static bool WE_hidsInit(void);
 
 /**
  * @brief Example initialization.
@@ -67,9 +68,9 @@ void WE_hidsSpiExampleInit()
     debugPrintln("* SPI MOSI is connected to SDA pin of sensor through a 1K resistor");
 
     /* init HIDS */
-    if (false == HIDS_init())
+    if (false == WE_hidsInit())
     {
-        debugPrintln("**** HIDS_Init() error. STOP ****");
+        debugPrintln("**** WE_hidsInit() error. STOP ****");
         HAL_Delay(5);
         while (1)
             ;
@@ -86,24 +87,25 @@ void WE_hidsSpiExampleInit()
  */
 void WE_hidsSpiExampleLoop()
 {
-    if (WE_FAIL == HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
+    if (WE_SUCCESS != HIDS_enableOneShot(&hids, HIDS_enable)) /* trigger a single measurement - oneshot it is! */
     {
         debugPrintln("**** HIDS_enableOneShot(enable): NOT OK ****");
+        return;
     }
 
     HAL_Delay(1);
 
     bool waitForMeasurement = true;
-    while (waitForMeasurement == true)
+    while (true == waitForMeasurement)
     {
         HIDS_state_t humStatus = HIDS_disable;
-        if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humStatus))
+        if (WE_SUCCESS != HIDS_isHumidityDataAvailable(&hids, &humStatus))
         {
             debugPrintln("**** HIDS_isHumidityDataAvailable(): NOT OK ****");
         }
 
         HIDS_state_t oneShotStatus = HIDS_enable;
-        if (WE_FAIL == HIDS_isOneShotEnabled(&hids, &oneShotStatus))
+        if (WE_SUCCESS != HIDS_isOneShotEnabled(&hids, &oneShotStatus))
         {
             debugPrintln("**** HIDS_isOneShotEnabled(): NOT OK ****");
         }
@@ -120,7 +122,7 @@ void WE_hidsSpiExampleLoop()
     }
 
     uint16_t humidity_uint16 = 0;
-    if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getHumidity_uint16(&hids, &humidity_uint16))
     {
         uint16_t full = humidity_uint16 / 100;
         uint16_t decimals = humidity_uint16 % 100; /* 2 decimal places */
@@ -144,7 +146,7 @@ void WE_hidsSpiExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool HIDS_init(void)
+static bool WE_hidsInit(void)
 {
     /* Initialize sensor interface (SPI, burst mode deactivated) */
     HIDS_getDefaultInterface(&hids);
@@ -156,6 +158,10 @@ static bool HIDS_init(void)
 
     /* Wait for boot */
     HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&hids))
+    {
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
 
     /* SPI chip select output must be initially high (because it is active low) */
     HAL_GPIO_WritePin(SPI1_CS0_GPIO_Port, SPI1_CS0_Pin, GPIO_PIN_SET);
@@ -163,21 +169,14 @@ static bool HIDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
-    {
-        if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != HIDS_getDeviceID(&hids, &deviceIdValue))
     {
         debugPrintln("**** HIDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
+    {
+        debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

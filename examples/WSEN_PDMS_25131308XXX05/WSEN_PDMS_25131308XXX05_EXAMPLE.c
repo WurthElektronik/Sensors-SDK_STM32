@@ -47,7 +47,7 @@ static WE_sensorInterface_t pdms;
 static PDMS_SensorType_t pdmsSensorType;
 
 /* Sensor initialization function */
-static bool PDMS_init(void);
+static bool WE_pdmsInit(void);
 
 /* Functions to print float values */
 static void debugPrintPressure_float(float pressureKPa);
@@ -69,11 +69,11 @@ void WE_pdmsI2cExampleInit()
     debugPrintln(bufferMinor);
     debugPrintln("Pin CS/SA0 at power on connected to GND via pull-down resistors activates I2C communication with address 0x6C.");
     debugPrintln("This example gives I2C measurement with CRC activated.");
-    debugPrintln("Select the i2c address PDMS_I2C_ADDRESS in PDMS_init() function for measurement without CRC.");
-    debugPrintln("Select the right pdms sensor type in PDMS_init() function. PDMS_pdus3 is selected as default.");
+    debugPrintln("Select the i2c address PDMS_I2C_ADDRESS in WE_pdmsInit() function for measurement without CRC.");
+    debugPrintln("Select the right pdms sensor type in WE_pdmsInit() function. PDMS_pdus3 is selected as default.");
 
     /* init PDMS */
-    if (false == PDMS_init())
+    if (false == WE_pdmsInit())
     {
         debugPrintln("**** PDMS_Init() error. STOP ****");
         WE_Delay(5);
@@ -122,7 +122,7 @@ void WE_pdmsI2cExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool PDMS_init(void)
+static bool WE_pdmsInit(void)
 {
     /* I2C communication shall be used with 100 kHz(Standard Mode)frequency. SPI is to be used for higher speed*/
     /* Initialize sensor interface (i2c with PDMS address, burst mode activated) */

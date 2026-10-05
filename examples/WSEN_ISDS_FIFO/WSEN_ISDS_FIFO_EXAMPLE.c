@@ -57,7 +57,7 @@ static bool interrupt0Triggered = false;
 static bool interrupt1Triggered = false;
 
 /* Sensor initialization function */
-static bool ISDS_init(void);
+static bool WE_isdsInit(void);
 
 /* Functions containing main loops for the available example modes */
 static void ISDS_startFifoMode();
@@ -89,7 +89,7 @@ void WE_isdsFifoExampleInit()
     debugPrintln("* INT_1 to PA1, rising edge interrupt only");
 
     /* init ISDS */
-    if (false == ISDS_init())
+    if (false == WE_isdsInit())
     {
         debugPrintln("**** ISDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -135,14 +135,14 @@ void WE_isdsFifoExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ISDS_init(void)
+static bool WE_isdsInit(void)
 {
     /* Initialize sensor interface (i2c with ISDS address, burst mode activated) */
     ISDS_getDefaultInterface(&isds);
     isds.interfaceType = WE_i2c;
     isds.options.i2c.burstMode = 1;
     isds.options.i2c.address = ISDS_ADDRESS_I2C_1;
-#warning "Please use correct i2c address here"
+#pragma message("Please use correct i2c address here")
     isds.handle = &hi2c1;
 
     /* Wait for boot */
@@ -156,21 +156,14 @@ static bool ISDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ISDS_getDeviceID(&isds, &deviceIdValue))
-    {
-        if (deviceIdValue == ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ISDS_getDeviceID(&isds, &deviceIdValue))
     {
         debugPrintln("**** ISDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
+    {
+        debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -183,7 +176,7 @@ static bool ISDS_init(void)
     } while (swReset);
     debugPrintln("**** ISDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ISDS_reboot(&isds, ISDS_enable);
     HAL_Delay(15);
     debugPrintln("**** ISDS reboot complete ****");
@@ -265,12 +258,12 @@ static void ISDS_startFifoMode()
     uint32_t nextPrintTime = 0;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             interrupt0Triggered = false;
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             interrupt1Triggered = false;
 
@@ -394,7 +387,7 @@ static void ISDS_startContinuousMode()
     uint32_t nextPrintTime = 0;
     while (1)
     {
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* FIFO buffer is filled up to threshold */
             interrupt0Triggered = false;
@@ -461,7 +454,7 @@ static void ISDS_startContinuousMode()
             debugPrint(".");
         }
 
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* FIFO buffer full or overrun - this shouldn't happen, if samples are read fast enough */
 
@@ -471,7 +464,7 @@ static void ISDS_startContinuousMode()
             uint16_t fillLevel, fifoPattern;
             ISDS_getFifoStatus(&isds, &status, &fillLevel, &fifoPattern);
 
-            char buffer[5];
+            char buffer[6];
             sprintf(buffer, "%d", fillLevel);
 
             if (status.fifoOverrunState)
@@ -548,7 +541,7 @@ static void ISDS_startContinuousToFifoMode()
     bool orientationChanged = false;
     while (1)
     {
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* In this example, interrupt 1 is triggered when the device's 6D orientation has changed */
 
@@ -560,10 +553,11 @@ static void ISDS_startContinuousToFifoMode()
             orientationChanged = true;
         }
 
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* In this example, interrupt 0 is triggered if the FIFO buffer is either
        * filled up to threshold, is full or in case of an overrun */
+        	interrupt0Triggered = false;
 
             /* Get FIFO status */
             ISDS_fifoStatus2_t status;
@@ -585,12 +579,11 @@ static void ISDS_startContinuousToFifoMode()
                 debugPrintln("FIFO overrun");
             }
 
-            if (orientationChanged == true)
+            if (true == orientationChanged)
             {
                 /* 6D orientation change event has been triggered - wait for FIFO buffer to be full */
                 if (status.fifoFullSmartState)
                 {
-                    interrupt0Triggered = false;
                     orientationChanged = false;
 
                     /* Read contents of complete FIFO buffer, compute and print average values */
@@ -652,8 +645,6 @@ static void ISDS_startContinuousToFifoMode()
                 /* No orientation change event happened - this is probably an interrupt signaling
          * that the FIFO buffer has at least FIFO_THRESH elements. */
 
-                interrupt0Triggered = false;
-
                 debugPrint(".");
 
                 /* Must read acceleration values so that there is no overrun while in continuous mode */
@@ -707,7 +698,7 @@ static void ISDS_startBypassToContinuousMode()
     uint32_t timeToSleep = 0;
     while (1)
     {
-        if (interrupt1Triggered == true)
+        if (true == interrupt1Triggered)
         {
             /* In this example, interrupt 1 is triggered when the device has woken up */
 
@@ -720,7 +711,7 @@ static void ISDS_startBypassToContinuousMode()
             timeToSleep = HAL_GetTick() + 5000;
         }
 
-        if (interrupt0Triggered == true)
+        if (true == interrupt0Triggered)
         {
             /* In this example, interrupt 0 is triggered if the FIFO buffer is
        * filled up to the configured threshold */

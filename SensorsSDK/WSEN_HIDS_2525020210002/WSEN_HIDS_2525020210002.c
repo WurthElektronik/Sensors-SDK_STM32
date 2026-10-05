@@ -18,7 +18,7 @@
  * FOR MORE INFORMATION PLEASE CAREFULLY READ THE LICENSE AGREEMENT FILE (license_terms_wsen_sdk.pdf)
  * LOCATED IN THE ROOT DIRECTORY OF THIS DRIVER PACKAGE.
  *
- * COPYRIGHT (c) 2022 Würth Elektronik eiSos GmbH & Co. KG
+ * COPYRIGHT (c) 2026 Würth Elektronik eiSos GmbH & Co. KG
  *
  ***************************************************************************************************
  */
@@ -36,7 +36,6 @@
  */
 static const WE_sensorInterface_t hidsDefaultSensorInterface = {
     .sensorType = WE_HIDS, .interfaceType = WE_i2c, .options = {.i2c = {.address = HIDS_ADDRESS, .burstMode = 1, .protocol = WE_i2cProtocol_Raw, .useRegAddrMsbForMultiBytesRead = 1, .reserved = 0}, .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000}, .handle = 0};
-/***** STATUIC variables *****/
 
 /**
  * @brief Read data from sensor.
@@ -49,7 +48,7 @@ static const WE_sensorInterface_t hidsDefaultSensorInterface = {
 static inline int8_t HIDS_ReadData(WE_sensorInterface_t* sensorInterface, uint8_t* data, uint16_t numBytesToRead) { return WE_ReadReg(sensorInterface, 0xFF, numBytesToRead, data); }
 
 /**
- * @brief generate CRC for the data bytes
+ * @brief Generate CRC for the data bytes
  * @param[in] data input
  * @param[in] count of data bytes
  * @retval Error code
@@ -98,8 +97,8 @@ static int8_t HIDS_CheckCRC(const uint8_t* data, uint16_t count, uint8_t checksu
  * @brief Write data to sensor.
  *
  * @param[in] sensorInterface Pointer to sensor interface
- * @param[in] numBytesToRead Number of bytes to be read
- * @param[out] data Target buffer
+ * @param[in] data Data to write
+ * @param[in] numBytesToWrite Number of bytes to write
  * @return Error Code
  */
 static inline int8_t HIDS_WriteData(WE_sensorInterface_t* sensorInterface, uint8_t* data, uint16_t numBytesToWrite)
@@ -115,6 +114,10 @@ static inline int8_t HIDS_WriteData(WE_sensorInterface_t* sensorInterface, uint8
  */
 int8_t HIDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
     *sensorInterface = hidsDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -126,30 +129,33 @@ int8_t HIDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface)
  */
 int8_t HIDS_Set_Measurement_Type(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t meausurementCmd)
 {
-    int8_t status = WE_FAIL;
     uint8_t temp = meausurementCmd;
-    status = HIDS_WriteData(sensorInterface, &temp, 1);
 
-    /* mandatory wait for measurement to be performed, see user manual of 2525020210002 */
-    WE_Delay(10);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != HIDS_WriteData(sensorInterface, &temp, 1))
     {
         /* error! */
         return WE_FAIL;
     }
 
+    /* mandatory wait for measurement to be performed, see user manual of 2525020210002 */
+    WE_Delay(10);
     return WE_SUCCESS;
 }
 
 /**
- * @brief Measure the data in milli values
+ * @brief Measure the temperature and humidity
  * @param[in] sensorInterface Pointer to sensor interface
- * @param[out] Temperature value in milli
- * @param[out] Humidity value in milli
+ * @param[in] measureCmd Measure command
+ * @param[out] temperatureRaw Temperature value in milli °C
+ * @param[out] humidityRaw Humidity value in milli %RH
  * @retval Error code
  */
 int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t measureCmd, int32_t* temperatureRaw, int32_t* humidityRaw)
 {
+    if ((NULL == temperatureRaw) || (NULL == humidityRaw))
+    {
+        return WE_FAIL;
+    }
 
     if (WE_SUCCESS != HIDS_Set_Measurement_Type(sensorInterface, measureCmd))
     {
@@ -157,25 +163,43 @@ int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measu
         return WE_FAIL;
     }
 
+    switch (measureCmd)
+    {
+        case HIDS_HEATER_200_MW_01_S:
+        case HIDS_HEATER_110_MW_01_S:
+        case HIDS_HEATER_20_MW_01_S:
+        {
+            WE_Delay(1000);
+        }
+        break;
+        case HIDS_HEATER_200_MW_100_MS:
+        case HIDS_HEATER_110_MW_100_MS:
+        case HIDS_HEATER_20_MW_100_MS:
+        {
+            WE_Delay(100);
+        }
+        break;
+        default:
+            break;
+    }
+
     uint8_t dataBytes[6] = {0};
-    int8_t status = WE_FAIL;
     uint16_t t_ticks = 0;
     uint16_t rh_ticks = 0;
 
-    status = HIDS_ReadData(sensorInterface, dataBytes, 6);
-    if (status != WE_SUCCESS)
+    if (WE_SUCCESS != HIDS_ReadData(sensorInterface, dataBytes, 6))
     {
         /* error! */
         return WE_FAIL;
     }
-    status = HIDS_CheckCRC(&dataBytes[0], HIDS_WORD_SIZE, dataBytes[2]);
-    if (status != WE_SUCCESS)
+
+    if (WE_SUCCESS != HIDS_CheckCRC(&dataBytes[0], HIDS_WORD_SIZE, dataBytes[2]))
     {
         /* error! */
         return WE_FAIL;
     }
-    status = HIDS_CheckCRC(&dataBytes[3], HIDS_WORD_SIZE, dataBytes[5]);
-    if (status != WE_SUCCESS)
+
+    if (WE_SUCCESS != HIDS_CheckCRC(&dataBytes[3], HIDS_WORD_SIZE, dataBytes[5]))
     {
         /* error! */
         return WE_FAIL;
@@ -184,51 +208,56 @@ int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measu
     t_ticks = ((uint16_t)dataBytes[0] << 8) | ((uint16_t)dataBytes[1]);
     rh_ticks = ((uint16_t)dataBytes[3] << 8) | ((uint16_t)dataBytes[4]);
 
-    *temperatureRaw = (int32_t)(((21875 * t_ticks) >> 13) - 45000); /* >> 13 == / 8192; temperatureRaw to be divided by 1000 for reaching rh percent */
-    *humidityRaw = (int32_t)(((15625 * rh_ticks) >> 13) - 6000);    /* humidityRaw to be divided by 1000 for reaching rh percent */
+    *temperatureRaw = (int32_t)(((21875 * (int32_t)t_ticks) >> 13) - 45000); /* >> 13 == / 8192; temperatureRaw to be divided by 1000 for reaching °C */
+    *humidityRaw = (int32_t)(((15625 * (int32_t)rh_ticks) >> 13) - 6000);    /* humidityRaw to be divided by 1000 for reaching rh percent */
     return WE_SUCCESS;
 }
 
 /**
- * @brief read the sensor serial number
+ * @brief Read the sensor serial number
  * @param[in] sensorInterface Pointer to sensor interface
  * @param[out] Serial number in Pointer to serial number as 32 bit integer
  * @retval Error code
  */
 int8_t HIDS_Sensor_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint32_t* serialNo)
 {
-    int8_t status = WE_FAIL;
+    if (NULL == serialNo)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t dataBytes[6] = {0};
     hids_measureCmd_t measureCmd = HIDS_MEASURE_SERIAL_NUMBER;
-    if (WE_FAIL == HIDS_Set_Measurement_Type(sensorInterface, measureCmd))
+    if (WE_SUCCESS != HIDS_Set_Measurement_Type(sensorInterface, measureCmd))
     {
         /* error! */
         return WE_FAIL;
     }
-    status = HIDS_ReadData(sensorInterface, dataBytes, 6);
-    if (status != WE_SUCCESS)
+
+    if (WE_SUCCESS != HIDS_ReadData(sensorInterface, dataBytes, 6))
     {
         /* error! */
         return WE_FAIL;
     }
-    status = HIDS_CheckCRC(&dataBytes[0], HIDS_WORD_SIZE, dataBytes[2]);
-    if (status != WE_SUCCESS)
+
+    if (WE_SUCCESS != HIDS_CheckCRC(&dataBytes[0], HIDS_WORD_SIZE, dataBytes[2]))
     {
         /* error! */
         return WE_FAIL;
     }
-    status = HIDS_CheckCRC(&dataBytes[3], HIDS_WORD_SIZE, dataBytes[5]);
-    if (status != WE_SUCCESS)
+
+    if (WE_SUCCESS != HIDS_CheckCRC(&dataBytes[3], HIDS_WORD_SIZE, dataBytes[5]))
     {
         /* error! */
         return WE_FAIL;
     }
+    /* dataBytes[2] and dataBytes[5] are CRC bytes, excluded from serial number */
     *serialNo = ((uint32_t)dataBytes[0] << 24) | ((uint32_t)dataBytes[1] << 16) | ((uint32_t)dataBytes[3] << 8) | ((uint32_t)dataBytes[4]);
     return WE_SUCCESS;
 }
 
 /**
- * @brief initilaize the seonsor
+ * @brief Initialize the sensor
  * @param[in] sensorInterface Pointer to sensor interface
  * @retval Error code
  */
@@ -249,12 +278,11 @@ int8_t HIDS_Sensor_Init(WE_sensorInterface_t* sensorInterface)
 }
 
 /**
- * @brief reset the sensor
+ * @brief Reset the sensor
  * @param[in] sensorInterface Pointer to sensor interface
  */
 int8_t HIDS_Reset(WE_sensorInterface_t* sensorInterface)
 {
-
     int8_t status = WE_FAIL;
     uint8_t temp = HIDS_SOFT_RESET;
     status = HIDS_WriteData(sensorInterface, &temp, 1);

@@ -55,7 +55,7 @@ static uint32_t freeFallEndTime = 0;
 static ITDS_state_t lastFreeFallEventOccurredState = ITDS_disable;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 
 /**
  * @brief Example initialization.
@@ -76,7 +76,7 @@ void WE_itdsFreeFallExampleInit()
     debugPrintln("* INT_0 to PA0, rising and falling edge");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -141,7 +141,7 @@ void WE_itdsFreeFallExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -160,21 +160,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -187,7 +180,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do

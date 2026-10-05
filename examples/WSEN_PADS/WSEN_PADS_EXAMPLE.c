@@ -40,8 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Comment/uncomment the following lines to disable/enable the examples for
- * each data type (see WE_padsExampleLoop() function). */
+#pragma message("Comment/uncomment the following lines to disable/enable the examples for each data type (see WE_padsExampleLoop() function)")
 /* Note: The float example won't compile unless WE_USE_FLOAT is defined. */
 #define PADS_EXAMPLE_ENABLE_FLOAT
 #define PADS_EXAMPLE_ENABLE_INT
@@ -50,7 +49,7 @@
 static WE_sensorInterface_t pads;
 
 /* Sensor initialization function */
-static bool PADS_init(void);
+static bool WE_padsInit(void);
 
 /* Example modes for the PADS sensor */
 void PADS_singleConversionModeExample(void);
@@ -83,7 +82,7 @@ void WE_padsExampleInit()
     debugPrintln("This is the example program for the PADS sensor.");
 
     /* init PADS */
-    if (false == PADS_init())
+    if (false == WE_padsInit())
     {
         debugPrintln("**** PADS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -102,7 +101,7 @@ void WE_padsExampleInit()
  */
 void WE_padsExampleLoop()
 {
-    /* Comment/uncomment the following lines to switch between example modes. */
+#pragma message("Comment/uncomment the following lines to switch between example modes")
     PADS_singleConversionModeExample();
     //  PADS_continuousModeExample();
 }
@@ -110,7 +109,7 @@ void WE_padsExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool PADS_init(void)
+static bool WE_padsInit(void)
 {
     /* Initialize sensor interface (i2c with PADS address, burst mode deactivated) */
     PADS_getDefaultInterface(&pads);
@@ -128,21 +127,14 @@ static bool PADS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
-    {
-        if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
-        {
-            debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != PADS_getDeviceID(&pads, &deviceIdValue))
     {
         debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+    {
+        debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

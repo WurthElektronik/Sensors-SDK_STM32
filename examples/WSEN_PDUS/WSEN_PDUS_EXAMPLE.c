@@ -44,7 +44,7 @@
 static WE_sensorInterface_t pdus;
 
 /* Sensor initialization function */
-static bool PDUS_init(void);
+static bool WE_pdusInit(void);
 
 #ifdef WE_USE_FLOAT
 static void debugPrintPressure_float(float pressureKPa);
@@ -73,7 +73,7 @@ void WE_pdusExampleInit()
     debugPrintln("For those articles a level conversion to 3.3V is required to talk with a STM32 (or any other 3.3V MCU).");
 
     /* init PDUS */
-    if (false == PDUS_init())
+    if (false == WE_pdusInit())
     {
         debugPrintln("**** PDUS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -133,7 +133,7 @@ void WE_pdusExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool PDUS_init(void)
+static bool WE_pdusInit(void)
 {
     /* Initialize sensor interface (i2c with PDUS address, burst mode activated) */
     PDUS_getDefaultInterface(&pdus);

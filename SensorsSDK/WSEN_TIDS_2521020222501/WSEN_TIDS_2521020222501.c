@@ -71,6 +71,10 @@ static inline int8_t TIDS_WriteReg(WE_sensorInterface_t* sensorInterface, uint8_
  */
 int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
 {
+    if (NULL == sensorInterface)
+    {
+        return WE_FAIL;
+    }
     *sensorInterface = tidsDefaultSensorInterface;
     return WE_SUCCESS;
 }
@@ -84,7 +88,15 @@ int8_t TIDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface)
  * @param[out] deviceID The returned device ID.
  * @retval Error code
  */
-int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID) { return TIDS_ReadReg(sensorInterface, TIDS_DEVICE_ID_REG, 1, deviceID); }
+int8_t TIDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID)
+{
+    if ((NULL == sensorInterface) || (NULL == deviceID))
+    {
+        return WE_FAIL;
+    }
+
+    return TIDS_ReadReg(sensorInterface, TIDS_DEVICE_ID_REG, 1, deviceID);
+}
 
 /**
  * @brief Set software reset [enabled, disabled]
@@ -96,7 +108,7 @@ int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swRese
 {
     TIDS_softReset_t swRstReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t*)&swRstReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t*)&swRstReg))
     {
         return WE_FAIL;
     }
@@ -114,9 +126,14 @@ int8_t TIDS_softReset(WE_sensorInterface_t* sensorInterface, TIDS_state_t swRese
  */
 int8_t TIDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, TIDS_state_t* swReset)
 {
+    if (NULL == swReset)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_softReset_t swRstReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t*)&swRstReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_SOFT_RESET_REG, 1, (uint8_t*)&swRstReg))
     {
         return WE_FAIL;
     }
@@ -136,7 +153,7 @@ int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_sta
 {
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -154,9 +171,14 @@ int8_t TIDS_enableContinuousMode(WE_sensorInterface_t* sensorInterface, TIDS_sta
  */
 int8_t TIDS_isContinuousModeEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* mode)
 {
+    if (NULL == mode)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -176,7 +198,7 @@ int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_st
 {
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -194,9 +216,14 @@ int8_t TIDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, TIDS_st
  */
 int8_t TIDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* bdu)
 {
+    if (NULL == bdu)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -216,7 +243,7 @@ int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_output
 {
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -234,9 +261,14 @@ int8_t TIDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_output
  */
 int8_t TIDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, TIDS_outputDataRate_t* odr)
 {
+    if (NULL == odr)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -257,7 +289,7 @@ int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t on
 {
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -275,9 +307,14 @@ int8_t TIDS_enableOneShot(WE_sensorInterface_t* sensorInterface, TIDS_state_t on
  */
 int8_t TIDS_isOneShotEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* oneShot)
 {
+    if (NULL == oneShot)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -297,7 +334,7 @@ int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_stat
 {
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -315,9 +352,14 @@ int8_t TIDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, TIDS_stat
  */
 int8_t TIDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, TIDS_state_t* autoIncr)
 {
+    if (NULL == autoIncr)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_ctrl_t ctrlReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_CTRL_REG, 1, (uint8_t*)&ctrlReg))
     {
         return WE_FAIL;
     }
@@ -369,10 +411,14 @@ int8_t TIDS_setTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t hLim
  */
 int8_t TIDS_getTempHighLimit(WE_sensorInterface_t* sensorInterface, int32_t* hLimit)
 {
+    if (NULL == hLimit)
+    {
+        return WE_FAIL;
+    }
 
     uint8_t hlimitBits;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_H_REG, 1, &hlimitBits))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_H_REG, 1, &hlimitBits))
     {
         return WE_FAIL;
     }
@@ -424,9 +470,14 @@ int8_t TIDS_setTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t lLimi
  */
 int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t* lLimit)
 {
+    if (NULL == lLimit)
+    {
+        return WE_FAIL;
+    }
+
     uint8_t lLimitBits;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_L_REG, 1, &lLimitBits))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_LIMIT_T_L_REG, 1, &lLimitBits))
     {
         return WE_FAIL;
     }
@@ -442,7 +493,14 @@ int8_t TIDS_getTempLowLimit(WE_sensorInterface_t* sensorInterface, int32_t* lLim
  * @param[out] status The returned sensor status data
  * @retval Error code
  */
-int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t* status) { return TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)status); }
+int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status_t* status)
+{
+    if (NULL == status)
+    {
+        return WE_FAIL;
+    }
+    return TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)status);
+}
 
 /**
  * @brief Check if the sensor is busy
@@ -452,9 +510,14 @@ int8_t TIDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, TIDS_status
  */
 int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t* busy)
 {
+    if (NULL == busy)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_status_t statusReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
     {
         return WE_FAIL;
     }
@@ -472,9 +535,14 @@ int8_t TIDS_isBusy(WE_sensorInterface_t* sensorInterface, TIDS_state_t* busy)
  */
 int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_status_t statusReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
     {
         return WE_FAIL;
     }
@@ -492,9 +560,14 @@ int8_t TIDS_isUpperLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_sta
  */
 int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_state_t* state)
 {
+    if (NULL == state)
+    {
+        return WE_FAIL;
+    }
+
     TIDS_status_t statusReg;
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_STATUS_REG, 1, (uint8_t*)&statusReg))
     {
         return WE_FAIL;
     }
@@ -512,14 +585,19 @@ int8_t TIDS_isLowerLimitExceeded(WE_sensorInterface_t* sensorInterface, TIDS_sta
  */
 int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* rawTemp)
 {
-    uint8_t tmp[2] = {0};
-
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_DATA_T_L_REG, 1, &tmp[0]))
+    if (NULL == rawTemp)
     {
         return WE_FAIL;
     }
 
-    if (WE_FAIL == TIDS_ReadReg(sensorInterface, TIDS_DATA_T_H_REG, 1, &tmp[1]))
+    uint8_t tmp[2] = {0};
+
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_DATA_T_L_REG, 1, &tmp[0]))
+    {
+        return WE_FAIL;
+    }
+
+    if (WE_SUCCESS != TIDS_ReadReg(sensorInterface, TIDS_DATA_T_H_REG, 1, &tmp[1]))
     {
         return WE_FAIL;
     }
@@ -539,8 +617,13 @@ int8_t TIDS_getRawTemperature(WE_sensorInterface_t* sensorInterface, int16_t* ra
  */
 int8_t TIDS_getTemperature(WE_sensorInterface_t* sensorInterface, float* tempDegC)
 {
+    if (NULL == tempDegC)
+    {
+        return WE_FAIL;
+    }
+
     int16_t rawTemp = 0;
-    if (WE_FAIL == TIDS_getRawTemperature(sensorInterface, &rawTemp))
+    if (WE_SUCCESS != TIDS_getRawTemperature(sensorInterface, &rawTemp))
     {
         return WE_FAIL;
     }

@@ -40,16 +40,13 @@
 #include <string.h>
 
 /* Functions containing main loops for the available example */
-void WE_hidsEvaluationCSVRaw();
+static void WE_hidsEvaluationCSVRaw();
+
+/* Sensor initialization function */
+static bool WE_hidsInit(void);
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t hids;
-
-/* Sensor initialization function */
-static bool HIDS_init(void);
-
-/* Debug output functions */
-uint8_t readCurrentChannel = 0xFF;
 
 /**
  * @brief Example initialization.
@@ -57,9 +54,9 @@ uint8_t readCurrentChannel = 0xFF;
  */
 void WE_hidsExampleInit()
 {
-    if (false == HIDS_init())
+    if (false == WE_hidsInit())
     {
-        debugPrintln("**** HIDS_init() error. STOP ****");
+        debugPrintln("**** WE_hidsInit() error. STOP ****");
         HAL_Delay(5);
         while (1)
             ;
@@ -97,14 +94,20 @@ void WE_hidsEvaluationCSVRaw()
 /**
  * @brief Initializes the hids sensor for this example application.
  */
-static bool HIDS_init(void)
+static bool WE_hidsInit(void)
 {
     /* Initialize sensor interface (use i2c with HIDS address, burst mode activated) */
     HIDS_Get_Default_Interface(&hids);
     hids.interfaceType = WE_i2c;
     hids.handle = &hi2c1;
+
     /* Wait for boot */
     HAL_Delay(50);
+    while (WE_SUCCESS != WE_isSensorInterfaceReady(&hids))
+    {
+    }
+    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
+
     if (WE_SUCCESS != HIDS_Sensor_Init(&hids))
     {
         debugPrintln("**** HIDS_Sensor_Init error. STOP ****");
@@ -113,6 +116,5 @@ static bool HIDS_init(void)
             ;
     }
 
-    debugPrintln("**** WE_isSensorInterfaceReady(): OK ****");
     return true;
 }

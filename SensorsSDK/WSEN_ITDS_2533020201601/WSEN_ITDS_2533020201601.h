@@ -86,7 +86,7 @@
 /* Register type definitions */
 
 /**
- * @brief CTR_1_REG
+ * @brief CTRL_1_REG
  *
  * Address 0x20
  * Type  R/W
@@ -662,8 +662,10 @@ typedef enum
     ITDS_Y_X_Z = 1,
     ITDS_X_Z_Y = 2,
     ITDS_Z_Y_X = 3,
+    ITDS_X_Y_Z_dup = 4,
     ITDS_Y_Z_X = 5,
-    ITDS_Z_X_Y = 6
+    ITDS_Z_X_Y = 6,
+    ITDS_Z_Y_X_dup = 7,
 } ITDS_tapAxisPriority_t;
 
 typedef enum
@@ -689,274 +691,272 @@ extern "C"
 {
 #endif
 
-    /*         Function definitions         */
+/*         Function definitions         */
 
-    int8_t ITDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
+int8_t ITDS_getDefaultInterface(WE_sensorInterface_t* sensorInterface);
 
-    int8_t ITDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
+int8_t ITDS_getDeviceID(WE_sensorInterface_t* sensorInterface, uint8_t* deviceID);
 
-    /* CTRL-REG 1 */
-    int8_t ITDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t odr);
-    int8_t ITDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t* odr);
-    int8_t ITDS_setOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t opMode);
-    int8_t ITDS_getOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t* opMode);
-    int8_t ITDS_setPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t powerMode);
-    int8_t ITDS_getPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t* powerMode);
+/* CTRL-REG 1 */
+int8_t ITDS_setOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t odr);
+int8_t ITDS_getOutputDataRate(WE_sensorInterface_t* sensorInterface, ITDS_outputDataRate_t* odr);
+int8_t ITDS_setOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t opMode);
+int8_t ITDS_getOperatingMode(WE_sensorInterface_t* sensorInterface, ITDS_operatingMode_t* opMode);
+int8_t ITDS_setPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t powerMode);
+int8_t ITDS_getPowerMode(WE_sensorInterface_t* sensorInterface, ITDS_powerMode_t* powerMode);
 
-    /* CTRL-REG 2 */
-    int8_t ITDS_reboot(WE_sensorInterface_t* sensorInterface, ITDS_state_t reboot);
-    int8_t ITDS_isRebooting(WE_sensorInterface_t* sensorInterface, ITDS_state_t* rebooting);
-    int8_t ITDS_softReset(WE_sensorInterface_t* sensorInterface, ITDS_state_t swReset);
-    int8_t ITDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* swReset);
-    int8_t ITDS_setCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t disconnectPU);
-    int8_t ITDS_isCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t* puDisconnected);
-    int8_t ITDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ITDS_state_t bdu);
-    int8_t ITDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* bdu);
-    int8_t ITDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, ITDS_state_t autoIncr);
-    int8_t ITDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* autoIncr);
-    int8_t ITDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ITDS_state_t i2cDisable);
-    int8_t ITDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* i2cDisabled);
+/* CTRL-REG 2 */
+int8_t ITDS_reboot(WE_sensorInterface_t* sensorInterface, ITDS_state_t reboot);
+int8_t ITDS_isRebooting(WE_sensorInterface_t* sensorInterface, ITDS_state_t* rebooting);
+int8_t ITDS_softReset(WE_sensorInterface_t* sensorInterface, ITDS_state_t swReset);
+int8_t ITDS_getSoftResetState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* swReset);
+int8_t ITDS_setCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t disconnectPU);
+int8_t ITDS_isCSPullUpDisconnected(WE_sensorInterface_t* sensorInterface, ITDS_state_t* puDisconnected);
+int8_t ITDS_enableBlockDataUpdate(WE_sensorInterface_t* sensorInterface, ITDS_state_t bdu);
+int8_t ITDS_isBlockDataUpdateEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* bdu);
+int8_t ITDS_enableAutoIncrement(WE_sensorInterface_t* sensorInterface, ITDS_state_t autoIncr);
+int8_t ITDS_isAutoIncrementEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* autoIncr);
+int8_t ITDS_disableI2CInterface(WE_sensorInterface_t* sensorInterface, ITDS_state_t i2cDisable);
+int8_t ITDS_isI2CInterfaceDisabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* i2cDisabled);
 
-    /* CTRL-REG 3 */
-    int8_t ITDS_setSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t selfTest);
-    int8_t ITDS_getSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t* selfTest);
-    int8_t ITDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t pinType);
-    int8_t ITDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t* pinType);
-    int8_t ITDS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, ITDS_state_t lir);
-    int8_t ITDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lir);
-    int8_t ITDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t level);
-    int8_t ITDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t* level);
-    int8_t ITDS_startSingleDataConversion(WE_sensorInterface_t* sensorInterface, ITDS_state_t start);
-    int8_t ITDS_isSingleDataConversionStarted(WE_sensorInterface_t* sensorInterface, ITDS_state_t* start);
-    int8_t ITDS_setSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t conversionTrigger);
-    int8_t ITDS_getSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t* conversionTrigger);
+/* CTRL-REG 3 */
+int8_t ITDS_setSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t selfTest);
+int8_t ITDS_getSelfTestMode(WE_sensorInterface_t* sensorInterface, ITDS_selfTestConfig_t* selfTest);
+int8_t ITDS_setInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t pinType);
+int8_t ITDS_getInterruptPinType(WE_sensorInterface_t* sensorInterface, ITDS_interruptPinConfig_t* pinType);
+int8_t ITDS_enableLatchedInterrupt(WE_sensorInterface_t* sensorInterface, ITDS_state_t lir);
+int8_t ITDS_isLatchedInterruptEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lir);
+int8_t ITDS_setInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t level);
+int8_t ITDS_getInterruptActiveLevel(WE_sensorInterface_t* sensorInterface, ITDS_interruptActiveLevel_t* level);
+int8_t ITDS_startSingleDataConversion(WE_sensorInterface_t* sensorInterface, ITDS_state_t start);
+int8_t ITDS_isSingleDataConversionStarted(WE_sensorInterface_t* sensorInterface, ITDS_state_t* start);
+int8_t ITDS_setSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t conversionTrigger);
+int8_t ITDS_getSingleDataConversionTrigger(WE_sensorInterface_t* sensorInterface, ITDS_singleDataConversionTrigger_t* conversionTrigger);
 
-    /* CTRL-REG 4 */
-    int8_t ITDS_enable6DOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int06D);
-    int8_t ITDS_is6DOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int06D);
-    int8_t ITDS_enableSingleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0SingleTap);
-    int8_t ITDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0SingleTap);
-    int8_t ITDS_enableWakeUpOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0WakeUp);
-    int8_t ITDS_isWakeUpOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0WakeUp);
-    int8_t ITDS_enableFreeFallINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FreeFall);
-    int8_t ITDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FreeFall);
-    int8_t ITDS_enableDoubleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DoubleTap);
-    int8_t ITDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DoubleTap);
-    int8_t ITDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoFull);
-    int8_t ITDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoFull);
-    int8_t ITDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoThreshold);
-    int8_t ITDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoThreshold);
-    int8_t ITDS_enableDataReadyINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DataReady);
-    int8_t ITDS_isDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DataReady);
+/* CTRL-REG 4 */
+int8_t ITDS_enable6DOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int06D);
+int8_t ITDS_is6DOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int06D);
+int8_t ITDS_enableSingleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0SingleTap);
+int8_t ITDS_isSingleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0SingleTap);
+int8_t ITDS_enableWakeUpOnINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0WakeUp);
+int8_t ITDS_isWakeUpOnINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0WakeUp);
+int8_t ITDS_enableFreeFallINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FreeFall);
+int8_t ITDS_isFreeFallINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FreeFall);
+int8_t ITDS_enableDoubleTapINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DoubleTap);
+int8_t ITDS_isDoubleTapINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DoubleTap);
+int8_t ITDS_enableFifoFullINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoFull);
+int8_t ITDS_isFifoFullINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoFull);
+int8_t ITDS_enableFifoThresholdINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0FifoThreshold);
+int8_t ITDS_isFifoThresholdINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0FifoThreshold);
+int8_t ITDS_enableDataReadyINT0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int0DataReady);
+int8_t ITDS_isDataReadyINT0Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int0DataReady);
 
-    /* CTRL-REG 5 */
-    int8_t ITDS_enableSleepStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepStatus);
-    int8_t ITDS_isSleepStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepStatus);
-    int8_t ITDS_enableSleepStatusChangeINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepChange);
-    int8_t ITDS_isSleepStatusChangeINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepChange);
-    int8_t ITDS_enableBootStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1Boot);
-    int8_t ITDS_isBootStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1Boot);
-    int8_t ITDS_enableTempDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1TempDataReady);
-    int8_t ITDS_isTempDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1TempDataReady);
-    int8_t ITDS_enableFifoOverrunIntINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoOverrun);
-    int8_t ITDS_isFifoOverrunIntINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoOverrun);
-    int8_t ITDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoFull);
-    int8_t ITDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoFull);
-    int8_t ITDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoThresholdInt);
-    int8_t ITDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoThresholdInt);
-    int8_t ITDS_enableDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1DataReadyInt);
-    int8_t ITDS_isDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1DataReadyInt);
+/* CTRL-REG 5 */
+int8_t ITDS_enableSleepStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepStatus);
+int8_t ITDS_isSleepStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepStatus);
+int8_t ITDS_enableSleepStatusChangeINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1SleepChange);
+int8_t ITDS_isSleepStatusChangeINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1SleepChange);
+int8_t ITDS_enableBootStatusINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1Boot);
+int8_t ITDS_isBootStatusINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1Boot);
+int8_t ITDS_enableTempDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1TempDataReady);
+int8_t ITDS_isTempDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1TempDataReady);
+int8_t ITDS_enableFifoOverrunIntINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoOverrun);
+int8_t ITDS_isFifoOverrunIntINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoOverrun);
+int8_t ITDS_enableFifoFullINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoFull);
+int8_t ITDS_isFifoFullINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoFull);
+int8_t ITDS_enableFifoThresholdINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1FifoThresholdInt);
+int8_t ITDS_isFifoThresholdINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1FifoThresholdInt);
+int8_t ITDS_enableDataReadyINT1(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1DataReadyInt);
+int8_t ITDS_isDataReadyINT1Enabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1DataReadyInt);
 
-    /* CTRL-REG 6 */
-    int8_t ITDS_setFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t filteringCutoff);
-    int8_t ITDS_getFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t* filteringCutoff);
-    int8_t ITDS_setFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t fullScale);
-    int8_t ITDS_getFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t* fullScale);
-    int8_t ITDS_setFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t filterType);
-    int8_t ITDS_getFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t* filterType);
-    int8_t ITDS_enableLowNoise(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowNoise);
-    int8_t ITDS_isLowNoiseEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowNoise);
+/* CTRL-REG 6 */
+int8_t ITDS_setFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t filteringCutoff);
+int8_t ITDS_getFilteringCutoff(WE_sensorInterface_t* sensorInterface, ITDS_bandwidth_t* filteringCutoff);
+int8_t ITDS_setFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t fullScale);
+int8_t ITDS_getFullScale(WE_sensorInterface_t* sensorInterface, ITDS_fullScale_t* fullScale);
+int8_t ITDS_setFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t filterType);
+int8_t ITDS_getFilterPath(WE_sensorInterface_t* sensorInterface, ITDS_filterType_t* filterType);
+int8_t ITDS_enableLowNoise(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowNoise);
+int8_t ITDS_isLowNoiseEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowNoise);
 
-    /* Status */
-    /* Note: The status register is partially duplicated to the STATUS_DETECT register. */
-    int8_t ITDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, ITDS_status_t* status);
-    int8_t ITDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady);
-    int8_t ITDS_getSingleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* singleTap);
-    int8_t ITDS_getDoubleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap);
-    int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleepState);
+/* Status */
+/* Note: The status register is partially duplicated to the STATUS_DETECT register. */
+int8_t ITDS_getStatusRegister(WE_sensorInterface_t* sensorInterface, ITDS_status_t* status);
+int8_t ITDS_isAccelerationDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady);
+int8_t ITDS_getSingleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* singleTap);
+int8_t ITDS_getDoubleTapState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap);
+int8_t ITDS_getSleepState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleepState);
 
-    /* Acceleration output */
-    int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t* xRawAcc);
-    int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t* yRawAcc);
-    int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t* zRawAcc);
-    int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xRawAcc, int16_t* yRawAcc, int16_t* zRawAcc);
+/* Acceleration output */
+int8_t ITDS_getRawAccelerationX(WE_sensorInterface_t* sensorInterface, int16_t* xRawAcc);
+int8_t ITDS_getRawAccelerationY(WE_sensorInterface_t* sensorInterface, int16_t* yRawAcc);
+int8_t ITDS_getRawAccelerationZ(WE_sensorInterface_t* sensorInterface, int16_t* zRawAcc);
+int8_t ITDS_getRawAccelerations(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xRawAcc, int16_t* yRawAcc, int16_t* zRawAcc);
 
 #ifdef WE_USE_FLOAT
-    int8_t ITDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float* xAcc);
-    int8_t ITDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float* yAcc);
-    int8_t ITDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float* zAcc);
-    int8_t ITDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, float* xAcc, float* yAcc, float* zAcc);
+int8_t ITDS_getAccelerationX_float(WE_sensorInterface_t* sensorInterface, float* xAcc);
+int8_t ITDS_getAccelerationY_float(WE_sensorInterface_t* sensorInterface, float* yAcc);
+int8_t ITDS_getAccelerationZ_float(WE_sensorInterface_t* sensorInterface, float* zAcc);
+int8_t ITDS_getAccelerations_float(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, float* xAcc, float* yAcc, float* zAcc);
 
-    float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale);
-    float ITDS_convertAccelerationFs2g_float(int16_t acc);
-    float ITDS_convertAccelerationFs4g_float(int16_t acc);
-    float ITDS_convertAccelerationFs8g_float(int16_t acc);
-    float ITDS_convertAccelerationFs16g_float(int16_t acc);
-#else
-#warning "WSEN_ITDS sensor driver: Float support is turned off by default. Define WE_USE_FLOAT to enable float support."
+float ITDS_convertAcceleration_float(int16_t acc, ITDS_fullScale_t fullScale);
+float ITDS_convertAccelerationFs2g_float(int16_t acc);
+float ITDS_convertAccelerationFs4g_float(int16_t acc);
+float ITDS_convertAccelerationFs8g_float(int16_t acc);
+float ITDS_convertAccelerationFs16g_float(int16_t acc);
 #endif /* WE_USE_FLOAT */
 
-    int8_t ITDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t* xAcc);
-    int8_t ITDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t* yAcc);
-    int8_t ITDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t* zAcc);
-    int8_t ITDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xAcc, int16_t* yAcc, int16_t* zAcc);
+int8_t ITDS_getAccelerationX_int(WE_sensorInterface_t* sensorInterface, int16_t* xAcc);
+int8_t ITDS_getAccelerationY_int(WE_sensorInterface_t* sensorInterface, int16_t* yAcc);
+int8_t ITDS_getAccelerationZ_int(WE_sensorInterface_t* sensorInterface, int16_t* zAcc);
+int8_t ITDS_getAccelerations_int(WE_sensorInterface_t* sensorInterface, uint8_t numSamples, int16_t* xAcc, int16_t* yAcc, int16_t* zAcc);
 
-    int16_t ITDS_convertAcceleration_int(int16_t acc, ITDS_fullScale_t fullScale);
-    int16_t ITDS_convertAccelerationFs2g_int(int16_t acc);
-    int16_t ITDS_convertAccelerationFs4g_int(int16_t acc);
-    int16_t ITDS_convertAccelerationFs8g_int(int16_t acc);
-    int16_t ITDS_convertAccelerationFs16g_int(int16_t acc);
+int16_t ITDS_convertAcceleration_int(int16_t acc, ITDS_fullScale_t fullScale);
+int16_t ITDS_convertAccelerationFs2g_int(int16_t acc);
+int16_t ITDS_convertAccelerationFs4g_int(int16_t acc);
+int16_t ITDS_convertAccelerationFs8g_int(int16_t acc);
+int16_t ITDS_convertAccelerationFs16g_int(int16_t acc);
 
-    /* Temperature output */
-    int8_t ITDS_getTemperature8bit(WE_sensorInterface_t* sensorInterface, uint8_t* temp8bit);
-    int8_t ITDS_getRawTemperature12bit(WE_sensorInterface_t* sensorInterface, int16_t* temp12bit);
+/* Temperature output */
+int8_t ITDS_getTemperature8bit(WE_sensorInterface_t* sensorInterface, uint8_t* temp8bit);
+int8_t ITDS_getRawTemperature12bit(WE_sensorInterface_t* sensorInterface, int16_t* temp12bit);
 #ifdef WE_USE_FLOAT
-    int8_t ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float* tempDegC);
+int8_t ITDS_getTemperature12bit(WE_sensorInterface_t* sensorInterface, float* tempDegC);
 #endif /* WE_USE_FLOAT */
 
-    /* FIFO CTRL */
-    int8_t ITDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t fifoMode);
-    int8_t ITDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t* fifoMode);
-    int8_t ITDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifoThreshold);
-    int8_t ITDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThreshold);
+/* FIFO CTRL */
+int8_t ITDS_setFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t fifoMode);
+int8_t ITDS_getFifoMode(WE_sensorInterface_t* sensorInterface, ITDS_FifoMode_t* fifoMode);
+int8_t ITDS_setFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t fifoThreshold);
+int8_t ITDS_getFifoThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* fifoThreshold);
 
-    /* FIFO_SAMPLES */
-    int8_t ITDS_getFifoSamplesRegister(WE_sensorInterface_t* sensorInterface, ITDS_fifoSamples_t* fifoSamplesStatus);
-    int8_t ITDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoThr);
-    int8_t ITDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoOverrun);
-    int8_t ITDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoFill);
+/* FIFO_SAMPLES */
+int8_t ITDS_getFifoSamplesRegister(WE_sensorInterface_t* sensorInterface, ITDS_fifoSamples_t* fifoSamplesStatus);
+int8_t ITDS_isFifoThresholdReached(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoThr);
+int8_t ITDS_getFifoOverrunState(WE_sensorInterface_t* sensorInterface, ITDS_state_t* fifoOverrun);
+int8_t ITDS_getFifoFillLevel(WE_sensorInterface_t* sensorInterface, uint8_t* fifoFill);
 
-    /* TAP_X_TH */
-    int8_t ITDS_enable4DDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t detection4D);
-    int8_t ITDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* detection4D);
-    int8_t ITDS_setTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdX);
-    int8_t ITDS_getTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdX);
-    int8_t ITDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t threshold6D);
-    int8_t ITDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t* threshold6D);
+/* TAP_X_TH */
+int8_t ITDS_enable4DDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t detection4D);
+int8_t ITDS_is4DDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* detection4D);
+int8_t ITDS_setTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdX);
+int8_t ITDS_getTapThresholdX(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdX);
+int8_t ITDS_set6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t threshold6D);
+int8_t ITDS_get6DThreshold(WE_sensorInterface_t* sensorInterface, ITDS_thresholdDegree_t* threshold6D);
 
-    /* TAP_Y_TH */
-    int8_t ITDS_setTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdY);
-    int8_t ITDS_getTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdY);
-    int8_t ITDS_setTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t priority);
-    int8_t ITDS_getTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t* priority);
+/* TAP_Y_TH */
+int8_t ITDS_setTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdY);
+int8_t ITDS_getTapThresholdY(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdY);
+int8_t ITDS_setTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t priority);
+int8_t ITDS_getTapAxisPriority(WE_sensorInterface_t* sensorInterface, ITDS_tapAxisPriority_t* priority);
 
-    /* TAP_Z_TH */
-    int8_t ITDS_setTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdZ);
-    int8_t ITDS_getTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdZ);
-    int8_t ITDS_enableTapX(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapX);
-    int8_t ITDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapX);
-    int8_t ITDS_enableTapY(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapY);
-    int8_t ITDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapY);
-    int8_t ITDS_enableTapZ(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapZ);
-    int8_t ITDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZ);
+/* TAP_Z_TH */
+int8_t ITDS_setTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t tapThresholdZ);
+int8_t ITDS_getTapThresholdZ(WE_sensorInterface_t* sensorInterface, uint8_t* tapThresholdZ);
+int8_t ITDS_enableTapX(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapX);
+int8_t ITDS_isTapXEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapX);
+int8_t ITDS_enableTapY(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapY);
+int8_t ITDS_isTapYEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapY);
+int8_t ITDS_enableTapZ(WE_sensorInterface_t* sensorInterface, ITDS_state_t tapZ);
+int8_t ITDS_isTapZEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZ);
 
-    /* INT_DUR */
-    int8_t ITDS_setTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t latencyTime);
-    int8_t ITDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t* latencyTime);
-    int8_t ITDS_setTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t quietTime);
-    int8_t ITDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t* quietTime);
-    int8_t ITDS_setTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t shockTime);
-    int8_t ITDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t* shockTime);
+/* INT_DUR */
+int8_t ITDS_setTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t latencyTime);
+int8_t ITDS_getTapLatencyTime(WE_sensorInterface_t* sensorInterface, uint8_t* latencyTime);
+int8_t ITDS_setTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t quietTime);
+int8_t ITDS_getTapQuietTime(WE_sensorInterface_t* sensorInterface, uint8_t* quietTime);
+int8_t ITDS_setTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t shockTime);
+int8_t ITDS_getTapShockTime(WE_sensorInterface_t* sensorInterface, uint8_t* shockTime);
 
-    /* WAKE_UP_TH */
-    int8_t ITDS_enableDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t doubleTap);
-    int8_t ITDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap);
-    int8_t ITDS_enableInactivityDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t inactivity);
-    int8_t ITDS_isInactivityDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* inactivity);
-    int8_t ITDS_setWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t wakeUpThresh);
-    int8_t ITDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* wakeUpThresh);
+/* WAKE_UP_TH */
+int8_t ITDS_enableDoubleTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t doubleTap);
+int8_t ITDS_isDoubleTapEventEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* doubleTap);
+int8_t ITDS_enableInactivityDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t inactivity);
+int8_t ITDS_isInactivityDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* inactivity);
+int8_t ITDS_setWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t wakeUpThresh);
+int8_t ITDS_getWakeUpThreshold(WE_sensorInterface_t* sensorInterface, uint8_t* wakeUpThresh);
 
-    /* WAKE_UP_DUR */
-    int8_t ITDS_setFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationMsb);
-    int8_t ITDS_getFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationMsb);
-    int8_t ITDS_setWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration);
-    int8_t ITDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration);
-    int8_t ITDS_enableStationaryDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t stationary);
-    int8_t ITDS_isStationaryDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* stationary);
-    int8_t ITDS_setSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration);
-    int8_t ITDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration);
+/* WAKE_UP_DUR */
+int8_t ITDS_setFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationMsb);
+int8_t ITDS_getFreeFallDurationMSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationMsb);
+int8_t ITDS_setWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration);
+int8_t ITDS_getWakeUpDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration);
+int8_t ITDS_enableStationaryDetection(WE_sensorInterface_t* sensorInterface, ITDS_state_t stationary);
+int8_t ITDS_isStationaryDetectionEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* stationary);
+int8_t ITDS_setSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t duration);
+int8_t ITDS_getSleepDuration(WE_sensorInterface_t* sensorInterface, uint8_t* duration);
 
-    /* FREE_FALL */
-    int8_t ITDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDuration);
-    int8_t ITDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDuration);
-    int8_t ITDS_setFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationLsb);
-    int8_t ITDS_getFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationLsb);
-    int8_t ITDS_setFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t threshold);
-    int8_t ITDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t* threshold);
+/* FREE_FALL */
+int8_t ITDS_setFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDuration);
+int8_t ITDS_getFreeFallDuration(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDuration);
+int8_t ITDS_setFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t freeFallDurationLsb);
+int8_t ITDS_getFreeFallDurationLSB(WE_sensorInterface_t* sensorInterface, uint8_t* freeFallDurationLsb);
+int8_t ITDS_setFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t threshold);
+int8_t ITDS_getFreeFallThreshold(WE_sensorInterface_t* sensorInterface, ITDS_FreeFallThreshold_t* threshold);
 
-    /* STATUS_DETECT */
-    /* Note: Most of the status bits are already covered by the STATUS_REG register. */
-    int8_t ITDS_getStatusDetectRegister(WE_sensorInterface_t* sensorInterface, ITDS_statusDetect_t* statusDetect);
-    int8_t ITDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady);
+/* STATUS_DETECT */
+/* Note: Most of the status bits are already covered by the STATUS_REG register. */
+int8_t ITDS_getStatusDetectRegister(WE_sensorInterface_t* sensorInterface, ITDS_statusDetect_t* statusDetect);
+int8_t ITDS_isTemperatureDataReady(WE_sensorInterface_t* sensorInterface, ITDS_state_t* dataReady);
 
-    /* WAKE_UP_EVENT */
-    int8_t ITDS_getWakeUpEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_wakeUpEvent_t* status);
-    int8_t ITDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpX);
-    int8_t ITDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpY);
-    int8_t ITDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpZ);
-    int8_t ITDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpState);
-    int8_t ITDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* freeFall);
+/* WAKE_UP_EVENT */
+int8_t ITDS_getWakeUpEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_wakeUpEvent_t* status);
+int8_t ITDS_isWakeUpXEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpX);
+int8_t ITDS_isWakeUpYEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpY);
+int8_t ITDS_isWakeUpZEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpZ);
+int8_t ITDS_isWakeUpEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* wakeUpState);
+int8_t ITDS_isFreeFallEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* freeFall);
 
-    /* TAP_EVENT */
-    int8_t ITDS_getTapEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_tapEvent_t* status);
-    int8_t ITDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapEventState);
-    int8_t ITDS_getTapSign(WE_sensorInterface_t* sensorInterface, ITDS_tapSign_t* tapSign);
-    int8_t ITDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapXAxis);
-    int8_t ITDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapYAxis);
-    int8_t ITDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZAxis);
+/* TAP_EVENT */
+int8_t ITDS_getTapEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_tapEvent_t* status);
+int8_t ITDS_isTapEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapEventState);
+int8_t ITDS_getTapSign(WE_sensorInterface_t* sensorInterface, ITDS_tapSign_t* tapSign);
+int8_t ITDS_isTapEventXAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapXAxis);
+int8_t ITDS_isTapEventYAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapYAxis);
+int8_t ITDS_isTapEventZAxis(WE_sensorInterface_t* sensorInterface, ITDS_state_t* tapZAxis);
 
-    /* 6D_EVENT */
-    int8_t ITDS_get6dEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_6dEvent_t* status);
-    int8_t ITDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ITDS_state_t* orientationChanged);
-    int8_t ITDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xlOverThreshold);
-    int8_t ITDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xhOverThreshold);
-    int8_t ITDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* ylOverThreshold);
-    int8_t ITDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* yhOverThreshold);
-    int8_t ITDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zlOverThreshold);
-    int8_t ITDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zhOverThreshold);
+/* 6D_EVENT */
+int8_t ITDS_get6dEventRegister(WE_sensorInterface_t* sensorInterface, ITDS_6dEvent_t* status);
+int8_t ITDS_has6dOrientationChanged(WE_sensorInterface_t* sensorInterface, ITDS_state_t* orientationChanged);
+int8_t ITDS_isXLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xlOverThreshold);
+int8_t ITDS_isXHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* xhOverThreshold);
+int8_t ITDS_isYLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* ylOverThreshold);
+int8_t ITDS_isYHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* yhOverThreshold);
+int8_t ITDS_isZLOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zlOverThreshold);
+int8_t ITDS_isZHOverThreshold(WE_sensorInterface_t* sensorInterface, ITDS_state_t* zhOverThreshold);
 
-    /* ALL_INT_EVENT */
-    int8_t ITDS_getAllInterruptEvents(WE_sensorInterface_t* sensorInterface, ITDS_allInterruptEvents_t* events);
-    int8_t ITDS_isSleepChangeEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleep);
+/* ALL_INT_EVENT */
+int8_t ITDS_getAllInterruptEvents(WE_sensorInterface_t* sensorInterface, ITDS_allInterruptEvents_t* events);
+int8_t ITDS_isSleepChangeEvent(WE_sensorInterface_t* sensorInterface, ITDS_state_t* sleep);
 
-    /* X_Y_Z_OFS_USR */
-    int8_t ITDS_setOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t offsetValueXAxis);
-    int8_t ITDS_getOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueXAxis);
-    int8_t ITDS_setOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t offsetValueYAxis);
-    int8_t ITDS_getOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueYAxis);
-    int8_t ITDS_setOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t offsetValueZAxis);
-    int8_t ITDS_getOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueZAxis);
+/* X_Y_Z_OFS_USR */
+int8_t ITDS_setOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t offsetValueXAxis);
+int8_t ITDS_getOffsetValueX(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueXAxis);
+int8_t ITDS_setOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t offsetValueYAxis);
+int8_t ITDS_getOffsetValueY(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueYAxis);
+int8_t ITDS_setOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t offsetValueZAxis);
+int8_t ITDS_getOffsetValueZ(WE_sensorInterface_t* sensorInterface, int8_t* offsetValueZAxis);
 
-    /* CTRL_7 */
-    int8_t ITDS_setDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t drdyPulsed);
-    int8_t ITDS_isDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t* drdyPulsed);
-    int8_t ITDS_setInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1OnInt0);
-    int8_t ITDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1OnInt0);
-    int8_t ITDS_enableInterrupts(WE_sensorInterface_t* sensorInterface, ITDS_state_t interrupts);
-    int8_t ITDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* interrupts);
-    int8_t ITDS_enableApplyOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset);
-    int8_t ITDS_isApplyOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset);
-    int8_t ITDS_enableApplyWakeUpOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset);
-    int8_t ITDS_isApplyWakeUpOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset);
+/* CTRL_7 */
+int8_t ITDS_setDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t drdyPulsed);
+int8_t ITDS_isDataReadyPulsed(WE_sensorInterface_t* sensorInterface, ITDS_drdyPulse_t* drdyPulsed);
+int8_t ITDS_setInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t int1OnInt0);
+int8_t ITDS_getInt1OnInt0(WE_sensorInterface_t* sensorInterface, ITDS_state_t* int1OnInt0);
+int8_t ITDS_enableInterrupts(WE_sensorInterface_t* sensorInterface, ITDS_state_t interrupts);
+int8_t ITDS_areInterruptsEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* interrupts);
+int8_t ITDS_enableApplyOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset);
+int8_t ITDS_isApplyOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset);
+int8_t ITDS_enableApplyWakeUpOffset(WE_sensorInterface_t* sensorInterface, ITDS_state_t applyOffset);
+int8_t ITDS_isApplyWakeUpOffsetEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* applyOffset);
 
-    int8_t ITDS_setOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t offsetWeight);
-    int8_t ITDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t* offsetWeight);
+int8_t ITDS_setOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t offsetWeight);
+int8_t ITDS_getOffsetWeight(WE_sensorInterface_t* sensorInterface, ITDS_state_t* offsetWeight);
 
-    int8_t ITDS_enableHighPassRefMode(WE_sensorInterface_t* sensorInterface, ITDS_state_t refMode);
-    int8_t ITDS_isHighPassRefModeEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* refMode);
+int8_t ITDS_enableHighPassRefMode(WE_sensorInterface_t* sensorInterface, ITDS_state_t refMode);
+int8_t ITDS_isHighPassRefModeEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* refMode);
 
-    int8_t ITDS_enableLowPassOn6D(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowPassOn6D);
-    int8_t ITDS_isLowPassOn6DEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowPassOn6D);
+int8_t ITDS_enableLowPassOn6D(WE_sensorInterface_t* sensorInterface, ITDS_state_t lowPassOn6D);
+int8_t ITDS_isLowPassOn6DEnabled(WE_sensorInterface_t* sensorInterface, ITDS_state_t* lowPassOn6D);
 
 #ifdef __cplusplus
 }

@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Comment/uncomment the following defines to exclude/include the examples for the corresponding sensors. */
+#pragma message("Comment/uncomment the following defines to exclude/include the examples for the corresponding sensors")
 #define MULTI_SENSOR_EXAMPLE_HIDS
 #define MULTI_SENSOR_EXAMPLE_ITDS
 #define MULTI_SENSOR_EXAMPLE_TIDS
@@ -55,7 +55,7 @@ static WE_sensorInterface_t tids;
 /* Sensor initialization functions */
 static bool initSensors(void);
 static bool HIDS_init(void);
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 static bool TIDS_init(void);
 
 #ifdef MULTI_SENSOR_EXAMPLE_ITDS
@@ -105,7 +105,7 @@ void WE_multiSensorExampleLoop()
     HAL_Delay(1);
 
     bool waitForMeasurement = true;
-    while (waitForMeasurement == true)
+    while (true == waitForMeasurement)
     {
         HIDS_state_t humidityAvailable = HIDS_disable;
         if (WE_FAIL == HIDS_isHumidityDataAvailable(&hids, &humidityAvailable))
@@ -131,7 +131,7 @@ void WE_multiSensorExampleLoop()
     }
 
     uint16_t humidity_uint16 = 0;
-    if (HIDS_getHumidity_uint16(&hids, &humidity_uint16) == WE_SUCCESS)
+    if (WE_SUCCESS == HIDS_getHumidity_uint16(&hids, &humidity_uint16))
     {
         uint16_t full = humidity_uint16 / 100;
         uint16_t decimals = humidity_uint16 % 100; /* 2 decimal places */
@@ -185,7 +185,7 @@ void WE_multiSensorExampleLoop()
     } while (tidsBusy == TIDS_enable);
 
     int16_t temperatureInt;
-    if (TIDS_getRawTemperature(&tids, &temperatureInt) == WE_SUCCESS)
+    if (WE_SUCCESS == TIDS_getRawTemperature(&tids, &temperatureInt))
     {
         debugPrintTemperatureInt(temperatureInt);
     }
@@ -222,7 +222,7 @@ static bool initSensors(void)
 #ifdef MULTI_SENSOR_EXAMPLE_ITDS
     /* init ITDS */
     debugPrintln("**** Initializing ITDS sensor...");
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -267,21 +267,14 @@ static bool HIDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == HIDS_getDeviceID(&hids, &deviceIdValue))
-    {
-        if (deviceIdValue == HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != HIDS_getDeviceID(&hids, &deviceIdValue))
     {
         debugPrintln("**** HIDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != HIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-HIDS! */
+    {
+        debugPrintln("**** HIDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -310,7 +303,7 @@ static bool HIDS_init(void)
 /**
  * @brief Initializes the ITDS sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -329,21 +322,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -356,7 +342,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do
@@ -402,21 +388,14 @@ static bool TIDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == TIDS_getDeviceID(&tids, &deviceIdValue))
-    {
-        if (deviceIdValue == TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
-        {
-            debugPrintln("**** TIDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** TIDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != TIDS_getDeviceID(&tids, &deviceIdValue))
     {
         debugPrintln("**** TIDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != TIDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-TIDS! */
+    {
+        debugPrintln("**** TIDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 

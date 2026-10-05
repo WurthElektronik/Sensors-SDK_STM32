@@ -67,7 +67,7 @@ static WE_sensorInterface_t pads;
 static bool interruptTriggered = false;
 
 /* Sensor initialization function */
-static bool PADS_init(void);
+static bool WE_padsInit(void);
 
 /* Functions containing main loops for the available example modes. */
 void PADS_startDataReadyInterruptExample();
@@ -98,7 +98,7 @@ void WE_padsAdvancedExampleInit()
     debugPrintln("* INT_0 to PA0, rising edge interrupt only");
 
     /* init PADS */
-    if (false == PADS_init())
+    if (false == WE_padsInit())
     {
         debugPrintln("**** PADS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -138,13 +138,21 @@ void WE_padsAdvancedExampleLoop()
         case PADS_exampleBypassToFifoMode:
             PADS_startBypassToFifoExample();
             break;
+        default:
+        {
+            debugPrintln("**** Invalid example ****");
+            HAL_Delay(5);
+            while (1)
+                ;
+            break;
+        }
     }
 }
 
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool PADS_init(void)
+static bool WE_padsInit(void)
 {
     /* Initialize sensor interface (i2c with PADS address, burst mode activated) */
     PADS_getDefaultInterface(&pads);
@@ -164,21 +172,14 @@ static bool PADS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == PADS_getDeviceID(&pads, &deviceIdValue))
-    {
-        if (deviceIdValue == PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
-        {
-            debugPrintln("**** PADS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != PADS_getDeviceID(&pads, &deviceIdValue))
     {
         debugPrintln("**** PADS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != PADS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-PADS! */
+    {
+        debugPrintln("**** PADS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -243,8 +244,7 @@ void PADS_startDataReadyInterruptExample()
 
     while (1)
     {
-
-        if (interruptTriggered == true)
+        if (true == interruptTriggered)
         {
             interruptTriggered = false;
             PADS_getPressure_int(&pads, &pressure);
@@ -320,7 +320,7 @@ void PADS_startAutoZeroExample()
 
     while (1)
     {
-        if (interruptTriggered == true)
+        if (true == interruptTriggered)
         {
             interruptTriggered = false;
 
@@ -373,7 +373,7 @@ void PADS_startFifoExample()
 
     while (1)
     {
-        if (interruptTriggered == true)
+        if (true == interruptTriggered)
         {
             interruptTriggered = false;
 
@@ -448,7 +448,7 @@ void PADS_startContinuousExample()
 
     while (1)
     {
-        if (interruptTriggered == true)
+        if (true == interruptTriggered)
         {
             interruptTriggered = false;
 
@@ -568,7 +568,7 @@ void PADS_startBypassToFifoExample()
 
     while (1)
     {
-        if (interruptTriggered == true)
+        if (true == interruptTriggered)
         {
             interruptTriggered = false;
 
@@ -614,7 +614,7 @@ void PADS_startBypassToFifoExample()
             lastThreshExceededState = threshExceeded;
         }
 
-        /* Uncomment the following lines to print the current FIFO fill level */
+#pragma message("Uncomment the following lines to print the current FIFO fill level ")
         //    uint8_t fillLevel;
         //    PADS_getFifoFillLevel(&pads, &fillLevel);
         //    if (fillLevel != lastFillLevel)

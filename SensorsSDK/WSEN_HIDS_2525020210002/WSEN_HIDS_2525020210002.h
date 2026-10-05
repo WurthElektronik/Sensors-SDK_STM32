@@ -61,12 +61,12 @@ typedef enum
 extern "C"
 {
 #endif
-    int8_t HIDS_Set_Measurement_Type(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t precision);
-    int8_t HIDS_Sensor_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint32_t* serialNo);
-    int8_t HIDS_Sensor_Init(WE_sensorInterface_t* sensorInterface);
-    int8_t HIDS_Reset(WE_sensorInterface_t* sensorInterface);
-    int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t meausureCmd, int32_t* temperatureRaw, int32_t* humidityRaw);
-    int8_t HIDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface);
+int8_t HIDS_Set_Measurement_Type(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t precision);
+int8_t HIDS_Sensor_Read_SlNo(WE_sensorInterface_t* sensorInterface, uint32_t* serialNo);
+int8_t HIDS_Sensor_Init(WE_sensorInterface_t* sensorInterface);
+int8_t HIDS_Reset(WE_sensorInterface_t* sensorInterface);
+int8_t HIDS_Sensor_Measure_Raw(WE_sensorInterface_t* sensorInterface, hids_measureCmd_t meausureCmd, int32_t* temperatureRaw, int32_t* humidityRaw);
+int8_t HIDS_Get_Default_Interface(WE_sensorInterface_t* sensorInterface);
 #ifdef __cplusplus
 }
 #endif

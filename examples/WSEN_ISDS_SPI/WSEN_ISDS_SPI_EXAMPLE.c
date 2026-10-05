@@ -34,6 +34,7 @@
 #include "gpio.h"
 #include "spi.h"
 #include <math.h>
+#include <platform.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@
 static WE_sensorInterface_t isds;
 
 /* Sensor initialization function */
-static bool ISDS_init(void);
+static bool WE_isdsInit(void);
 
 static void debugPrintAcceleration_int(char axis[], int32_t accMg);
 static void debugPrintAngularRate_int(char axis[], int32_t rateMdps);
@@ -67,7 +68,7 @@ void WE_isdsSpiExampleInit()
     debugPrintln("* PA0 is used as chip select output (connected to CS input of sensor)");
 
     /* init ISDS */
-    if (false == ISDS_init())
+    if (false == WE_isdsInit())
     {
         debugPrintln("**** ISDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -143,7 +144,7 @@ void WE_isdsSpiExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ISDS_init(void)
+static bool WE_isdsInit(void)
 {
     /* Initialize sensor interface (SPI, burst mode activated) */
     ISDS_getDefaultInterface(&isds);
@@ -162,21 +163,14 @@ static bool ISDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ISDS_getDeviceID(&isds, &deviceIdValue))
-    {
-        if (deviceIdValue == ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ISDS_getDeviceID(&isds, &deviceIdValue))
     {
         debugPrintln("**** ISDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ISDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ISDS! */
+    {
+        debugPrintln("**** ISDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -189,7 +183,7 @@ static bool ISDS_init(void)
     } while (swReset);
     debugPrintln("**** ISDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ISDS_reboot(&isds, ISDS_enable);
     HAL_Delay(15);
     debugPrintln("**** ISDS reboot complete ****");

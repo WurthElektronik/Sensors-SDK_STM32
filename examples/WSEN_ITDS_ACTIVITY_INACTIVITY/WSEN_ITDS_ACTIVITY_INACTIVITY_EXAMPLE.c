@@ -62,7 +62,7 @@ static bool enteredSleepMode = false;
 static bool sleepChangeEvent = false;
 
 /* Sensor initialization function */
-static bool ITDS_init(void);
+static bool WE_itdsInit(void);
 
 /**
  * @brief Example initialization.
@@ -92,6 +92,14 @@ void WE_itdsActivityInactivityExampleInit()
         case motionDetectionMode:
             debugPrint("motion detection");
             break;
+        default:
+        {
+            debugPrintln("**** Invalid example ****");
+            HAL_Delay(5);
+            while (1)
+                ;
+            break;
+        }
     }
     debugPrintln(") example program for the ITDS sensor.");
     debugPrintln("Note that for this example to work, the following pin/interrupt configuration is required:");
@@ -99,7 +107,7 @@ void WE_itdsActivityInactivityExampleInit()
     debugPrintln("* INT_1 to PA1, rising and falling edge");
 
     /* init ITDS */
-    if (false == ITDS_init())
+    if (false == WE_itdsInit())
     {
         debugPrintln("**** ITDS_Init() error. STOP ****");
         HAL_Delay(5);
@@ -114,28 +122,28 @@ void WE_itdsActivityInactivityExampleInit()
  */
 void WE_itdsActivityInactivityExampleLoop()
 {
-    if (activityDetected == true)
+    if (true == activityDetected)
     {
         /* Wake-up condition met */
         activityDetected = false;
         debugPrintln("Activity detected.");
     }
 
-    if (enteredSleepMode == true)
+    if (true == enteredSleepMode)
     {
         /* Sleep mode signal has been triggered */
         enteredSleepMode = false;
         debugPrintln("Sleep status rising edge: Going to sleep.");
     }
 
-    if (leftSleepMode == true)
+    if (true == leftSleepMode)
     {
         /* Sleep mode signal has been revoked */
         leftSleepMode = false;
         debugPrintln("Sleep status falling edge: Waking up.");
     }
 
-    if (sleepChangeEvent == true)
+    if (true == sleepChangeEvent)
     {
         /* Interrupt due to sleep state transition trigger signal - read sleep state
      * register to find out if in active or inactive state */
@@ -168,7 +176,7 @@ void WE_itdsActivityInactivityExampleLoop()
 /**
  * @brief Initializes the sensor for this example application.
  */
-static bool ITDS_init(void)
+static bool WE_itdsInit(void)
 {
     /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
@@ -187,21 +195,14 @@ static bool ITDS_init(void)
 
     /* First communication test */
     uint8_t deviceIdValue = 0;
-    if (WE_SUCCESS == ITDS_getDeviceID(&itds, &deviceIdValue))
-    {
-        if (deviceIdValue == ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: OK ****");
-        }
-        else
-        {
-            debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
-            return false;
-        }
-    }
-    else
+    if (WE_SUCCESS != ITDS_getDeviceID(&itds, &deviceIdValue))
     {
         debugPrintln("**** ITDS_getDeviceID(): NOT OK ****");
+        return false;
+    }
+    else if (deviceIdValue != ITDS_DEVICE_ID_VALUE) /* who am i ? - i am WSEN-ITDS! */
+    {
+        debugPrintln("**** ITDS_DEVICE_ID_VALUE: NOT OK ****");
         return false;
     }
 
@@ -214,7 +215,7 @@ static bool ITDS_init(void)
     } while (swReset);
     debugPrintln("**** ITDS reset complete ****");
 
-    /* Perform reboot (retrieve trimming parameters from nonvolatile memory) */
+    /* Perform reboot (retrieve trimming parameters from non-volatile memory) */
     ITDS_reboot(&itds, ITDS_enable);
     ITDS_state_t boot;
     do
